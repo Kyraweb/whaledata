@@ -218,7 +218,7 @@ onMounted(() => {
 
   map = new maptilersdk.Map({
     container: mapContainer.value,
-    style:     `https://api.maptiler.com/maps/ocean/style.json?key=${MAPTILER_KEY}`,
+    style:     maptilersdk.MapStyle.DATAVIZ.DARK,
     center:    [0, 20],
     zoom:      1.8,
     projection: 'globe',
