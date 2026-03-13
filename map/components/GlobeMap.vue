@@ -301,8 +301,8 @@ onMounted(() => {
     } catch(e) {
       console.warn('setFog not supported:', e)
     }
-    initRouteLayers()
-    initSightingLayers()
+    if (!map.getSource('routes')) initRouteLayers()
+    if (!map.getSource('sightings')) initSightingLayers()
   })
 })
 
