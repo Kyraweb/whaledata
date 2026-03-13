@@ -289,14 +289,18 @@ onMounted(() => {
   map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
 
   map.on('load', () => {
-    map.setFog({
-      range: [0.5, 10],
-      color: 'rgba(8, 13, 26, 0.8)',
-      'horizon-blend': 0.1,
-      'high-color': '#0a1628',
-      'space-color': '#030508',
-      'star-intensity': 0.4
-    })
+    try {
+      map.setFog({
+        range: [0.5, 10],
+        color: 'rgba(8, 13, 26, 0.8)',
+        'horizon-blend': 0.1,
+        'high-color': '#0a1628',
+        'space-color': '#030508',
+        'star-intensity': 0.4
+      })
+    } catch(e) {
+      console.warn('setFog not supported:', e)
+    }
     initRouteLayers()
     initSightingLayers()
   })
