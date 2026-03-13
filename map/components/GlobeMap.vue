@@ -289,9 +289,6 @@ onMounted(() => {
 
   map.on('style.load', () => {
     map.setProjection({ type: 'globe' })
-  })
-
-  map.on('load', () => {
     try {
       map.setFog({
         range: [0.5, 10],
