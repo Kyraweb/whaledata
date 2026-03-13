@@ -287,8 +287,8 @@ onMounted(() => {
 
   map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
 
-  map.on('styledata', () => {
-    try { map.setProjection('globe') } catch(e) {}
+  map.on('style.load', () => {
+    map.setProjection({ type: 'globe' })
   })
 
   map.on('load', () => {
