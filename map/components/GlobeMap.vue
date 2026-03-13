@@ -278,15 +278,18 @@ function animateDash() {
 onMounted(() => {
   map = new maplibregl.Map({
     container: mapContainer.value,
-    style: `https://api.maptiler.com/maps/ocean/style.json?key=${MAPTILER_KEY}`,
+    style: `https://api.maptiler.com/maps/dataviz-dark/style.json?key=${MAPTILER_KEY}`,
     center: [0, 20],
     zoom: 1.8,
     attributionControl: false,
-    renderWorldCopies: false,
-    projection: { type: 'globe' }
+    renderWorldCopies: false
   })
 
   map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
+
+  map.on('styledata', () => {
+    try { map.setProjection('globe') } catch(e) {}
+  })
 
   map.on('load', () => {
     try {
