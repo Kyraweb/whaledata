@@ -223,7 +223,7 @@ function initSightingLayers() {
   map.addLayer({
     id: 'sightings-hitarea', type: 'circle', source: 'sightings',
     paint: {
-      'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 10, 5, 14, 10, 18],
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 6, 5, 8, 10, 11],
       'circle-color': 'transparent',
       'circle-opacity': 0
     }
