@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import species, sightings
+from app.routers import species, sightings, routes
 
 # ----------------------------
 # App setup
@@ -30,6 +30,7 @@ app.add_middleware(
 # ----------------------------
 app.include_router(species.router)
 app.include_router(sightings.router)
+app.include_router(routes.router)
 
 # ----------------------------
 # Health check
