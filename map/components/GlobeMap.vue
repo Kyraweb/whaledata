@@ -198,6 +198,7 @@ function initLayers() {
   })
 
   layersReady = true
+  console.log('[whale] layers ready, sightings in source:', props.sightings.length)
   animateDash()
 }
 
@@ -239,6 +240,9 @@ onMounted(async () => {
 
   // Use load (fires once) — not style.load which fires repeatedly
   map.on('load', () => {
+    console.log('[whale] map load fired')
+    console.log('[whale] sightings at load time:', props.sightings.length)
+    console.log('[whale] routes at load time:', props.migrationRoutes.length)
     try {
       map.setFog({
         range: [0.5, 10],
@@ -260,11 +264,13 @@ onUnmounted(() => {
 })
 
 watch(() => props.sightings, (val) => {
+  console.log('[whale] sightings watch fired, length:', val.length, 'layersReady:', layersReady)
   if (layersReady && map?.getSource('sightings'))
     map.getSource('sightings').setData(sightingsGeoJSON(val))
 }, { deep: true })
 
 watch(() => props.migrationRoutes, (val) => {
+  console.log('[whale] routes watch fired, length:', val.length, 'layersReady:', layersReady)
   if (layersReady && map?.getSource('routes')) {
     map.getSource('routes').setData(routesGeoJSON(val))
     map.getSource('route-endpoints').setData(routeEndpointsGeoJSON(val))
