@@ -122,15 +122,15 @@ function initLayers() {
 
   map.addLayer({ id: 'routes-glow', type: 'line', source: 'routes',
     layout: { 'line-cap': 'round', 'line-join': 'round' },
-    paint: { 'line-color': ['get', 'color'], 'line-width': 8, 'line-opacity': 0.07, 'line-blur': 6 }
+    paint: { 'line-color': ['get', 'color'], 'line-width': 10, 'line-opacity': 0.15, 'line-blur': 6 }
   })
   map.addLayer({ id: 'routes-base', type: 'line', source: 'routes',
     layout: { 'line-cap': 'round', 'line-join': 'round' },
-    paint: { 'line-color': ['get', 'color'], 'line-width': 1.5, 'line-opacity': 0.3 }
+    paint: { 'line-color': ['get', 'color'], 'line-width': 2.5, 'line-opacity': 0.7 }
   })
   map.addLayer({ id: 'routes-dash', type: 'line', source: 'routes',
     layout: { 'line-cap': 'butt', 'line-join': 'round' },
-    paint: { 'line-color': ['get', 'color'], 'line-width': 2, 'line-opacity': 0.9, 'line-dasharray': [0, 4, 3] }
+    paint: { 'line-color': ['get', 'color'], 'line-width': 3, 'line-opacity': 1, 'line-dasharray': [0, 4, 3] }
   })
   map.addLayer({ id: 'routes-hitarea', type: 'line', source: 'routes',
     layout: { 'line-cap': 'round', 'line-join': 'round' },
@@ -148,9 +148,9 @@ function initLayers() {
   })
   map.addLayer({ id: 'sightings-dot', type: 'circle', source: 'sightings',
     paint: {
-      'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 3, 5, 5, 10, 8],
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 4, 5, 6, 10, 9],
       'circle-color': ['get', 'color'], 'circle-opacity': 1,
-      'circle-stroke-width': 1.5, 'circle-stroke-color': ['get', 'color'], 'circle-stroke-opacity': 0.3
+      'circle-stroke-width': 2, 'circle-stroke-color': '#0a1628', 'circle-stroke-opacity': 0.8
     }
   })
   map.addLayer({ id: 'sightings-hitarea', type: 'circle', source: 'sightings',
