@@ -1,0 +1,106 @@
+/* =============================================
+   whaledata.org — Global Styles
+   Aesthetic: Deep ocean / bioluminescent
+   ============================================= */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg-void:        #050810;
+  --bg-deep:        #080d1a;
+  --bg-surface:     #0d1528;
+  --bg-raised:      #111d35;
+
+  --cyan:           #00e5ff;
+  --cyan-dim:       #00b8cc;
+  --cyan-glow:      rgba(0, 229, 255, 0.15);
+  --cyan-glow-soft: rgba(0, 229, 255, 0.06);
+
+  --text-primary:   #e8f4f8;
+  --text-secondary: #7a9bb5;
+  --text-muted:     #3d5a72;
+
+  --border:         rgba(0, 229, 255, 0.1);
+  --border-bright:  rgba(0, 229, 255, 0.25);
+
+  --font-display:   'Syne', sans-serif;
+  --font-mono:      'DM Mono', monospace;
+
+  /* Species accent colors */
+  --humpback:  #00e5ff;
+  --blue:      #4d9fff;
+  --grey:      #a8c5da;
+  --sperm:     #7eb8d4;
+  --fin:       #5dd4b8;
+  --orca:      #ff6b9d;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg-void);
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  overflow: hidden;
+}
+
+#app {
+  height: 100vh;
+  width: 100vw;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg-deep); }
+::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
+
+/* MapLibre overrides */
+.maplibregl-ctrl-bottom-left,
+.maplibregl-ctrl-bottom-right { display: none; }
+
+.maplibregl-ctrl-top-right {
+  top: 80px;
+  right: 16px;
+}
+
+.maplibregl-ctrl-group {
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  overflow: hidden;
+}
+
+.maplibregl-ctrl-group button {
+  background: transparent !important;
+  border: none !important;
+  filter: invert(1) brightness(0.7);
+}
+
+.maplibregl-ctrl-group button:hover {
+  background: var(--cyan-glow-soft) !important;
+  filter: invert(1) brightness(1);
+}
+
+.maplibregl-popup-content {
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border-bright) !important;
+  border-radius: 10px !important;
+  padding: 14px 16px !important;
+  color: var(--text-primary) !important;
+  font-family: var(--font-display) !important;
+  box-shadow: 0 0 24px rgba(0, 229, 255, 0.12) !important;
+}
+
+.maplibregl-popup-tip {
+  border-top-color: var(--border-bright) !important;
+}
+
+.maplibregl-popup-close-button {
+  color: var(--text-secondary) !important;
+  font-size: 18px !important;
+  right: 8px !important;
+  top: 6px !important;
+}
