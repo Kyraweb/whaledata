@@ -122,15 +122,15 @@ function initLayers() {
 
   map.addLayer({ id: 'routes-glow', type: 'line', source: 'routes',
     layout: { 'line-cap': 'round', 'line-join': 'round' },
-    paint: { 'line-color': ['get', 'color'], 'line-width': 10, 'line-opacity': 0.15, 'line-blur': 6 }
+    paint: { 'line-color': ['get', 'color'], 'line-width': 14, 'line-opacity': 0.4, 'line-blur': 4 }
   })
   map.addLayer({ id: 'routes-base', type: 'line', source: 'routes',
     layout: { 'line-cap': 'round', 'line-join': 'round' },
-    paint: { 'line-color': ['get', 'color'], 'line-width': 2.5, 'line-opacity': 0.7 }
+    paint: { 'line-color': ['get', 'color'], 'line-width': 3, 'line-opacity': 1 }
   })
   map.addLayer({ id: 'routes-dash', type: 'line', source: 'routes',
     layout: { 'line-cap': 'butt', 'line-join': 'round' },
-    paint: { 'line-color': ['get', 'color'], 'line-width': 3, 'line-opacity': 1, 'line-dasharray': [0, 4, 3] }
+    paint: { 'line-color': ['get', 'color'], 'line-width': 4, 'line-opacity': 1, 'line-dasharray': [0, 4, 3] }
   })
   map.addLayer({ id: 'routes-hitarea', type: 'line', source: 'routes',
     layout: { 'line-cap': 'round', 'line-join': 'round' },
@@ -150,7 +150,7 @@ function initLayers() {
     paint: {
       'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 4, 5, 6, 10, 9],
       'circle-color': ['get', 'color'], 'circle-opacity': 1,
-      'circle-stroke-width': 2, 'circle-stroke-color': '#0a1628', 'circle-stroke-opacity': 0.8
+      'circle-stroke-width': 0, 'circle-stroke-color': '#0a1628', 'circle-stroke-opacity': 0
     }
   })
   map.addLayer({ id: 'sightings-hitarea', type: 'circle', source: 'sightings',
@@ -162,7 +162,7 @@ function initLayers() {
     map.getCanvas().style.cursor = 'pointer'
     const p = e.features[0].properties
     hoveredRoute.value = p
-    map.setPaintProperty('routes-base', 'line-opacity', ['case', ['==', ['get', 'id'], p.id], 0.8, 0.3])
+    map.setPaintProperty('routes-base', 'line-opacity', ['case', ['==', ['get', 'id'], p.id], 1, 1])
     map.setPaintProperty('routes-dash', 'line-width',   ['case', ['==', ['get', 'id'], p.id], 3, 2])
   })
   map.on('mouseleave', 'routes-hitarea', () => {
