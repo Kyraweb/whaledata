@@ -11,3 +11,4 @@ Vue.js frontend. Renders a 3D globe with whale sightings, migration routes, and 
 ## Setup
 
 coming soon  
+##
