@@ -9,9 +9,10 @@
       @species-change="onSpeciesChange"
     />
 
-    <div class="map-area" :style="{ marginLeft: sidebarWidth }">
+    <div class="map-area">
       <GlobeMap
         :sightings="filteredSightings"
+        :migrationRoutes="filteredRoutes"
         :selectedSpecies="selectedSpecies"
       />
     </div>
@@ -25,11 +26,11 @@ import Sidebar from './components/Sidebar.vue'
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://api.whaledata.org'
 
-const allSightings    = ref([])
-const speciesSummary  = ref([])
-const selectedSpecies = ref('')
-const loading         = ref(true)
-const sidebarWidth    = ref('280px')
+const allSightings      = ref([])
+const allRoutes         = ref([])
+const speciesSummary    = ref([])
+const selectedSpecies   = ref('')
+const loading           = ref(true)
 
 const totalCount = computed(() =>
   speciesSummary.value.reduce((sum, s) => sum + s.sighting_count, 0)
@@ -40,6 +41,11 @@ const filteredSightings = computed(() => {
   return allSightings.value.filter(s => s.common_name === selectedSpecies.value)
 })
 
+const filteredRoutes = computed(() => {
+  if (!selectedSpecies.value) return allRoutes.value
+  return allRoutes.value.filter(r => r.common_name === selectedSpecies.value)
+})
+
 function onSpeciesChange(species) {
   selectedSpecies.value = species
 }
@@ -47,16 +53,19 @@ function onSpeciesChange(species) {
 async function loadData() {
   loading.value = true
   try {
-    const [sightingsRes, summaryRes] = await Promise.all([
+    const [sightingsRes, summaryRes, routesRes] = await Promise.all([
       fetch(`${API_URL}/sightings/?limit=5000`),
-      fetch(`${API_URL}/sightings/species-summary`)
+      fetch(`${API_URL}/sightings/species-summary`),
+      fetch(`${API_URL}/routes/`)
     ])
 
     const sightingsData = await sightingsRes.json()
     const summaryData   = await summaryRes.json()
+    const routesData    = await routesRes.json()
 
     allSightings.value   = sightingsData.data || []
-    speciesSummary.value = summaryData.data || []
+    speciesSummary.value = summaryData.data   || []
+    allRoutes.value      = routesData.data    || []
   } catch (err) {
     console.error('Failed to load whale data:', err)
   } finally {
@@ -83,6 +92,5 @@ onMounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  transition: margin-left 0.3s ease;
 }
 </style>
