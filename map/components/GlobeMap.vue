@@ -59,7 +59,14 @@ function sightingsGeoJSON(sightings) {
   return {
     type: 'FeatureCollection',
     features: (sightings || [])
-      .filter(s => s.longitude != null && s.latitude != null)
+      .filter(s => {
+        if (s.longitude == null || s.latitude == null) return false
+        const lng = parseFloat(s.longitude)
+        const lat = parseFloat(s.latitude)
+        // Filter out inland South America cluster (Amazon basin - clearly not ocean)
+        if (lng > -75 && lng < -35 && lat > -25 && lat < 10) return false
+        return true
+      })
       .map(s => ({
         type: 'Feature',
         geometry: { type: 'Point', coordinates: [parseFloat(s.longitude), parseFloat(s.latitude)] },
@@ -142,8 +149,8 @@ function initLayers() {
   map.addLayer({ id: 'sightings-dot', type: 'circle', source: 'sightings',
     paint: {
       'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 3, 5, 5, 10, 8],
-      'circle-color': ['get', 'color'], 'circle-opacity': 0.85,
-      'circle-stroke-width': 0.5, 'circle-stroke-color': '#ffffff', 'circle-stroke-opacity': 0.15
+      'circle-color': ['get', 'color'], 'circle-opacity': 1,
+      'circle-stroke-width': 1.5, 'circle-stroke-color': ['get', 'color'], 'circle-stroke-opacity': 0.3
     }
   })
   map.addLayer({ id: 'sightings-hitarea', type: 'circle', source: 'sightings',
@@ -211,14 +218,13 @@ onMounted(() => {
 
   map = new maptilersdk.Map({
     container: mapContainer.value,
-    style:     maptilersdk.MapStyle.DATAVIZ.DARK,
+    style:     `https://api.maptiler.com/maps/ocean/style.json?key=${MAPTILER_KEY}`,
     center:    [0, 20],
     zoom:      1.8,
     projection: 'globe',
     attributionControl: false,
   })
 
-  map.addControl(new maptilersdk.NavigationControl({ showCompass: false }), 'top-right')
 
   map.on('load', () => {
     initLayers()
