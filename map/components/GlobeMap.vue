@@ -282,14 +282,23 @@ onMounted(() => {
     center: [0, 20],
     zoom: 1.8,
     attributionControl: false,
-    renderWorldCopies: false
+    renderWorldCopies: false,
+    projection: 'globe'
   })
 
   map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
 
   map.on('load', () => {
-    initRouteLayers()   // routes first (bottom)
-    initSightingLayers() // dots on top
+    map.setFog({
+      range: [0.5, 10],
+      color: 'rgba(8, 13, 26, 0.8)',
+      'horizon-blend': 0.1,
+      'high-color': '#0a1628',
+      'space-color': '#030508',
+      'star-intensity': 0.4
+    })
+    initRouteLayers()
+    initSightingLayers()
   })
 })
 
