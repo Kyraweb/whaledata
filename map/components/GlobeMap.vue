@@ -1,6 +1,6 @@
 <template>
   <div ref="mapContainer" class="globe-map" />
-  
+
   <Transition name="panel">
     <div v-if="hoveredRoute" class="route-panel">
       <div class="route-panel-species" :style="{ color: getSpeciesColor(hoveredRoute.common_name) }">
@@ -24,8 +24,8 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
-import maplibregl from 'maplibre-gl'
-import 'maplibre-gl/dist/maplibre-gl.css'
+import * as maptilersdk from '@maptiler/sdk'
+import '@maptiler/sdk/dist/maptiler-sdk.css'
 
 const props = defineProps({
   sightings:       { type: Array,  default: () => [] },
@@ -102,20 +102,17 @@ function routeEndpointsGeoJSON(routes) {
     .forEach(r => {
       const coords = r.geojson.coordinates
       const color  = getSpeciesColor(r.common_name)
-      features.push({ type: 'Feature', geometry: { type: 'Point', coordinates: coords[0] }, properties: { color, kind: 'start' } })
-      features.push({ type: 'Feature', geometry: { type: 'Point', coordinates: coords[coords.length - 1] }, properties: { color, kind: 'end' } })
+      features.push({ type: 'Feature', geometry: { type: 'Point', coordinates: coords[0] }, properties: { color } })
+      features.push({ type: 'Feature', geometry: { type: 'Point', coordinates: coords[coords.length - 1] }, properties: { color } })
     })
   return { type: 'FeatureCollection', features }
 }
 
-// Called once map.load fires — adds all sources and layers
 function initLayers() {
-  // Sources — initialised with current prop data (may already be loaded)
   map.addSource('routes',          { type: 'geojson', data: routesGeoJSON(props.migrationRoutes) })
   map.addSource('route-endpoints', { type: 'geojson', data: routeEndpointsGeoJSON(props.migrationRoutes) })
   map.addSource('sightings',       { type: 'geojson', data: sightingsGeoJSON(props.sightings) })
 
-  // ── Route layers ──────────────────────────────────────────────
   map.addLayer({ id: 'routes-glow', type: 'line', source: 'routes',
     layout: { 'line-cap': 'round', 'line-join': 'round' },
     paint: { 'line-color': ['get', 'color'], 'line-width': 8, 'line-opacity': 0.07, 'line-blur': 6 }
@@ -139,8 +136,6 @@ function initLayers() {
   map.addLayer({ id: 'route-endpoints-dot', type: 'circle', source: 'route-endpoints',
     paint: { 'circle-radius': 3.5, 'circle-color': ['get', 'color'], 'circle-opacity': 0.9 }
   })
-
-  // ── Sighting layers ───────────────────────────────────────────
   map.addLayer({ id: 'sightings-glow', type: 'circle', source: 'sightings',
     paint: { 'circle-radius': 10, 'circle-color': ['get', 'color'], 'circle-opacity': 0.1, 'circle-blur': 1 }
   })
@@ -156,7 +151,6 @@ function initLayers() {
              'circle-color': 'transparent', 'circle-opacity': 0 }
   })
 
-  // ── Interactions ──────────────────────────────────────────────
   map.on('mouseenter', 'routes-hitarea', (e) => {
     map.getCanvas().style.cursor = 'pointer'
     const p = e.features[0].properties
@@ -170,7 +164,6 @@ function initLayers() {
     map.setPaintProperty('routes-base', 'line-opacity', 0.3)
     map.setPaintProperty('routes-dash', 'line-width', 2)
   })
-
   map.on('mouseenter', 'sightings-hitarea', (e) => {
     map.getCanvas().style.cursor = 'pointer'
     const feature = e.features[0]
@@ -178,7 +171,7 @@ function initLayers() {
     const p       = feature.properties
     const color   = p.color || '#00e5ff'
     if (popup) popup.remove()
-    popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 12, maxWidth: '240px' })
+    popup = new maptilersdk.Popup({ closeButton: false, closeOnClick: false, offset: 12, maxWidth: '240px' })
       .setLngLat(coords)
       .setHTML(`
         <div style="font-family:'Syne',sans-serif;padding:2px 0">
@@ -198,7 +191,6 @@ function initLayers() {
   })
 
   layersReady = true
-  console.log('[whale] layers ready, sightings in source:', props.sightings.length)
   animateDash()
 }
 
@@ -214,35 +206,21 @@ function animateDash() {
   animationFrame = setTimeout(animateDash, 80)
 }
 
-onMounted(async () => {
-  // Fetch the MapTiler style, inject globe projection, use it directly
-  // This avoids calling setProjection() which causes a second style.load
-  let style
-  try {
-    const res = await fetch(`https://api.maptiler.com/maps/dataviz-dark/style.json?key=${MAPTILER_KEY}`)
-    style = await res.json()
-    style.projection = { type: 'globe' }
-  } catch(e) {
-    // Fallback to URL style if fetch fails
-    style = `https://api.maptiler.com/maps/dataviz-dark/style.json?key=${MAPTILER_KEY}`
-  }
+onMounted(() => {
+  maptilersdk.config.apiKey = MAPTILER_KEY
 
-  map = new maplibregl.Map({
+  map = new maptilersdk.Map({
     container: mapContainer.value,
-    style,
-    center: [0, 20],
-    zoom: 1.8,
+    style:     maptilersdk.MapStyle.DATAVIZ.DARK,
+    center:    [0, 20],
+    zoom:      1.8,
+    projection: 'globe',
     attributionControl: false,
-    renderWorldCopies: false
   })
 
-  map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
+  map.addControl(new maptilersdk.NavigationControl({ showCompass: false }), 'top-right')
 
-  // Use load (fires once) — not style.load which fires repeatedly
   map.on('load', () => {
-    console.log('[whale] map load fired')
-    console.log('[whale] sightings at load time:', props.sightings.length)
-    console.log('[whale] routes at load time:', props.migrationRoutes.length)
     initLayers()
   })
 })
@@ -254,13 +232,11 @@ onUnmounted(() => {
 })
 
 watch(() => props.sightings, (val) => {
-  console.log('[whale] sightings watch fired, length:', val.length, 'layersReady:', layersReady)
   if (layersReady && map?.getSource('sightings'))
     map.getSource('sightings').setData(sightingsGeoJSON(val))
 }, { deep: true })
 
 watch(() => props.migrationRoutes, (val) => {
-  console.log('[whale] routes watch fired, length:', val.length, 'layersReady:', layersReady)
   if (layersReady && map?.getSource('routes')) {
     map.getSource('routes').setData(routesGeoJSON(val))
     map.getSource('route-endpoints').setData(routeEndpointsGeoJSON(val))
