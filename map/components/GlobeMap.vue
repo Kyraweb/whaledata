@@ -243,16 +243,6 @@ onMounted(async () => {
     console.log('[whale] map load fired')
     console.log('[whale] sightings at load time:', props.sightings.length)
     console.log('[whale] routes at load time:', props.migrationRoutes.length)
-    try {
-      map.setFog({
-        range: [0.5, 10],
-        color: 'rgba(8, 13, 26, 0.8)',
-        'horizon-blend': 0.1,
-        'high-color': '#0a1628',
-        'space-color': '#030508',
-        'star-intensity': 0.4
-      })
-    } catch(e) {}
     initLayers()
   })
 })
