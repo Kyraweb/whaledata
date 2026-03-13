@@ -75,7 +75,8 @@ function renderSightings(sightings) {
     })
 
     const popup = new maplibregl.Popup({
-      offset: 12,
+      offset: [0, -8],
+      anchor: 'bottom',
       closeButton: true,
       maxWidth: '240px'
     }).setHTML(`
@@ -109,11 +110,15 @@ onMounted(() => {
     style: `https://api.maptiler.com/maps/dataviz-dark/style.json?key=${MAPTILER_KEY}`,
     center: [0, 20],
     zoom: 1.5,
-    pitch: 30,
-    attributionControl: false
+    pitch: 0,
+    attributionControl: false,
+    renderWorldCopies: false
   })
 
   map.addControl(new maplibregl.NavigationControl(), 'top-right')
+
+  // Smooth scroll zoom
+  map.scrollZoom.setWheelZoomRate(1 / 200)
 
   map.on('load', () => {
     if (props.sightings.length) {
