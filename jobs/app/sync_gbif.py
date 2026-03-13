@@ -200,12 +200,7 @@ def run():
     conn    = get_connection()
     log_id  = start_sync_log(conn, "gbif")
 
-    # Wipe existing GBIF sightings so we start clean
-    cur = conn.cursor()
-    cur.execute("DELETE FROM sightings WHERE source = 'gbif';")
-    conn.commit()
-    cur.close()
-    print("Cleared existing GBIF sightings.")
+    print("Starting sync — duplicates will be skipped automatically.")
 
     total   = {"fetched": 0, "inserted": 0, "updated": 0, "skipped": 0}
     error   = None
