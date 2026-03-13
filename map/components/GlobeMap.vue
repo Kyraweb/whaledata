@@ -59,14 +59,7 @@ function sightingsGeoJSON(sightings) {
   return {
     type: 'FeatureCollection',
     features: (sightings || [])
-      .filter(s => {
-        if (s.longitude == null || s.latitude == null) return false
-        const lng = parseFloat(s.longitude)
-        const lat = parseFloat(s.latitude)
-        // Filter out inland South America cluster (Amazon basin - clearly not ocean)
-        if (lng > -75 && lng < -35 && lat > -25 && lat < 10) return false
-        return true
-      })
+      .filter(s => s.longitude != null && s.latitude != null)
       .map(s => ({
         type: 'Feature',
         geometry: { type: 'Point', coordinates: [parseFloat(s.longitude), parseFloat(s.latitude)] },

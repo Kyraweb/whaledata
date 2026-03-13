@@ -32,13 +32,20 @@ const speciesSummary    = ref([])
 const selectedSpecies   = ref('')
 const loading           = ref(true)
 
-const totalCount = computed(() =>
-  speciesSummary.value.reduce((sum, s) => sum + s.sighting_count, 0)
-)
+const totalCount = computed(() => allSightings.value.filter(isOceanSighting).length)
+
+function isOceanSighting(s) {
+  const lng = parseFloat(s.longitude)
+  const lat = parseFloat(s.latitude)
+  // Filter out inland South America cluster (Amazon basin)
+  if (lng > -75 && lng < -35 && lat > -25 && lat < 10) return false
+  return true
+}
 
 const filteredSightings = computed(() => {
-  if (!selectedSpecies.value) return allSightings.value
-  return allSightings.value.filter(s => s.common_name === selectedSpecies.value)
+  const base = allSightings.value.filter(isOceanSighting)
+  if (!selectedSpecies.value) return base
+  return base.filter(s => s.common_name === selectedSpecies.value)
 })
 
 const filteredRoutes = computed(() => {
