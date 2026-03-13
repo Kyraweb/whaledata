@@ -288,7 +288,6 @@ onMounted(() => {
   map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
 
   map.on('load', () => {
-    map.setProjection('globe')
     try {
       map.setFog({
         range: [0.5, 10],
