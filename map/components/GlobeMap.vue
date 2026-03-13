@@ -38,6 +38,7 @@ const hoveredRoute = ref(null)
 let map            = null
 let popup          = null
 let animationFrame = null
+let layersReady    = false
 
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY || ''
 
@@ -54,12 +55,10 @@ function getSpeciesColor(name) {
   return SPECIES_COLORS[name] || '#ffffff'
 }
 
-// ─── GeoJSON helpers ──────────────────────────────────────────
-
 function sightingsGeoJSON(sightings) {
   return {
     type: 'FeatureCollection',
-    features: sightings
+    features: (sightings || [])
       .filter(s => s.longitude != null && s.latitude != null)
       .map(s => ({
         type: 'Feature',
@@ -79,7 +78,7 @@ function sightingsGeoJSON(sightings) {
 function routesGeoJSON(routes) {
   return {
     type: 'FeatureCollection',
-    features: routes
+    features: (routes || [])
       .filter(r => r.geojson?.coordinates?.length)
       .map(r => ({
         type: 'Feature',
@@ -96,137 +95,80 @@ function routesGeoJSON(routes) {
   }
 }
 
-// Build a point GeoJSON for route start + end markers
 function routeEndpointsGeoJSON(routes) {
   const features = []
-  routes
+  ;(routes || [])
     .filter(r => r.geojson?.coordinates?.length >= 2)
     .forEach(r => {
       const coords = r.geojson.coordinates
       const color  = getSpeciesColor(r.common_name)
-      // start
-      features.push({
-        type: 'Feature',
-        geometry: { type: 'Point', coordinates: coords[0] },
-        properties: { color, kind: 'start', name: r.origin_region }
-      })
-      // end
-      features.push({
-        type: 'Feature',
-        geometry: { type: 'Point', coordinates: coords[coords.length - 1] },
-        properties: { color, kind: 'end', name: r.destination_region }
-      })
+      features.push({ type: 'Feature', geometry: { type: 'Point', coordinates: coords[0] }, properties: { color, kind: 'start' } })
+      features.push({ type: 'Feature', geometry: { type: 'Point', coordinates: coords[coords.length - 1] }, properties: { color, kind: 'end' } })
     })
   return { type: 'FeatureCollection', features }
 }
 
-// ─── Layer init ───────────────────────────────────────────────
-
-function initRouteLayers() {
-  map.addSource('routes', { type: 'geojson', data: routesGeoJSON(props.migrationRoutes) })
+// Called once map.load fires — adds all sources and layers
+function initLayers() {
+  // Sources — initialised with current prop data (may already be loaded)
+  map.addSource('routes',          { type: 'geojson', data: routesGeoJSON(props.migrationRoutes) })
   map.addSource('route-endpoints', { type: 'geojson', data: routeEndpointsGeoJSON(props.migrationRoutes) })
+  map.addSource('sightings',       { type: 'geojson', data: sightingsGeoJSON(props.sightings) })
 
-  // Glow
-  map.addLayer({
-    id: 'routes-glow', type: 'line', source: 'routes',
+  // ── Route layers ──────────────────────────────────────────────
+  map.addLayer({ id: 'routes-glow', type: 'line', source: 'routes',
     layout: { 'line-cap': 'round', 'line-join': 'round' },
     paint: { 'line-color': ['get', 'color'], 'line-width': 8, 'line-opacity': 0.07, 'line-blur': 6 }
   })
-
-  // Base
-  map.addLayer({
-    id: 'routes-base', type: 'line', source: 'routes',
+  map.addLayer({ id: 'routes-base', type: 'line', source: 'routes',
     layout: { 'line-cap': 'round', 'line-join': 'round' },
     paint: { 'line-color': ['get', 'color'], 'line-width': 1.5, 'line-opacity': 0.3 }
   })
-
-  // Animated dash
-  map.addLayer({
-    id: 'routes-dash', type: 'line', source: 'routes',
+  map.addLayer({ id: 'routes-dash', type: 'line', source: 'routes',
     layout: { 'line-cap': 'butt', 'line-join': 'round' },
     paint: { 'line-color': ['get', 'color'], 'line-width': 2, 'line-opacity': 0.9, 'line-dasharray': [0, 4, 3] }
   })
-
-  // Hover highlight (wide transparent hit area)
-  map.addLayer({
-    id: 'routes-hitarea', type: 'line', source: 'routes',
+  map.addLayer({ id: 'routes-hitarea', type: 'line', source: 'routes',
     layout: { 'line-cap': 'round', 'line-join': 'round' },
     paint: { 'line-color': ['get', 'color'], 'line-width': 20, 'line-opacity': 0 }
   })
-
-  // Endpoint dots — outer ring
-  map.addLayer({
-    id: 'route-endpoints-ring', type: 'circle', source: 'route-endpoints',
-    paint: {
-      'circle-radius': 7,
-      'circle-color': 'transparent',
-      'circle-stroke-width': 1.5,
-      'circle-stroke-color': ['get', 'color'],
-      'circle-stroke-opacity': 0.7
-    }
+  map.addLayer({ id: 'route-endpoints-ring', type: 'circle', source: 'route-endpoints',
+    paint: { 'circle-radius': 7, 'circle-color': 'transparent',
+             'circle-stroke-width': 1.5, 'circle-stroke-color': ['get', 'color'], 'circle-stroke-opacity': 0.7 }
+  })
+  map.addLayer({ id: 'route-endpoints-dot', type: 'circle', source: 'route-endpoints',
+    paint: { 'circle-radius': 3.5, 'circle-color': ['get', 'color'], 'circle-opacity': 0.9 }
   })
 
-  // Endpoint dots — inner fill
-  map.addLayer({
-    id: 'route-endpoints-dot', type: 'circle', source: 'route-endpoints',
+  // ── Sighting layers ───────────────────────────────────────────
+  map.addLayer({ id: 'sightings-glow', type: 'circle', source: 'sightings',
+    paint: { 'circle-radius': 10, 'circle-color': ['get', 'color'], 'circle-opacity': 0.1, 'circle-blur': 1 }
+  })
+  map.addLayer({ id: 'sightings-dot', type: 'circle', source: 'sightings',
     paint: {
-      'circle-radius': 3.5,
-      'circle-color': ['get', 'color'],
-      'circle-opacity': 0.9
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 3, 5, 5, 10, 8],
+      'circle-color': ['get', 'color'], 'circle-opacity': 0.85,
+      'circle-stroke-width': 0.5, 'circle-stroke-color': '#ffffff', 'circle-stroke-opacity': 0.15
     }
   })
+  map.addLayer({ id: 'sightings-hitarea', type: 'circle', source: 'sightings',
+    paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 6, 5, 8, 10, 11],
+             'circle-color': 'transparent', 'circle-opacity': 0 }
+  })
 
-  // Route hover events
+  // ── Interactions ──────────────────────────────────────────────
   map.on('mouseenter', 'routes-hitarea', (e) => {
     map.getCanvas().style.cursor = 'pointer'
     const p = e.features[0].properties
     hoveredRoute.value = p
-    map.setPaintProperty('routes-base', 'line-opacity', [
-      'case', ['==', ['get', 'id'], p.id], 0.8, 0.3
-    ])
-    map.setPaintProperty('routes-dash', 'line-width', [
-      'case', ['==', ['get', 'id'], p.id], 3, 2
-    ])
+    map.setPaintProperty('routes-base', 'line-opacity', ['case', ['==', ['get', 'id'], p.id], 0.8, 0.3])
+    map.setPaintProperty('routes-dash', 'line-width',   ['case', ['==', ['get', 'id'], p.id], 3, 2])
   })
-
   map.on('mouseleave', 'routes-hitarea', () => {
     map.getCanvas().style.cursor = ''
     hoveredRoute.value = null
     map.setPaintProperty('routes-base', 'line-opacity', 0.3)
     map.setPaintProperty('routes-dash', 'line-width', 2)
-  })
-
-  animateDash()
-}
-
-function initSightingLayers() {
-  map.addSource('sightings', { type: 'geojson', data: sightingsGeoJSON(props.sightings) })
-
-  map.addLayer({
-    id: 'sightings-glow', type: 'circle', source: 'sightings',
-    paint: { 'circle-radius': 10, 'circle-color': ['get', 'color'], 'circle-opacity': 0.1, 'circle-blur': 1 }
-  })
-
-  map.addLayer({
-    id: 'sightings-dot', type: 'circle', source: 'sightings',
-    paint: {
-      'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 3, 5, 5, 10, 8],
-      'circle-color': ['get', 'color'],
-      'circle-opacity': 0.85,
-      'circle-stroke-width': 0.5,
-      'circle-stroke-color': '#ffffff',
-      'circle-stroke-opacity': 0.15
-    }
-  })
-
-  // Invisible wide hit area for easy hovering
-  map.addLayer({
-    id: 'sightings-hitarea', type: 'circle', source: 'sightings',
-    paint: {
-      'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 6, 5, 8, 10, 11],
-      'circle-color': 'transparent',
-      'circle-opacity': 0
-    }
   })
 
   map.on('mouseenter', 'sightings-hitarea', (e) => {
@@ -235,7 +177,6 @@ function initSightingLayers() {
     const coords  = feature.geometry.coordinates.slice()
     const p       = feature.properties
     const color   = p.color || '#00e5ff'
-
     if (popup) popup.remove()
     popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 12, maxWidth: '240px' })
       .setLngLat(coords)
@@ -249,17 +190,16 @@ function initSightingLayers() {
             ${p.source ? '🔬 ' + p.source.toUpperCase() : ''}
           </div>
         </div>
-      `)
-      .addTo(map)
+      `).addTo(map)
   })
-
   map.on('mouseleave', 'sightings-hitarea', () => {
     map.getCanvas().style.cursor = ''
     if (popup) { popup.remove(); popup = null }
   })
-}
 
-// ─── Dash animation ───────────────────────────────────────────
+  layersReady = true
+  animateDash()
+}
 
 const DASH_FRAMES = [
   [0,4,3],[0.5,4,2.5],[1,4,2],[1.5,4,1.5],[2,4,1],[2.5,4,0.5],[3,4,0],
@@ -273,12 +213,30 @@ function animateDash() {
   animationFrame = setTimeout(animateDash, 80)
 }
 
-// ─── Lifecycle ────────────────────────────────────────────────
+onMounted(async () => {
+  // Fetch the MapTiler style, inject globe projection, use it directly
+  // This avoids calling setProjection() which causes a second style.load
+  let style
+  try {
+    const res = await fetch(`https://api.maptiler.com/maps/dataviz-dark/style.json?key=${MAPTILER_KEY}`)
+    style = await res.json()
+    style.projection = { type: 'globe' }
+    style.fog = {
+      range: [0.5, 10],
+      color: 'rgba(8, 13, 26, 0.8)',
+      'horizon-blend': 0.1,
+      'high-color': '#0a1628',
+      'space-color': '#030508',
+      'star-intensity': 0.4
+    }
+  } catch(e) {
+    // Fallback to URL style if fetch fails
+    style = `https://api.maptiler.com/maps/dataviz-dark/style.json?key=${MAPTILER_KEY}`
+  }
 
-onMounted(() => {
   map = new maplibregl.Map({
     container: mapContainer.value,
-    style: `https://api.maptiler.com/maps/dataviz-dark/style.json?key=${MAPTILER_KEY}`,
+    style,
     center: [0, 20],
     zoom: 1.8,
     attributionControl: false,
@@ -287,34 +245,9 @@ onMounted(() => {
 
   map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
 
-  map.on('style.load', () => {
-    map.setProjection({ type: 'globe' })
-    try {
-      map.setFog({
-        range: [0.5, 10],
-        color: 'rgba(8, 13, 26, 0.8)',
-        'horizon-blend': 0.1,
-        'high-color': '#0a1628',
-        'space-color': '#030508',
-        'star-intensity': 0.4
-      })
-    } catch(e) {
-      console.warn('setFog not supported:', e)
-    }
-    if (!map.getSource('routes')) {
-      initRouteLayers()
-      // Data may have already arrived before style was ready — populate immediately
-      if (props.migrationRoutes.length) {
-        map.getSource('routes').setData(routesGeoJSON(props.migrationRoutes))
-        map.getSource('route-endpoints').setData(routeEndpointsGeoJSON(props.migrationRoutes))
-      }
-    }
-    if (!map.getSource('sightings')) {
-      initSightingLayers()
-      if (props.sightings.length) {
-        map.getSource('sightings').setData(sightingsGeoJSON(props.sightings))
-      }
-    }
+  // Use load (fires once) — not style.load which fires repeatedly
+  map.on('load', () => {
+    initLayers()
   })
 })
 
@@ -325,12 +258,15 @@ onUnmounted(() => {
 })
 
 watch(() => props.sightings, (val) => {
-  if (map?.getSource('sightings')) map.getSource('sightings').setData(sightingsGeoJSON(val))
+  if (layersReady && map?.getSource('sightings'))
+    map.getSource('sightings').setData(sightingsGeoJSON(val))
 }, { deep: true })
 
 watch(() => props.migrationRoutes, (val) => {
-  if (map?.getSource('routes')) map.getSource('routes').setData(routesGeoJSON(val))
-  if (map?.getSource('route-endpoints')) map.getSource('route-endpoints').setData(routeEndpointsGeoJSON(val))
+  if (layersReady && map?.getSource('routes')) {
+    map.getSource('routes').setData(routesGeoJSON(val))
+    map.getSource('route-endpoints').setData(routeEndpointsGeoJSON(val))
+  }
 }, { deep: true })
 </script>
 
@@ -338,39 +274,23 @@ watch(() => props.migrationRoutes, (val) => {
 .globe-map { width: 100%; height: 100%; }
 
 .route-panel {
-  position: fixed;
-  bottom: 32px;
-  right: 32px;
-  width: 300px;
-  background: rgba(8, 13, 26, 0.95);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(0, 229, 255, 0.2);
-  border-radius: 14px;
-  padding: 20px;
-  z-index: 200;
-  box-shadow: 0 0 40px rgba(0, 229, 255, 0.08);
+  position: fixed; bottom: 32px; right: 32px; width: 300px;
+  background: rgba(8, 13, 26, 0.95); backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 229, 255, 0.2); border-radius: 14px;
+  padding: 20px; z-index: 200; box-shadow: 0 0 40px rgba(0, 229, 255, 0.08);
 }
-.route-panel-species {
-  font-size: 11px; font-weight: 600;
-  text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 6px;
-}
-.route-panel-name {
-  font-size: 14px; font-weight: 600;
-  color: var(--text-primary); margin-bottom: 10px; line-height: 1.4;
-}
+.route-panel-species { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 6px; }
+.route-panel-name { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 10px; line-height: 1.4; }
 .route-panel-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
 .route-tag {
   font-size: 10px; padding: 2px 8px; border-radius: 20px;
   background: rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.15);
   color: var(--text-secondary); text-transform: capitalize; font-family: var(--font-mono);
 }
-.route-panel-path {
-  display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 11px;
-}
+.route-panel-path { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 11px; }
 .route-origin, .route-dest { color: var(--text-primary); font-weight: 500; }
 .route-arrow { color: var(--cyan); flex-shrink: 0; }
 .route-panel-desc { font-size: 11px; color: var(--text-secondary); line-height: 1.7; }
-
 .panel-enter-active, .panel-leave-active { transition: all 0.2s ease; }
 .panel-enter-from, .panel-leave-to { opacity: 0; transform: translateY(8px); }
 </style>
