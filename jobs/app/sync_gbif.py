@@ -94,14 +94,15 @@ def fetch_gbif_page(taxon_key: int, offset: int) -> list:
     return response.json().get("results", [])
 
 
-def upsert_sighting(cur, record: dict, common_name: str) -> str:
+def upsert_sighting(cur, record: dict, common_name: str, scientific_name: str) -> str:
     """
     Insert a sighting record. Returns 'inserted', 'skipped', or 'error'.
     Duplicate source+source_id combinations are silently skipped.
+    scientific_name comes from our config — not from GBIF — to ensure accuracy.
     """
     try:
         source_id   = str(record.get("key", ""))
-        sci_name    = record.get("species") or record.get("scientificName", "")
+        sci_name    = scientific_name  # use our config, not GBIF's record
         lat         = record.get("decimalLatitude")
         lng         = record.get("decimalLongitude")
         sighted_on  = record.get("eventDate", "")[:10] if record.get("eventDate") else None
@@ -170,7 +171,7 @@ def sync_species(conn, species: dict) -> dict:
 
         cur = conn.cursor()
         for record in records:
-            result = upsert_sighting(cur, record, common_name)
+            result = upsert_sighting(cur, record, common_name, sci_name)
             counts["fetched"] += 1
             if result == "inserted":
                 counts["inserted"] += 1
@@ -198,6 +199,13 @@ def run():
 
     conn    = get_connection()
     log_id  = start_sync_log(conn, "gbif")
+
+    # Wipe existing GBIF sightings so we start clean
+    cur = conn.cursor()
+    cur.execute("DELETE FROM sightings WHERE source = 'gbif';")
+    conn.commit()
+    cur.close()
+    print("Cleared existing GBIF sightings.")
 
     total   = {"fetched": 0, "inserted": 0, "updated": 0, "skipped": 0}
     error   = None
