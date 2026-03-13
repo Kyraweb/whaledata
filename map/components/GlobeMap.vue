@@ -221,14 +221,6 @@ onMounted(async () => {
     const res = await fetch(`https://api.maptiler.com/maps/dataviz-dark/style.json?key=${MAPTILER_KEY}`)
     style = await res.json()
     style.projection = { type: 'globe' }
-    style.fog = {
-      range: [0.5, 10],
-      color: 'rgba(8, 13, 26, 0.8)',
-      'horizon-blend': 0.1,
-      'high-color': '#0a1628',
-      'space-color': '#030508',
-      'star-intensity': 0.4
-    }
   } catch(e) {
     // Fallback to URL style if fetch fails
     style = `https://api.maptiler.com/maps/dataviz-dark/style.json?key=${MAPTILER_KEY}`
@@ -247,6 +239,16 @@ onMounted(async () => {
 
   // Use load (fires once) — not style.load which fires repeatedly
   map.on('load', () => {
+    try {
+      map.setFog({
+        range: [0.5, 10],
+        color: 'rgba(8, 13, 26, 0.8)',
+        'horizon-blend': 0.1,
+        'high-color': '#0a1628',
+        'space-color': '#030508',
+        'star-intensity': 0.4
+      })
+    } catch(e) {}
     initLayers()
   })
 })
