@@ -301,8 +301,20 @@ onMounted(() => {
     } catch(e) {
       console.warn('setFog not supported:', e)
     }
-    if (!map.getSource('routes')) initRouteLayers()
-    if (!map.getSource('sightings')) initSightingLayers()
+    if (!map.getSource('routes')) {
+      initRouteLayers()
+      // Data may have already arrived before style was ready — populate immediately
+      if (props.migrationRoutes.length) {
+        map.getSource('routes').setData(routesGeoJSON(props.migrationRoutes))
+        map.getSource('route-endpoints').setData(routeEndpointsGeoJSON(props.migrationRoutes))
+      }
+    }
+    if (!map.getSource('sightings')) {
+      initSightingLayers()
+      if (props.sightings.length) {
+        map.getSource('sightings').setData(sightingsGeoJSON(props.sightings))
+      }
+    }
   })
 })
 
