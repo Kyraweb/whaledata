@@ -282,13 +282,13 @@ onMounted(() => {
     center: [0, 20],
     zoom: 1.8,
     attributionControl: false,
-    renderWorldCopies: false,
-    projection: 'globe'
+    renderWorldCopies: false
   })
 
   map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
 
   map.on('load', () => {
+    map.setProjection('globe')
     try {
       map.setFog({
         range: [0.5, 10],
