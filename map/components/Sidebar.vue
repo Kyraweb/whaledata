@@ -107,7 +107,7 @@
               preload="none"
               class="audio-player"
             >
-              <source :src="activeSpecies.audio" type="audio/mpeg" />
+              <source :src="activeSpecies.audio" :type="activeSpecies.audioType || 'audio/ogg'" />
               Your browser does not support audio.
             </audio>
           </div>
@@ -158,6 +158,8 @@ const SPECIES_COLORS = {
   'Orca':           '#ff6b9d',
 }
 
+// Images via Wikimedia Commons API (allows hotlinking)
+// Audio via Wikimedia Commons (ogg format)
 const SPECIES_DATA = {
   'Humpback whale': {
     name:        'Humpback whale',
