@@ -7,6 +7,18 @@
   </button>
 
   <Transition name="panel">
+    <div v-if="hoveredShipLane" class="route-panel ship-lane-panel">
+      <div class="route-panel-species" style="color: #ff9f43">🚢 Shipping Lane</div>
+      <div class="route-panel-name">{{ hoveredShipLane.name }}</div>
+      <div class="route-panel-meta">
+        <span class="route-tag" style="border-color: rgba(255,159,67,0.3); background: rgba(255,159,67,0.08); color: #ff9f43">
+          {{ hoveredShipLane.traffic }} traffic
+        </span>
+      </div>
+    </div>
+  </Transition>
+
+  <Transition name="panel">
     <div v-if="hoveredRoute" class="route-panel">
       <div class="route-panel-species" :style="{ color: getSpeciesColor(hoveredRoute.common_name) }">
         {{ hoveredRoute.common_name }}
@@ -46,6 +58,7 @@ let popup          = null
 let animationFrame = null
 let layersReady    = false
 const shipLanesVisible = ref(false)
+const hoveredShipLane = ref(null)
 
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY || ''
 
@@ -198,7 +211,20 @@ function initLayers() {
   })
 
   // Ship lanes — hidden by default
+  // Build endpoints GeoJSON from ship lanes
+  const shipEndpoints = {
+    type: 'FeatureCollection',
+    features: SHIP_LANES_GEOJSON.features.flatMap(f => {
+      const coords = f.geometry.coordinates
+      return [
+        { type: 'Feature', geometry: { type: 'Point', coordinates: coords[0] }, properties: {} },
+        { type: 'Feature', geometry: { type: 'Point', coordinates: coords[coords.length - 1] }, properties: {} }
+      ]
+    })
+  }
+
   map.addSource('ship-lanes', { type: 'geojson', data: SHIP_LANES_GEOJSON })
+  map.addSource('ship-endpoints', { type: 'geojson', data: shipEndpoints })
   map.addLayer({
     id: 'ship-lanes-line',
     type: 'line',
@@ -210,6 +236,47 @@ function initLayers() {
       'line-opacity': ['match', ['get', 'traffic'], 'high', 0.7, 'medium', 0.5, 0.35],
       'line-dasharray': [3, 2]
     }
+  })
+
+  // Endpoint rings
+  map.addLayer({
+    id: 'ship-endpoints-ring', type: 'circle', source: 'ship-endpoints',
+    layout: { visibility: 'none' },
+    paint: {
+      'circle-radius': 5, 'circle-color': 'transparent',
+      'circle-stroke-width': 1.5, 'circle-stroke-color': '#ff9f43', 'circle-stroke-opacity': 0.7
+    }
+  })
+  map.addLayer({
+    id: 'ship-endpoints-dot', type: 'circle', source: 'ship-endpoints',
+    layout: { visibility: 'none' },
+    paint: { 'circle-radius': 2.5, 'circle-color': '#ff9f43', 'circle-opacity': 0.9 }
+  })
+
+  // Wide hit area for hover
+  map.addLayer({
+    id: 'ship-lanes-hitarea', type: 'line', source: 'ship-lanes',
+    layout: { 'line-cap': 'round', visibility: 'none' },
+    paint: { 'line-color': '#ff9f43', 'line-width': 20, 'line-opacity': 0 }
+  })
+
+  map.on('mouseenter', 'ship-lanes-hitarea', (e) => {
+    map.getCanvas().style.cursor = 'pointer'
+    const p = e.features[0].properties
+    hoveredShipLane.value = p
+    map.setPaintProperty('ship-lanes-line', 'line-opacity', [
+      'case', ['==', ['get', 'name'], p.name], 1, 0.3
+    ])
+    map.setPaintProperty('ship-lanes-line', 'line-width', [
+      'case', ['==', ['get', 'name'], p.name], 4, ['match', ['get', 'traffic'], 'high', 2, 'medium', 1.5, 1]
+    ])
+  })
+
+  map.on('mouseleave', 'ship-lanes-hitarea', () => {
+    map.getCanvas().style.cursor = ''
+    hoveredShipLane.value = null
+    map.setPaintProperty('ship-lanes-line', 'line-opacity', ['match', ['get', 'traffic'], 'high', 0.7, 'medium', 0.5, 0.35])
+    map.setPaintProperty('ship-lanes-line', 'line-width', ['match', ['get', 'traffic'], 'high', 2, 'medium', 1.5, 1])
   })
 
   layersReady = true
@@ -231,7 +298,12 @@ function animateDash() {
 function toggleShipLanes() {
   if (!map || !map.getLayer('ship-lanes-line')) return
   shipLanesVisible.value = !shipLanesVisible.value
-  map.setLayoutProperty('ship-lanes-line', 'visibility', shipLanesVisible.value ? 'visible' : 'none')
+  const v = shipLanesVisible.value ? 'visible' : 'none'
+  map.setLayoutProperty('ship-lanes-line',     'visibility', v)
+  map.setLayoutProperty('ship-lanes-hitarea',  'visibility', v)
+  map.setLayoutProperty('ship-endpoints-ring', 'visibility', v)
+  map.setLayoutProperty('ship-endpoints-dot',  'visibility', v)
+  if (!shipLanesVisible.value) hoveredShipLane.value = null
 }
 
 onMounted(() => {
