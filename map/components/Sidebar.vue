@@ -166,84 +166,84 @@ const SPECIES_DATA = {
     scientific:  'Megaptera novaeangliae',
     iucn:        'LC',
     iucnLabel:   'Least Concern',
-    photo:       'https://commons.wikimedia.org/wiki/Special:FilePath/Humpback_Whale_underwater_shot.jpg?width=320',
+    photo:       '/assets/images/humpback.jpg',
     description: 'Famous for their haunting, complex songs sung only by males. Humpbacks make one of the longest migrations of any mammal, travelling up to 8,000 km between feeding and breeding grounds.',
     facts: [
       { label: 'Length',   value: '14–17m' },
       { label: 'Weight',   value: '25–30t' },
       { label: 'Lifespan', value: '45–100yr' },
     ],
-    audio: 'https://upload.wikimedia.org/wikipedia/commons/2/2c/Humpback_Whale_underwater_-_Luc_Rinaldi.ogg'
+    audio: '/assets/sounds/humpback.mp3'
   },
   'Blue whale': {
     name:        'Blue whale',
     scientific:  'Balaenoptera musculus',
     iucn:        'EN',
     iucnLabel:   'Endangered',
-    photo:       'https://commons.wikimedia.org/wiki/Special:FilePath/NOAA_blue_whale.jpg?width=320',
+    photo:       '/assets/images/blue-whale.jpg',
     description: 'The largest animal ever known to have existed on Earth. A blue whale\'s heart alone weighs as much as a car, and its call can be heard up to 1,600 km away.',
     facts: [
       { label: 'Length',   value: '24–33m' },
       { label: 'Weight',   value: 'up to 200t' },
       { label: 'Lifespan', value: '80–90yr' },
     ],
-    audio: 'https://upload.wikimedia.org/wikipedia/commons/5/5d/Blue_Whale_-_NOAA.ogg'
+    audio: '/assets/sounds/blue-whale.mp3'
   },
   'Grey whale': {
     name:        'Grey whale',
     scientific:  'Eschrichtius robustus',
     iucn:        'LC',
     iucnLabel:   'Least Concern',
-    photo:       'https://commons.wikimedia.org/wiki/Special:FilePath/GrayWhale09.jpg?width=320',
+    photo:       '/assets/images/grey-whale.jpg',
     description: 'Undertakes the longest migration of any mammal — up to 20,000 km round trip between Arctic feeding grounds and warm Mexican lagoons. The Eastern Pacific population has recovered from near-extinction.',
     facts: [
       { label: 'Length',    value: '13–15m' },
       { label: 'Weight',    value: '15–35t' },
       { label: 'Migration', value: '20,000km' },
     ],
-    audio: 'https://upload.wikimedia.org/wikipedia/commons/a/a7/Greywhale.ogg'
+    audio: '/assets/sounds/grey-whale.mp3'
   },
   'Sperm whale': {
     name:        'Sperm whale',
     scientific:  'Physeter macrocephalus',
     iucn:        'VU',
     iucnLabel:   'Vulnerable',
-    photo:       'https://commons.wikimedia.org/wiki/Special:FilePath/Sperm_whale_NPS.jpg?width=320',
+    photo:       '/assets/images/sperm-whale.jpg',
     description: 'The largest toothed predator on Earth, capable of diving to 3,000m for over 90 minutes. Their clicks are the loudest sounds made by any animal. Immortalised as Moby Dick.',
     facts: [
       { label: 'Length',   value: '15–20m' },
       { label: 'Dive',     value: '3,000m' },
       { label: 'Lifespan', value: '60–70yr' },
     ],
-    audio: 'https://upload.wikimedia.org/wikipedia/commons/e/e9/Sperm_Whale_-_NOAA.ogg'
+    audio: '/assets/sounds/sperm-whale.mp3'
   },
   'Fin whale': {
     name:        'Fin whale',
     scientific:  'Balaenoptera physalus',
     iucn:        'VU',
     iucnLabel:   'Vulnerable',
-    photo:       'https://commons.wikimedia.org/wiki/Special:FilePath/Fin_whale_NOAA.jpg?width=320',
+    photo:       '/assets/images/fin-whale.jpg',
     description: 'The second largest animal on Earth, known as the "greyhound of the sea" for its slender build and speed. Their low-frequency songs can travel thousands of kilometres through ocean.',
     facts: [
       { label: 'Length',   value: '18–26m' },
       { label: 'Speed',    value: '37 km/h' },
       { label: 'Lifespan', value: '80–90yr' },
     ],
-    audio: 'https://upload.wikimedia.org/wikipedia/commons/d/d7/Fin_Whale_-_NOAA.ogg'
+    audio: '/assets/sounds/fin-whale.mp3'
   },
   'Orca': {
     name:        'Orca',
     scientific:  'Orcinus orca',
     iucn:        'DD',
     iucnLabel:   'Data Deficient',
-    photo:       'https://commons.wikimedia.org/wiki/Special:FilePath/Killerwhales_jumping.jpg?width=320',
+    photo:       '/assets/images/orca.jpg',
     description: 'The apex predator of the ocean, found in every sea from Arctic to Antarctic. Orcas live in tight family pods with complex social structures and distinct cultural traditions passed between generations.',
     facts: [
       { label: 'Length',   value: '6–8m' },
       { label: 'Weight',   value: '3–6t' },
       { label: 'Lifespan', value: '50–90yr' },
     ],
-    audio: 'https://upload.wikimedia.org/wikipedia/commons/7/74/Killerwhale_calls.ogg'
+    audio: '/assets/sounds/orca.mp3'
   }
 }
 
