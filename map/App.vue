@@ -37,13 +37,15 @@ const totalCount = computed(() => allSightings.value.filter(isOceanSighting).len
 function isOceanSighting(s) {
   const lng = parseFloat(s.longitude)
   const lat = parseFloat(s.latitude)
-  // Filter out known inland clusters with bad GBIF coordinates
-  // Amazon basin / inland South America
-  if (lng > -75 && lng < -35 && lat > -25 && lat < 10) return false
-  // South Asia inland (Pakistan, India, Bangladesh, Nepal — no ocean access for whales)
-  if (lng > 60 && lng < 95 && lat > 15 && lat < 35) return false
-  // Central Asia / landlocked regions
-  if (lng > 45 && lng < 90 && lat > 35 && lat < 55) return false
+  // Filter clearly landlocked regions only — avoid blocking coastal/ocean areas
+  // Amazon basin / inland South America (not the coast)
+  if (lng > -72 && lng < -44 && lat > -18 && lat < 8) return false
+  // Himalayan region — Nepal, Bhutan, far inland India
+  if (lng > 70 && lng < 100 && lat > 22 && lat < 38) return false
+  // Central Asia — Kazakhstan, Mongolia etc
+  if (lng > 50 && lng < 120 && lat > 38 && lat < 58) return false
+  // Sahara / sub-Saharan inland Africa
+  if (lng > 10 && lng < 40 && lat > 5 && lat < 22) return false
   return true
 }
 
