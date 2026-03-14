@@ -1,6 +1,11 @@
 <template>
   <div ref="mapContainer" class="globe-map" />
 
+  <button class="ship-lanes-btn" :class="{ active: shipLanesVisible }" @click="toggleShipLanes">
+    <span class="ship-lanes-icon">🚢</span>
+    <span class="ship-lanes-label">{{ shipLanesVisible ? 'Hide ship lanes' : 'Show ship lanes' }}</span>
+  </button>
+
   <Transition name="panel">
     <div v-if="hoveredRoute" class="route-panel">
       <div class="route-panel-species" :style="{ color: getSpeciesColor(hoveredRoute.common_name) }">
@@ -25,6 +30,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import * as maptilersdk from '@maptiler/sdk'
+import { SHIP_LANES_GEOJSON } from './ShipLanes.js'
 import '@maptiler/sdk/dist/maptiler-sdk.css'
 
 const props = defineProps({
@@ -39,6 +45,7 @@ let map            = null
 let popup          = null
 let animationFrame = null
 let layersReady    = false
+const shipLanesVisible = ref(false)
 
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY || ''
 
@@ -190,6 +197,21 @@ function initLayers() {
     if (popup) { popup.remove(); popup = null }
   })
 
+  // Ship lanes — hidden by default
+  map.addSource('ship-lanes', { type: 'geojson', data: SHIP_LANES_GEOJSON })
+  map.addLayer({
+    id: 'ship-lanes-line',
+    type: 'line',
+    source: 'ship-lanes',
+    layout: { 'line-cap': 'round', 'line-join': 'round', visibility: 'none' },
+    paint: {
+      'line-color': '#ff9f43',
+      'line-width': ['match', ['get', 'traffic'], 'high', 2, 'medium', 1.5, 1],
+      'line-opacity': ['match', ['get', 'traffic'], 'high', 0.7, 'medium', 0.5, 0.35],
+      'line-dasharray': [3, 2]
+    }
+  })
+
   layersReady = true
   animateDash()
 }
@@ -266,4 +288,43 @@ watch(() => props.migrationRoutes, (val) => {
 .route-panel-desc { font-size: 11px; color: var(--text-secondary); line-height: 1.7; }
 .panel-enter-active, .panel-leave-active { transition: all 0.2s ease; }
 .panel-enter-from, .panel-leave-to { opacity: 0; transform: translateY(8px); }
+
+/* Ship lanes toggle button */
+.ship-lanes-btn {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: rgba(8, 13, 26, 0.9);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 159, 67, 0.3);
+  border-radius: 30px;
+  color: rgba(255, 159, 67, 0.7);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  z-index: 200;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.ship-lanes-btn:hover {
+  background: rgba(255, 159, 67, 0.12);
+  border-color: rgba(255, 159, 67, 0.6);
+  color: rgba(255, 159, 67, 1);
+}
+
+.ship-lanes-btn.active {
+  background: rgba(255, 159, 67, 0.15);
+  border-color: rgba(255, 159, 67, 0.8);
+  color: #ff9f43;
+  box-shadow: 0 0 20px rgba(255, 159, 67, 0.2);
+}
+
+.ship-lanes-icon { font-size: 15px; }
 </style>
