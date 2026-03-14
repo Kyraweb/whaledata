@@ -28,7 +28,7 @@ from app.database import get_connection
 TARGET_SPECIES = [
     {"taxon_key": 2440898, "common_name": "Humpback whale",   "scientific_name": "Megaptera novaeangliae"},
     {"taxon_key": 2440718, "common_name": "Blue whale",        "scientific_name": "Balaenoptera musculus"},
-    {"taxon_key": 2440522, "common_name": "Orca",              "scientific_name": "Orcinus orca"},
+    {"taxon_key": 2440483, "common_name": "Orca",              "scientific_name": "Orcinus orca"},
     {"taxon_key": 2440714, "common_name": "Grey whale",        "scientific_name": "Eschrichtius robustus"},
     {"taxon_key": 2440764, "common_name": "Sperm whale",       "scientific_name": "Physeter macrocephalus"},
     {"taxon_key": 2440706, "common_name": "Fin whale",         "scientific_name": "Balaenoptera physalus"},
