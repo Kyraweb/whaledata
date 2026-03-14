@@ -69,18 +69,30 @@ export const SHIP_LANES_GEOJSON = {
     // ── North Pacific — Asia to North America ──────────────────
     {
       type: 'Feature',
-      properties: { name: 'North Pacific — Japan to US West Coast', traffic: 'high' },
+      properties: { name: 'North Pacific — Japan to US West Coast (west)', traffic: 'high' },
       geometry: { type: 'LineString', coordinates: [
-        [136, 35], [145, 38], [155, 40], [165, 43], [175, 45], [-175, 46],
-        [-165, 47], [-155, 47], [-145, 46], [-135, 47], [-125, 47], [-122, 47]
+        [136, 35], [145, 38], [155, 40], [165, 43], [175, 45], [180, 46]
       ]}
     },
     {
       type: 'Feature',
-      properties: { name: 'North Pacific — China to US West Coast', traffic: 'high' },
+      properties: { name: 'North Pacific — Japan to US West Coast (east)', traffic: 'high' },
       geometry: { type: 'LineString', coordinates: [
-        [121, 31], [130, 33], [140, 35], [152, 36], [163, 37], [173, 37],
-        [-177, 36], [-165, 35], [-152, 34], [-140, 34], [-130, 33], [-118, 34]
+        [-180, 46], [-170, 47], [-160, 47], [-150, 47], [-140, 46], [-130, 46], [-122, 47]
+      ]}
+    },
+    {
+      type: 'Feature',
+      properties: { name: 'North Pacific — China to US West Coast (west)', traffic: 'high' },
+      geometry: { type: 'LineString', coordinates: [
+        [121, 31], [130, 33], [140, 35], [152, 36], [163, 37], [173, 37], [180, 37]
+      ]}
+    },
+    {
+      type: 'Feature',
+      properties: { name: 'North Pacific — China to US West Coast (east)', traffic: 'high' },
+      geometry: { type: 'LineString', coordinates: [
+        [-180, 37], [-170, 36], [-158, 35], [-145, 34], [-132, 33], [-118, 34]
       ]}
     },
     // ── Panama Canal connections ───────────────────────────────
