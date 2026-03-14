@@ -1,112 +1,125 @@
-// Major global shipping corridors as GeoJSON LineStrings
-// Sources: IMO traffic separation schemes + major trade route data
+// Major global shipping lanes based on actual trade routes
 export const SHIP_LANES_GEOJSON = {
   type: 'FeatureCollection',
   features: [
-    // ── North Atlantic ─────────────────────────────────────────
+    // ── Transatlantic ──────────────────────────────────────────
     {
       type: 'Feature',
-      properties: { name: 'North Atlantic — Europe to North America', traffic: 'high' },
+      properties: { name: 'North Atlantic — Northern Europe to US East Coast', traffic: 'high' },
       geometry: { type: 'LineString', coordinates: [
-        [-5, 48], [-15, 47], [-30, 45], [-45, 43], [-55, 42], [-65, 40], [-70, 38]
+        [4, 52], [-2, 51], [-8, 50], [-20, 49], [-35, 47], [-50, 44], [-60, 42], [-70, 40], [-74, 40]
       ]}
     },
     {
       type: 'Feature',
-      properties: { name: 'North Atlantic — UK to US East Coast', traffic: 'high' },
+      properties: { name: 'North Atlantic — Southern Europe to US East Coast', traffic: 'high' },
       geometry: { type: 'LineString', coordinates: [
-        [-2, 51], [-15, 50], [-30, 47], [-45, 44], [-60, 41], [-70, 40], [-74, 40]
+        [-9, 39], [-18, 36], [-30, 34], [-45, 33], [-58, 32], [-68, 32], [-74, 38]
+      ]}
+    },
+    // ── Europe to South America ────────────────────────────────
+    {
+      type: 'Feature',
+      properties: { name: 'Europe to Brazil', traffic: 'medium' },
+      geometry: { type: 'LineString', coordinates: [
+        [-9, 39], [-15, 30], [-20, 15], [-25, 0], [-32, -10], [-38, -23]
+      ]}
+    },
+    // ── Europe/Asia via Cape of Good Hope ──────────────────────
+    {
+      type: 'Feature',
+      properties: { name: 'Cape of Good Hope — Europe to Asia', traffic: 'high' },
+      geometry: { type: 'LineString', coordinates: [
+        [-9, 39], [-13, 28], [-15, 15], [-12, 0], [-8, -15], [-10, -28], [-16, -35], [-18, -38], [-15, -42],
+        [10, -40], [30, -38], [45, -35], [55, -25], [60, -18], [65, -10], [70, 0], [72, 8]
+      ]}
+    },
+    // ── Suez Canal route ───────────────────────────────────────
+    {
+      type: 'Feature',
+      properties: { name: 'Suez Canal — Europe to Indian Ocean', traffic: 'high' },
+      geometry: { type: 'LineString', coordinates: [
+        [4, 52], [5, 45], [8, 38], [12, 35], [18, 33], [25, 32], [32, 30], [33, 27],
+        [37, 22], [42, 15], [44, 12], [48, 12], [52, 13], [58, 14], [63, 16]
+      ]}
+    },
+    // ── Indian Ocean — Suez to Asia ────────────────────────────
+    {
+      type: 'Feature',
+      properties: { name: 'Indian Ocean — Gulf to India', traffic: 'high' },
+      geometry: { type: 'LineString', coordinates: [
+        [56, 24], [60, 22], [62, 18], [65, 12], [68, 8], [72, 8], [77, 8]
+      ]}
+    },
+    {
+      type: 'Feature',
+      properties: { name: 'Indian Ocean — India to Malacca', traffic: 'high' },
+      geometry: { type: 'LineString', coordinates: [
+        [77, 8], [82, 7], [88, 5], [95, 4], [100, 3], [104, 1]
+      ]}
+    },
+    // ── Strait of Malacca to East Asia ────────────────────────
+    {
+      type: 'Feature',
+      properties: { name: 'Malacca to South China Sea', traffic: 'high' },
+      geometry: { type: 'LineString', coordinates: [
+        [104, 1], [106, 4], [109, 8], [112, 14], [114, 18], [116, 22], [121, 25], [122, 31], [121, 37]
+      ]}
+    },
+    // ── North Pacific — Asia to North America ──────────────────
+    {
+      type: 'Feature',
+      properties: { name: 'North Pacific — Japan to US West Coast', traffic: 'high' },
+      geometry: { type: 'LineString', coordinates: [
+        [136, 35], [145, 38], [155, 40], [165, 43], [175, 45], [-175, 46],
+        [-165, 47], [-155, 47], [-145, 46], [-135, 47], [-125, 47], [-122, 47]
+      ]}
+    },
+    {
+      type: 'Feature',
+      properties: { name: 'North Pacific — China to US West Coast', traffic: 'high' },
+      geometry: { type: 'LineString', coordinates: [
+        [121, 31], [130, 33], [140, 35], [152, 36], [163, 37], [173, 37],
+        [-177, 36], [-165, 35], [-152, 34], [-140, 34], [-130, 33], [-118, 34]
+      ]}
+    },
+    // ── Panama Canal connections ───────────────────────────────
+    {
+      type: 'Feature',
+      properties: { name: 'US West Coast to Panama Canal', traffic: 'high' },
+      geometry: { type: 'LineString', coordinates: [
+        [-118, 34], [-115, 28], [-107, 20], [-95, 14], [-82, 9]
+      ]}
+    },
+    {
+      type: 'Feature',
+      properties: { name: 'Panama Canal to US East Coast', traffic: 'high' },
+      geometry: { type: 'LineString', coordinates: [
+        [-80, 9], [-77, 14], [-73, 20], [-70, 25], [-68, 30], [-72, 35], [-74, 40]
       ]}
     },
     // ── South Atlantic ─────────────────────────────────────────
     {
       type: 'Feature',
-      properties: { name: 'South Atlantic — Europe to South America', traffic: 'medium' },
+      properties: { name: 'South Atlantic — Brazil to Europe', traffic: 'medium' },
       geometry: { type: 'LineString', coordinates: [
-        [-8, 35], [-15, 25], [-20, 10], [-25, 0], [-30, -15], [-38, -23]
+        [-43, -23], [-35, -15], [-28, -5], [-22, 5], [-18, 15], [-14, 25], [-10, 36], [-9, 39]
+      ]}
+    },
+    // ── Australia routes ───────────────────────────────────────
+    {
+      type: 'Feature',
+      properties: { name: 'Australia to East Asia', traffic: 'medium' },
+      geometry: { type: 'LineString', coordinates: [
+        [151, -34], [153, -28], [152, -20], [148, -15], [138, -10], [130, -5], [118, 2], [112, 5], [108, 4], [104, 1]
       ]}
     },
     {
       type: 'Feature',
-      properties: { name: 'Cape of Good Hope route', traffic: 'high' },
+      properties: { name: 'Australia to Europe via Cape', traffic: 'medium' },
       geometry: { type: 'LineString', coordinates: [
-        [-8, 35], [-10, 20], [-12, 5], [-10, -10], [-12, -25], [-18, -35], [-20, -38]
-      ]}
-    },
-    // ── Mediterranean / Suez ───────────────────────────────────
-    {
-      type: 'Feature',
-      properties: { name: 'Mediterranean — Atlantic to Suez', traffic: 'high' },
-      geometry: { type: 'LineString', coordinates: [
-        [-5, 36], [5, 37], [15, 37], [25, 34], [32, 31], [33, 28], [35, 25], [38, 20], [43, 13], [48, 12], [50, 13]
-      ]}
-    },
-    // ── Indian Ocean ───────────────────────────────────────────
-    {
-      type: 'Feature',
-      properties: { name: 'Indian Ocean — Suez to Asia', traffic: 'high' },
-      geometry: { type: 'LineString', coordinates: [
-        [50, 13], [55, 12], [60, 10], [65, 8], [72, 8], [78, 8], [80, 7], [82, 8]
-      ]}
-    },
-    {
-      type: 'Feature',
-      properties: { name: 'Indian Ocean — Suez to Australia', traffic: 'medium' },
-      geometry: { type: 'LineString', coordinates: [
-        [50, 13], [60, 5], [70, -5], [80, -15], [90, -20], [100, -25], [110, -30], [115, -32]
-      ]}
-    },
-    // ── Strait of Malacca / Asia ───────────────────────────────
-    {
-      type: 'Feature',
-      properties: { name: 'Strait of Malacca', traffic: 'high' },
-      geometry: { type: 'LineString', coordinates: [
-        [82, 8], [90, 5], [95, 4], [100, 3], [104, 1], [108, 3], [110, 5]
-      ]}
-    },
-    {
-      type: 'Feature',
-      properties: { name: 'Asia — China to Japan', traffic: 'high' },
-      geometry: { type: 'LineString', coordinates: [
-        [110, 5], [115, 15], [118, 22], [122, 28], [124, 32], [127, 35], [130, 38]
-      ]}
-    },
-    // ── North Pacific ──────────────────────────────────────────
-    {
-      type: 'Feature',
-      properties: { name: 'North Pacific — Asia to North America', traffic: 'high' },
-      geometry: { type: 'LineString', coordinates: [
-        [130, 38], [140, 40], [150, 42], [160, 44], [170, 46], [180, 47], [-170, 47], [-160, 46], [-150, 45], [-140, 45], [-130, 46], [-124, 47]
-      ]}
-    },
-    {
-      type: 'Feature',
-      properties: { name: 'North Pacific — Asia to US West Coast', traffic: 'high' },
-      geometry: { type: 'LineString', coordinates: [
-        [127, 35], [140, 35], [155, 35], [170, 35], [180, 35], [-170, 34], [-160, 33], [-150, 33], [-140, 33], [-130, 32], [-118, 33]
-      ]}
-    },
-    // ── Panama Canal ───────────────────────────────────────────
-    {
-      type: 'Feature',
-      properties: { name: 'Panama Canal — Pacific approach', traffic: 'high' },
-      geometry: { type: 'LineString', coordinates: [
-        [-118, 33], [-110, 25], [-100, 18], [-90, 13], [-82, 9]
-      ]}
-    },
-    {
-      type: 'Feature',
-      properties: { name: 'Panama Canal — Atlantic approach', traffic: 'high' },
-      geometry: { type: 'LineString', coordinates: [
-        [-80, 9], [-75, 12], [-70, 15], [-65, 18], [-60, 20]
-      ]}
-    },
-    // ── South Pacific ──────────────────────────────────────────
-    {
-      type: 'Feature',
-      properties: { name: 'South Pacific — Australia to South America', traffic: 'low' },
-      geometry: { type: 'LineString', coordinates: [
-        [151, -34], [160, -35], [175, -38], [-175, -40], [-160, -38], [-145, -35], [-130, -30], [-118, -28]
+        [115, -32], [100, -35], [80, -38], [55, -38], [35, -36], [20, -35], [15, -32],
+        [18, -38], [16, -42], [10, -40]
       ]}
     },
   ]
