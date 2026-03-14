@@ -173,7 +173,7 @@ const SPECIES_DATA = {
       { label: 'Weight',   value: '25–30t' },
       { label: 'Lifespan', value: '45–100yr' },
     ],
-    audio: '/assets/sounds/humpback.mp3'
+    audio: '/assets/sounds/humpback.ogg'
   },
   'Blue whale': {
     name:        'Blue whale',
@@ -187,7 +187,7 @@ const SPECIES_DATA = {
       { label: 'Weight',   value: 'up to 200t' },
       { label: 'Lifespan', value: '80–90yr' },
     ],
-    audio: '/assets/sounds/blue-whale.mp3'
+    audio: '/assets/sounds/blue-whale.ogg'
   },
   'Grey whale': {
     name:        'Grey whale',
@@ -201,7 +201,7 @@ const SPECIES_DATA = {
       { label: 'Weight',    value: '15–35t' },
       { label: 'Migration', value: '20,000km' },
     ],
-    audio: '/assets/sounds/grey-whale.mp3'
+    audio: '/assets/sounds/grey-whale.ogg'
   },
   'Sperm whale': {
     name:        'Sperm whale',
@@ -215,7 +215,7 @@ const SPECIES_DATA = {
       { label: 'Dive',     value: '3,000m' },
       { label: 'Lifespan', value: '60–70yr' },
     ],
-    audio: '/assets/sounds/sperm-whale.mp3'
+    audio: '/assets/sounds/sperm-whale.ogg'
   },
   'Fin whale': {
     name:        'Fin whale',
@@ -229,7 +229,7 @@ const SPECIES_DATA = {
       { label: 'Speed',    value: '37 km/h' },
       { label: 'Lifespan', value: '80–90yr' },
     ],
-    audio: '/assets/sounds/fin-whale.mp3'
+    audio: '/assets/sounds/fin-whale.ogg'
   },
   'Orca': {
     name:        'Orca',
@@ -243,7 +243,7 @@ const SPECIES_DATA = {
       { label: 'Weight',   value: '3–6t' },
       { label: 'Lifespan', value: '50–90yr' },
     ],
-    audio: '/assets/sounds/orca.mp3'
+    audio: '/assets/sounds/orca.ogg'
   }
 }
 
