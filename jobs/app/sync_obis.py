@@ -45,15 +45,19 @@ def insert_sighting(conn, record: dict) -> str:
         if not (source_id and lat is not None and lng is not None):
             return "skipped"
 
-        # Parse date
+        # Parse date — handle formats like "2015-06-01", "2015", "1925/1925"
         raw_date = record.get("eventDate", "")
-        try:
-            if raw_date:
-                sighted_date = raw_date[:10]
-            else:
+        sighted_date = None
+        if raw_date:
+            try:
+                part = str(raw_date).split("/")[0].split("T")[0].strip()
+                # Must be a valid YYYY-MM-DD or YYYY date
+                if len(part) == 4 and part.isdigit():
+                    sighted_date = f"{part}-01-01"
+                elif len(part) >= 10:
+                    sighted_date = part[:10]
+            except Exception:
                 sighted_date = None
-        except Exception:
-            sighted_date = None
 
         region = record.get("country") or record.get("datasetName") or ""
         source_url = f"https://obis.org/occurrence/{source_id}"
