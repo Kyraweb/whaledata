@@ -166,7 +166,7 @@ const SPECIES_DATA = {
     scientific:  'Megaptera novaeangliae',
     iucn:        'LC',
     iucnLabel:   'Least Concern',
-    photo:       'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Humpback_Whale_underwater_shot.jpg/640px-Humpback_Whale_underwater_shot.jpg',
+    photo:       'https://commons.wikimedia.org/wiki/Special:FilePath/Humpback_Whale_underwater_shot.jpg?width=320',
     description: 'Famous for their haunting, complex songs sung only by males. Humpbacks make one of the longest migrations of any mammal, travelling up to 8,000 km between feeding and breeding grounds.',
     facts: [
       { label: 'Length',   value: '14–17m' },
@@ -180,7 +180,7 @@ const SPECIES_DATA = {
     scientific:  'Balaenoptera musculus',
     iucn:        'EN',
     iucnLabel:   'Endangered',
-    photo:       'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Blue_whale_size.svg/640px-Blue_whale_size.svg.png',
+    photo:       'https://commons.wikimedia.org/wiki/Special:FilePath/NOAA_blue_whale.jpg?width=320',
     description: 'The largest animal ever known to have existed on Earth. A blue whale\'s heart alone weighs as much as a car, and its call can be heard up to 1,600 km away.',
     facts: [
       { label: 'Length',   value: '24–33m' },
@@ -194,7 +194,7 @@ const SPECIES_DATA = {
     scientific:  'Eschrichtius robustus',
     iucn:        'LC',
     iucnLabel:   'Least Concern',
-    photo:       'https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/GrayWhale09.jpg/640px-GrayWhale09.jpg',
+    photo:       'https://commons.wikimedia.org/wiki/Special:FilePath/GrayWhale09.jpg?width=320',
     description: 'Undertakes the longest migration of any mammal — up to 20,000 km round trip between Arctic feeding grounds and warm Mexican lagoons. The Eastern Pacific population has recovered from near-extinction.',
     facts: [
       { label: 'Length',    value: '13–15m' },
@@ -208,7 +208,7 @@ const SPECIES_DATA = {
     scientific:  'Physeter macrocephalus',
     iucn:        'VU',
     iucnLabel:   'Vulnerable',
-    photo:       'https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Sperm_whale_NPS.jpg/640px-Sperm_whale_NPS.jpg',
+    photo:       'https://commons.wikimedia.org/wiki/Special:FilePath/Sperm_whale_NPS.jpg?width=320',
     description: 'The largest toothed predator on Earth, capable of diving to 3,000m for over 90 minutes. Their clicks are the loudest sounds made by any animal. Immortalised as Moby Dick.',
     facts: [
       { label: 'Length',   value: '15–20m' },
@@ -222,7 +222,7 @@ const SPECIES_DATA = {
     scientific:  'Balaenoptera physalus',
     iucn:        'VU',
     iucnLabel:   'Vulnerable',
-    photo:       'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Fin_whale_NOAA.jpg/640px-Fin_whale_NOAA.jpg',
+    photo:       'https://commons.wikimedia.org/wiki/Special:FilePath/Fin_whale_NOAA.jpg?width=320',
     description: 'The second largest animal on Earth, known as the "greyhound of the sea" for its slender build and speed. Their low-frequency songs can travel thousands of kilometres through ocean.',
     facts: [
       { label: 'Length',   value: '18–26m' },
@@ -236,7 +236,7 @@ const SPECIES_DATA = {
     scientific:  'Orcinus orca',
     iucn:        'DD',
     iucnLabel:   'Data Deficient',
-    photo:       'https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Killerwhales_jumping.jpg/640px-Killerwhales_jumping.jpg',
+    photo:       'https://commons.wikimedia.org/wiki/Special:FilePath/Killerwhales_jumping.jpg?width=320',
     description: 'The apex predator of the ocean, found in every sea from Arctic to Antarctic. Orcas live in tight family pods with complex social structures and distinct cultural traditions passed between generations.',
     facts: [
       { label: 'Length',   value: '6–8m' },
