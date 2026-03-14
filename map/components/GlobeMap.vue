@@ -228,6 +228,12 @@ function animateDash() {
   animationFrame = setTimeout(animateDash, 80)
 }
 
+function toggleShipLanes() {
+  if (!map || !map.getLayer('ship-lanes-line')) return
+  shipLanesVisible.value = !shipLanesVisible.value
+  map.setLayoutProperty('ship-lanes-line', 'visibility', shipLanesVisible.value ? 'visible' : 'none')
+}
+
 onMounted(() => {
   maptilersdk.config.apiKey = MAPTILER_KEY
 
