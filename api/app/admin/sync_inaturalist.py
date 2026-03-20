@@ -117,7 +117,7 @@ def insert_inat(conn, record: dict, common_name: str, scientific_name: str) -> s
                 ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography,
                 %s, %s, %s, %s, %s, %s, %s
             )
-            ON CONFLICT ('inaturalist', source_id) DO NOTHING;
+            ON CONFLICT (source_id) DO NOTHING;
         """, (
             common_name, scientific_name,
             lng, lat,

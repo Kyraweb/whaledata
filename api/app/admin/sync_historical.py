@@ -49,7 +49,7 @@ def fetch_gbif_historical(taxon_key: int, offset: int) -> list:
         "taxonKey":         taxon_key,
         "hasCoordinate":    "true",
         "hasGeospatialIssue": "false",
-        "year":             f",{CUTOFF_YEAR}",  # year range up to cutoff
+        "year":             f"1500,{CUTOFF_YEAR}",  # GBIF range format: minYear,maxYear
         "limit":            BATCH_SIZE,
         "offset":           offset,
     }

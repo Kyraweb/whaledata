@@ -1,11 +1,6 @@
 """
-sync_acoustics.py
-
-Fetches whale acoustic detection records from NOAA PACM
-(Passive Acoustic Cetacean Map).
-
-NOAA PACM API: https://pacm.fisheries.noaa.gov/
-Provides detections from bottom-mounted hydrophones and buoys.
+sync_acoustics.py — fetches acoustic detections from OBIS acoustic datasets.
+NOAA PACM API is not accessible from all hosting environments so we use OBIS.
 
 Usage:
     python -m app.sync_acoustics
@@ -20,22 +15,26 @@ import urllib.parse
 from datetime import datetime
 from app.database import get_connection
 
-# ── Config ────────────────────────────────────────────────────
+DEBUG       = "--debug" in sys.argv
+LIMIT_ARG   = next((int(a.split("=")[1]) for a in sys.argv if a.startswith("--limit=")), None)
+MAX_RECORDS = LIMIT_ARG or 1000
+BATCH_SIZE  = 500
+OBIS_API    = "https://api.obis.org/v3"
 
-DEBUG     = "--debug" in sys.argv
-LIMIT_ARG = next((int(a.split("=")[1]) for a in sys.argv if a.startswith("--limit=")), None)
-MAX_RECORDS = LIMIT_ARG or 2000
-
-PACM_API = "https://pacm.fisheries.noaa.gov/api/v1"
-
-# PACM species codes
 TARGET_SPECIES = [
-    {"code": "Mn",  "common_name": "Humpback whale", "scientific_name": "Megaptera novaeangliae"},
-    {"code": "Bm",  "common_name": "Blue whale",     "scientific_name": "Balaenoptera musculus"},
-    {"code": "Bp",  "common_name": "Fin whale",      "scientific_name": "Balaenoptera physalus"},
-    {"code": "Pm",  "common_name": "Sperm whale",    "scientific_name": "Physeter macrocephalus"},
-    {"code": "Oo",  "common_name": "Orca",           "scientific_name": "Orcinus orca"},
+    {"aphia_id": 137091, "common_name": "Humpback whale", "scientific_name": "Megaptera novaeangliae"},
+    {"aphia_id": 137090, "common_name": "Blue whale",     "scientific_name": "Balaenoptera musculus"},
+    {"aphia_id": 137092, "common_name": "Fin whale",      "scientific_name": "Balaenoptera physalus"},
+    {"aphia_id": 137102, "common_name": "Sperm whale",    "scientific_name": "Physeter macrocephalus"},
+    {"aphia_id": 137083, "common_name": "Orca",           "scientific_name": "Orcinus orca"},
 ]
+
+ACOUSTIC_DATASETS = [
+    "ce2de8dc-93ca-4003-bad3-46c20f640f8c",
+    "0b3f3f32-7a5b-43c0-9a46-3b9994ca9e87",
+]
+
+ACOUSTIC_KEYWORDS = ["acoustic","sound","hydrophone","pacm","pam","passive","detection","buoy","mooring"]
 
 
 def log(msg, force=False):
@@ -43,200 +42,126 @@ def log(msg, force=False):
         print(msg, flush=True)
 
 
-def fetch_pacm(species_code: str, page: int = 1) -> dict:
-    """Fetch acoustic detections from NOAA PACM API."""
-    params = {
-        "species": species_code,
-        "page":    page,
-        "limit":   100,
-    }
-    url = f"{PACM_API}/detections?" + urllib.parse.urlencode(params)
-    log(f"  Fetching: {url}")
-    try:
-        req = urllib.request.Request(url, headers={"User-Agent": "whaledata.org/1.0 (research)", "Accept": "application/json"})
-        with urllib.request.urlopen(req, timeout=30) as r:
-            return json.loads(r.read())
-    except urllib.error.HTTPError as e:
-        log(f"  [HTTP ERROR] {e.code} — {e.reason}", force=True)
-        return {}
-    except Exception as e:
-        log(f"  [ERROR] {e}", force=True)
-        return {}
-
-
-def fetch_pacm_obis_fallback(aphia_id: int, offset: int) -> list:
-    """
-    Fallback: fetch acoustic records from OBIS when PACM API is unavailable.
-    OBIS indexes some PACM data under acoustic datasets.
-    """
-    params = {
-        "taxonid":  aphia_id,
-        "hascoords": "true",
-        "size":     200,
-        "after":    offset,
-        "datasetid": "ce2de8dc-93ca-4003-bad3-46c20f640f8c",  # NOAA PACM OBIS dataset
-        "fields":   "id,decimalLongitude,decimalLatitude,eventDate,locality,datasetName",
-    }
-    url = "https://api.obis.org/v3/occurrence?" + urllib.parse.urlencode(params)
-    log(f"  [FALLBACK] Fetching from OBIS: {url}")
+def fetch_obis(aphia_id, offset, dataset_id=None):
+    params = {"taxonid": aphia_id, "hascoords": "true", "size": BATCH_SIZE, "after": offset,
+               "fields": "id,decimalLongitude,decimalLatitude,eventDate,locality,datasetName,institutionCode"}
+    if dataset_id:
+        params["datasetid"] = dataset_id
+    url = f"{OBIS_API}/occurrence?" + urllib.parse.urlencode(params)
+    log(f"  GET {url}")
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "whaledata.org/1.0"})
         with urllib.request.urlopen(req, timeout=30) as r:
-            data = json.loads(r.read())
-            return data.get("results", [])
+            return json.loads(r.read()).get("results", [])
     except Exception as e:
-        log(f"  [FALLBACK ERROR] {e}", force=True)
+        log(f"  [ERROR] {e}", force=True)
         return []
 
 
-APHIA_IDS = {
-    "Mn": 137091,
-    "Bm": 137090,
-    "Bp": 137092,
-    "Pm": 137102,
-    "Oo": 137083,
-}
+def is_acoustic(record):
+    text = " ".join(filter(None, [record.get("datasetName"), record.get("institutionCode"), record.get("locality")])).lower()
+    return any(kw in text for kw in ACOUSTIC_KEYWORDS)
 
 
-def insert_acoustic(conn, record: dict, common_name: str, scientific_name: str, source_prefix: str = "pacm") -> str:
+def insert(conn, record, common_name, scientific_name):
     cur = conn.cursor()
     try:
         source_id = str(record.get("id", ""))
-        lat = record.get("decimalLatitude") or record.get("latitude")
-        lng = record.get("decimalLongitude") or record.get("longitude")
-
+        lat = record.get("decimalLatitude")
+        lng = record.get("decimalLongitude")
         if not source_id or lat is None or lng is None:
             return "skipped"
-
-        detected_on = str(record.get("eventDate") or record.get("date") or "")[:10] or None
-        call_type   = record.get("call_type") or record.get("callType") or "unknown"
-        confidence  = record.get("confidence") or "unknown"
-        platform    = record.get("locality") or record.get("platform") or record.get("datasetName") or ""
-        region      = record.get("region") or record.get("locality") or ""
-
+        detected_on = str(record.get("eventDate") or "")[:10] or None
+        platform    = (record.get("datasetName") or record.get("institutionCode") or "")[:255]
+        region      = record.get("locality") or ""
         cur.execute("""
-            INSERT INTO acoustics (
-                common_name, scientific_name, location, detected_on,
-                call_type, confidence, platform, region,
-                source, source_id, source_url
-            ) VALUES (
-                %s, %s,
-                ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography,
-                %s, %s, %s, %s, %s,
-                %s, %s, %s
-            )
+            INSERT INTO acoustics (common_name, scientific_name, location, detected_on,
+                call_type, confidence, platform, region, source, source_id, source_url)
+            VALUES (%s, %s, ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography,
+                %s, 'unknown', 'unknown', %s, %s, 'obis_acoustic', %s, %s)
             ON CONFLICT (source, source_id) DO NOTHING;
-        """, (
-            common_name, scientific_name,
-            float(lng), float(lat),
-            detected_on, call_type, confidence, platform, region,
-            source_prefix, source_id,
-            f"https://pacm.fisheries.noaa.gov/detections/{source_id}"
-        ))
+        """, (common_name, scientific_name, float(lng), float(lat), detected_on,
+              platform, region, source_id, f"https://obis.org/occurrence/{source_id}"))
         conn.commit()
         result = "inserted" if cur.rowcount > 0 else "skipped"
-        log(f"  [{result.upper()}] {common_name} acoustic @ {lat:.2f},{lng:.2f} on {detected_on}")
+        log(f"  [{result.upper()}] {common_name} @ {lat:.2f},{lng:.2f}")
         return result
-
     except Exception as e:
         conn.rollback()
-        log(f"  [ERROR] Insert failed: {e}", force=True)
+        log(f"  [ERROR] {e}", force=True)
         return "error"
     finally:
         cur.close()
 
 
-def sync_species(conn, species: dict) -> dict:
+def sync_species(conn, species):
     counts = {"fetched": 0, "inserted": 0, "skipped": 0, "error": 0}
-    log(f"\n→ Syncing {species['common_name']} acoustics...", force=True)
+    log(f"\n→ {species['common_name']} acoustics...", force=True)
 
-    # Try PACM API first
-    page = 1
-    pacm_success = False
-
-    while counts["fetched"] < MAX_RECORDS:
-        data    = fetch_pacm(species["code"], page)
-        records = data.get("data") or data.get("results") or []
-
-        if records:
-            pacm_success = True
+    for dataset_id in ACOUSTIC_DATASETS:
+        offset = 0
+        while counts["fetched"] < MAX_RECORDS:
+            records = fetch_obis(species["aphia_id"], offset, dataset_id)
+            if not records: break
             counts["fetched"] += len(records)
-            log(f"  PACM page {page}: {len(records)} records")
             for r in records:
-                result = insert_acoustic(conn, r, species["common_name"], species["scientific_name"], "pacm")
-                counts[result] = counts.get(result, 0) + 1
-            if len(records) < 100:
-                break
-            page += 1
-        else:
-            log(f"  PACM returned no data for {species['code']}", force=True)
-            break
+                res = insert(conn, r, species["common_name"], species["scientific_name"])
+                counts[res] = counts.get(res, 0) + 1
+            offset += len(records)
+            if len(records) < BATCH_SIZE: break
 
-    # Fallback to OBIS if PACM returned nothing
-    if not pacm_success:
-        log(f"  Trying OBIS fallback for {species['common_name']}...", force=True)
-        aphia_id = APHIA_IDS.get(species["code"])
-        if aphia_id:
-            offset = 0
-            while counts["fetched"] < MAX_RECORDS:
-                records = fetch_pacm_obis_fallback(aphia_id, offset)
-                if not records:
-                    break
-                counts["fetched"] += len(records)
-                for r in records:
-                    result = insert_acoustic(conn, r, species["common_name"], species["scientific_name"], "pacm_obis")
-                    counts[result] = counts.get(result, 0) + 1
-                offset += len(records)
-                if len(records) < 200:
-                    break
+    # Broad fallback filtered by acoustic keywords
+    if counts["inserted"] == 0:
+        log("  Trying broad keyword filter...", force=True)
+        offset = 0
+        while counts["fetched"] < MAX_RECORDS:
+            records = fetch_obis(species["aphia_id"], offset)
+            if not records: break
+            acoustic = [r for r in records if is_acoustic(r)]
+            counts["fetched"] += len(records)
+            for r in acoustic:
+                res = insert(conn, r, species["common_name"], species["scientific_name"])
+                counts[res] = counts.get(res, 0) + 1
+            offset += len(records)
+            if len(records) < BATCH_SIZE: break
 
-    log(f"  Done — inserted: {counts['inserted']}, skipped: {counts['skipped']}", force=True)
+    log(f"  inserted={counts['inserted']} skipped={counts['skipped']}", force=True)
     return counts
 
 
-def log_sync(conn, total: dict, error_msg: str = None):
+def log_sync(conn, total, error_msg=None):
     cur = conn.cursor()
-    cur.execute("""
-        INSERT INTO sync_log (source, started_at, completed_at, records_fetched,
-                              records_inserted, records_skipped, status, error_message)
-        VALUES ('acoustics', NOW(), NOW(), %s, %s, %s, %s, %s);
-    """, (total["fetched"], total["inserted"], total["skipped"],
-          "failed" if error_msg else "success", error_msg))
+    cur.execute("""INSERT INTO sync_log (source, started_at, completed_at, records_fetched,
+        records_inserted, records_skipped, status, error_message)
+        VALUES ('acoustics', NOW(), NOW(), %s, %s, %s, %s, %s);""",
+        (total["fetched"], total["inserted"], total["skipped"],
+         "failed" if error_msg else "success", error_msg))
     conn.commit()
     cur.close()
 
 
 def run():
     print("=" * 52)
-    print("whaledata — Acoustics sync (NOAA PACM)")
+    print("whaledata — Acoustics sync (OBIS)")
     print(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     if DEBUG: print("DEBUG MODE ON")
     print("=" * 52)
-
     total = {"fetched": 0, "inserted": 0, "skipped": 0, "error": 0}
     error_msg = None
-
     try:
         conn = get_connection()
         for species in TARGET_SPECIES:
             counts = sync_species(conn, species)
-            for k in total:
-                total[k] += counts.get(k, 0)
+            for k in total: total[k] += counts.get(k, 0)
         log_sync(conn, total)
         conn.close()
     except Exception as e:
         error_msg = str(e)
         print(f"\n[FATAL ERROR] {e}", flush=True)
-        import traceback
-        traceback.print_exc()
-
+        import traceback; traceback.print_exc()
     print("\n" + "=" * 52)
-    print("Sync complete")
-    print(f"  Fetched:  {total['fetched']}")
-    print(f"  Inserted: {total['inserted']}")
-    print(f"  Skipped:  {total['skipped']}")
-    if error_msg:
-        print(f"  Fatal:    {error_msg}")
+    print(f"Fetched: {total['fetched']} | Inserted: {total['inserted']} | Skipped: {total['skipped']}")
+    if error_msg: print(f"Fatal: {error_msg}")
     print("=" * 52)
 
 
