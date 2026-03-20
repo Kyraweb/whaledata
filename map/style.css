@@ -104,3 +104,18 @@ html, body {
   right: 8px !important;
   top: 6px !important;
 }
+
+/* ── Mobile overrides ──────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Move map controls so they don't overlap mobile bar */
+  .maplibregl-ctrl-top-right {
+    top: 16px;
+    right: 16px;
+  }
+
+  /* Hide attribution on mobile */
+  .maplibregl-ctrl-bottom-left,
+  .maplibregl-ctrl-bottom-right {
+    display: none;
+  }
+}

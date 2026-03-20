@@ -405,4 +405,18 @@ watch(() => props.migrationRoutes, (val) => {
 }
 
 .ship-lanes-icon { font-size: 15px; }
+
+@media (max-width: 767px) {
+  .ship-lanes-btn {
+    bottom: 80px;
+    font-size: 12px;
+    padding: 8px 16px;
+  }
+  .route-panel {
+    bottom: 80px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+  }
+}
 </style>
