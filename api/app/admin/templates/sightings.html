@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Sightings — whaledata admin{% endblock %}
+{% block content %}
+<div class="page-hdr">
+  <div class="page-title">Sightings</div>
+  <div class="page-sub">Browse and delete individual records · showing up to 200 per filter</div>
+</div>
+
+{% if msg %}<div class="alert ok">{{ msg }}</div>{% endif %}
+
+<form method="GET" action="/admin/sightings" class="filter-row">
+  <select name="species" class="form-ctrl">
+    <option value="">All species</option>
+    {% for s in species_list %}
+    <option value="{{ s }}" {% if s == sel_species %}selected{% endif %}>{{ s }}</option>
+    {% endfor %}
+  </select>
+  <select name="source" class="form-ctrl">
+    <option value="">All sources</option>
+    <option value="gbif" {% if sel_source=='gbif' %}selected{% endif %}>GBIF</option>
+    <option value="obis" {% if sel_source=='obis' %}selected{% endif %}>OBIS</option>
+  </select>
+  <input name="region" class="form-ctrl" placeholder="Region filter..." value="{{ sel_region or '' }}">
+  <button type="submit" class="btn btn-cyan">Filter</button>
+  <a href="/admin/sightings" class="btn btn-ghost">Clear</a>
+  <span class="muted" style="font-size:12px">{{ "{:,}".format(sightings|length) }} shown of {{ "{:,}".format(total) }} total</span>
+</form>
+
+<div class="section">
+  <table class="tbl">
+    <thead><tr><th>ID</th><th>Species</th><th>Source</th><th>Date</th><th>Region</th><th>Lat</th><th>Lng</th><th></th></tr></thead>
+    <tbody>
+      {% for s in sightings %}
+      <tr>
+        <td class="mono muted">{{ s.id }}</td>
+        <td><strong>{{ s.common_name }}</strong></td>
+        <td><span class="tag {{ s.source }}">{{ s.source.upper() }}</span></td>
+        <td class="mono muted">{{ s.sighted_on or '—' }}</td>
+        <td class="muted">{{ s.region or '—' }}</td>
+        <td class="mono muted">{{ "%.3f"|format(s.lat) }}</td>
+        <td class="mono muted">{{ "%.3f"|format(s.lng) }}</td>
+        <td>
+          <form method="POST" action="/admin/sightings/delete" onsubmit="return confirm('Delete sighting #{{ s.id }}?')">
+            <input type="hidden" name="sighting_id" value="{{ s.id }}">
+            <input type="hidden" name="back" value="species={{ sel_species }}&source={{ sel_source }}&region={{ sel_region }}">
+            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+      {% if not sightings %}<tr><td colspan="8" class="empty">No sightings match the filter</td></tr>{% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — whaledata admin{% endblock %}
+{% block content %}
+<div class="page-hdr">
+  <div class="page-title">Dashboard</div>
+  <div class="page-sub">Live database overview</div>
+</div>
+
+<div class="cards">
+  <div class="card"><div class="card-val">{{ "{:,}".format(total_sightings) }}</div><div class="card-lbl">Total Sightings</div></div>
+  <div class="card"><div class="card-val">{{ species_total }}</div><div class="card-lbl">Species</div></div>
+  <div class="card"><div class="card-val">{{ routes_total }}</div><div class="card-lbl">Migration Routes</div></div>
+  <div class="card"><div class="card-val">{{ db_size }}</div><div class="card-lbl">Database Size</div></div>
+</div>
+
+<div class="section">
+  <div class="section-title">Sightings by Species &amp; Source</div>
+  <table class="tbl">
+    <thead><tr><th>Species</th><th>Source</th><th>Count</th><th>Earliest</th><th>Latest</th></tr></thead>
+    <tbody>
+      {% for r in species_counts %}
+      <tr>
+        <td><strong>{{ r.common_name }}</strong></td>
+        <td><span class="tag {{ r.source }}">{{ r.source.upper() }}</span></td>
+        <td class="mono green">{{ "{:,}".format(r.n) }}</td>
+        <td class="mono muted">{{ r.earliest or '—' }}</td>
+        <td class="mono muted">{{ r.latest or '—' }}</td>
+      </tr>
+      {% endfor %}
+      {% if not species_counts %}<tr><td colspan="5" class="empty">No data</td></tr>{% endif %}
+    </tbody>
+  </table>
+</div>
+
+<div class="section">
+  <div class="section-title">Recent Syncs</div>
+  <table class="tbl">
+    <thead><tr><th>Source</th><th>Status</th><th>Started</th><th>Fetched</th><th>Inserted</th><th>Skipped</th></tr></thead>
+    <tbody>
+      {% for r in sync_logs %}
+      <tr>
+        <td><span class="tag {{ r.source }}">{{ r.source.upper() }}</span></td>
+        <td><span class="tag {{ r.status }}">{{ r.status }}</span></td>
+        <td class="mono muted">{{ r.started_at.strftime('%Y-%m-%d %H:%M') if r.started_at else '—' }}</td>
+        <td class="mono">{{ r.records_fetched or 0 }}</td>
+        <td class="mono green">{{ r.records_inserted or 0 }}</td>
+        <td class="mono muted">{{ r.records_skipped or 0 }}</td>
+      </tr>
+      {% endfor %}
+      {% if not sync_logs %}<tr><td colspan="6" class="empty">No sync logs yet</td></tr>{% endif %}
+    </tbody>
+  </table>
+  <div style="margin-top:10px"><a href="/admin/logs">View all logs →</a></div>
+</div>
+{% endblock %}

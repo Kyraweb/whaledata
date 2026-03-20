@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Species — whaledata admin{% endblock %}
+{% block content %}
+<div class="page-hdr">
+  <div class="page-title">Species</div>
+  <div class="page-sub">Edit conservation status and population trend</div>
+</div>
+
+{% if msg %}<div class="alert ok">{{ msg }}</div>{% endif %}
+
+<div class="section">
+  <table class="tbl">
+    <thead><tr><th>Species</th><th>Scientific Name</th><th>IUCN</th><th>Trend</th><th>Sightings</th><th></th></tr></thead>
+    <tbody>
+      {% for s in species %}
+      <tr>
+        <td><strong>{{ s.common_name }}</strong></td>
+        <td class="mono muted italic">{{ s.scientific_name }}</td>
+        <td><span class="tag {{ (s.conservation_status or 'dd').lower() }}">{{ s.conservation_status or 'DD' }}</span></td>
+        <td class="muted">{{ s.population_trend or '—' }}</td>
+        <td class="mono green">{{ "{:,}".format(s.sighting_count) }}</td>
+        <td>
+          <button class="btn btn-cyan btn-sm"
+            onclick="openEdit({{ s.id }},'{{ s.common_name }}','{{ s.scientific_name }}','{{ s.conservation_status or 'DD' }}','{{ s.population_trend or 'unknown' }}')">
+            Edit
+          </button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Edit modal -->
+<div id="modal" class="modal-wrap">
+  <div class="modal-bg" onclick="closeModal()"></div>
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <h3 id="modal-title">Edit Species</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <form method="POST" action="/admin/species/edit">
+      <input type="hidden" name="species_id" id="f-id">
+      <div class="form-group" style="margin-bottom:12px">
+        <div class="form-label">Species</div>
+        <input id="f-name" class="form-ctrl" readonly>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <div class="form-label">Scientific Name</div>
+        <input id="f-sci" class="form-ctrl" readonly>
+      </div>
+      <div class="form-grid" style="margin-bottom:16px">
+        <div class="form-group">
+          <div class="form-label">IUCN Status</div>
+          <select name="conservation_status" id="f-status" class="form-ctrl">
+            <option value="LC">LC — Least Concern</option>
+            <option value="NT">NT — Near Threatened</option>
+            <option value="VU">VU — Vulnerable</option>
+            <option value="EN">EN — Endangered</option>
+            <option value="CR">CR — Critically Endangered</option>
+            <option value="DD">DD — Data Deficient</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <div class="form-label">Population Trend</div>
+          <select name="population_trend" id="f-trend" class="form-ctrl">
+            <option value="increasing">Increasing</option>
+            <option value="stable">Stable</option>
+            <option value="decreasing">Decreasing</option>
+            <option value="unknown">Unknown</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-cyan">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openEdit(id, name, sci, status, trend) {
+  document.getElementById('f-id').value = id
+  document.getElementById('f-name').value = name
+  document.getElementById('f-sci').value = sci
+  document.getElementById('f-status').value = status
+  document.getElementById('f-trend').value = trend
+  document.getElementById('modal-title').textContent = 'Edit — ' + name
+  document.getElementById('modal').classList.add('open')
+}
+function closeModal() { document.getElementById('modal').classList.remove('open') }
+</script>
+{% endblock %}

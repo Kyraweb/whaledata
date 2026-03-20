@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Sync Logs — whaledata admin{% endblock %}
+{% block content %}
+<div class="page-hdr">
+  <div class="page-title">Sync Logs</div>
+  <div class="page-sub">Full history of all data sync runs</div>
+</div>
+
+<div class="section">
+  <table class="tbl">
+    <thead><tr><th>Source</th><th>Status</th><th>Started</th><th>Duration</th><th>Fetched</th><th>Inserted</th><th>Skipped</th><th>Error</th></tr></thead>
+    <tbody>
+      {% for r in logs %}
+      <tr>
+        <td><span class="tag {{ r.source }}">{{ r.source.upper() }}</span></td>
+        <td><span class="tag {{ r.status }}">{{ r.status }}</span></td>
+        <td class="mono muted">{{ r.started_at.strftime('%Y-%m-%d %H:%M') if r.started_at else '—' }}</td>
+        <td class="mono muted">{{ (r.duration_sec|string + 's') if r.duration_sec else '—' }}</td>
+        <td class="mono">{{ r.records_fetched or 0 }}</td>
+        <td class="mono green">{{ r.records_inserted or 0 }}</td>
+        <td class="mono muted">{{ r.records_skipped or 0 }}</td>
+        <td class="mono red" style="font-size:11px">{{ r.error_message or '' }}</td>
+      </tr>
+      {% endfor %}
+      {% if not logs %}<tr><td colspan="8" class="empty">No sync logs yet</td></tr>{% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
