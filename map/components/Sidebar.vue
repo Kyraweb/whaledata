@@ -306,7 +306,7 @@ function onImgError(e) {
 .collapse-btn:hover { border-color: var(--border-bright); color: var(--cyan); }
 
 /* Body */
-.sidebar-body { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+.sidebar-body { flex: 1; overflow-y: auto; display: flex; flex-direction: column; min-height: 0; }
 
 /* Stats */
 .stats-bar {
@@ -319,7 +319,7 @@ function onImgError(e) {
 .stat-divider { width: 1px; height: 28px; background: var(--border); }
 
 /* Filter */
-.filter-section { padding: 16px; flex-shrink: 0; }
+.filter-section { padding: 16px; flex-shrink: 0; overflow-y: auto; }
 .filter-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 10px; }
 .species-list { display: flex; flex-direction: column; gap: 4px; }
 .species-btn {
