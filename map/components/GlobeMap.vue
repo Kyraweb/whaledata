@@ -312,6 +312,16 @@ function initLayers() {
   }
   map.addSource('ship-lanes', { type: 'geojson', data: SHIP_LANES_GEOJSON })
   map.addSource('ship-endpoints', { type: 'geojson', data: shipEndpoints })
+  map.addLayer({ id: 'ship-lanes-glow', type: 'line', source: 'ship-lanes',
+    layout: { 'line-cap': 'round', 'line-join': 'round', visibility: 'none' },
+    paint: {
+      'line-color': '#ff9f43',
+      'line-width': ['match', ['get', 'traffic'], 'high', 12, 'medium', 8, 5],
+      'line-opacity': 0.12,
+      'line-blur': 6,
+    }
+  })
+
   map.addLayer({ id: 'ship-lanes-line', type: 'line', source: 'ship-lanes',
     layout: { 'line-cap': 'round', 'line-join': 'round', visibility: 'none' },
     paint: { 'line-color': '#ff9f43', 'line-width': ['match', ['get', 'traffic'], 'high', 2, 'medium', 1.5, 1],
@@ -368,6 +378,7 @@ function toggleShipLanes() {
   if (!map || !map.getLayer('ship-lanes-line')) return
   shipLanesVisible.value = !shipLanesVisible.value
   const v = shipLanesVisible.value ? 'visible' : 'none'
+  map.setLayoutProperty('ship-lanes-glow',     'visibility', v)
   map.setLayoutProperty('ship-lanes-line',     'visibility', v)
   map.setLayoutProperty('ship-lanes-hitarea',  'visibility', v)
   map.setLayoutProperty('ship-endpoints-ring', 'visibility', v)

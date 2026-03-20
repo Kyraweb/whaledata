@@ -486,11 +486,10 @@ onUnmounted(() => window.removeEventListener('resize', checkMobile))
 .year-slider-wrap {
   position: fixed;
   bottom: 32px;
-  left: 300px; /* sidebar width */
-  right: 0;
+  right: 80px;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-end;
   gap: 6px;
   z-index: 150;
   pointer-events: none;
