@@ -13,7 +13,15 @@
     />
 
     <!-- Mobile: hamburger (only when sheet closed) -->
-    <button v-if="isMobile && !sheetOpen" class="hamburger" @click="sheetOpen = true">☰</button>
+    <button v-if="isMobile && !sheetOpen && !infoOpen" class="hamburger" @click="sheetOpen = true">☰</button>
+
+    <!-- Mobile: info button (only when species selected and sheets closed) -->
+    <button
+      v-if="isMobile && selectedSpecies && !sheetOpen && !infoOpen"
+      class="info-btn"
+      :style="{ borderColor: speciesColor(selectedSpecies), color: speciesColor(selectedSpecies) }"
+      @click="infoOpen = true"
+    >ⓘ</button>
 
     <!-- Mobile: bottom sheet -->
     <Transition name="sheet">
@@ -68,8 +76,41 @@
       </div>
     </Transition>
 
+    <!-- Species detail sheet -->
+    <Transition name="sheet">
+      <div v-if="isMobile && infoOpen && activeSpeciesData" class="mobile-sheet info-sheet">
+        <div class="sheet-header">
+          <div class="sheet-brand" :style="{ color: speciesColor(selectedSpecies) }">
+            {{ selectedSpecies }}
+          </div>
+          <button class="sheet-close" @click="infoOpen = false">✕</button>
+        </div>
+        <div class="info-scroll">
+          <img :src="activeSpeciesData.photo" :alt="selectedSpecies" class="info-img" @error="e => e.target.style.display='none'" />
+          <div class="info-body">
+            <div class="info-sci">{{ activeSpeciesData.scientific }}</div>
+            <div class="info-badges">
+              <span class="iucn-badge" :class="activeSpeciesData.iucn.toLowerCase()">{{ activeSpeciesData.iucn }}</span>
+              <span class="iucn-label">{{ activeSpeciesData.iucnLabel }}</span>
+            </div>
+            <div class="info-facts">
+              <div v-for="f in activeSpeciesData.facts" :key="f.label" class="info-fact">
+                <span class="info-fact-value">{{ f.value }}</span>
+                <span class="info-fact-label">{{ f.label }}</span>
+              </div>
+            </div>
+            <p class="info-desc">{{ activeSpeciesData.description }}</p>
+            <div class="info-audio-label">🔊 Whale call</div>
+            <audio :key="activeSpeciesData.audio" controls preload="none" class="info-audio">
+              <source :src="activeSpeciesData.audio" type="audio/ogg" />
+            </audio>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
     <!-- Backdrop -->
-    <div v-if="isMobile && sheetOpen" class="backdrop" @click="sheetOpen = false" />
+    <div v-if="isMobile && (sheetOpen || infoOpen)" class="backdrop" @click="sheetOpen = false; infoOpen = false" />
 
     <!-- Mobile stats bar (always visible) -->
     <div v-if="isMobile" class="mobile-bar">
@@ -106,6 +147,54 @@ const selectedSpecies = ref('')
 const loading         = ref(true)
 const isMobile        = ref(false)
 const sheetOpen       = ref(false)
+const infoOpen        = ref(false)
+
+const SPECIES_DATA = {
+  'Humpback whale': {
+    scientific: 'Megaptera novaeangliae', iucn: 'LC', iucnLabel: 'Least Concern',
+    photo: '/assets/images/humpback.jpg',
+    description: 'Famous for their haunting, complex songs sung only by males. Humpbacks make one of the longest migrations of any mammal, travelling up to 8,000 km between feeding and breeding grounds.',
+    facts: [{ label: 'Length', value: '14–17m' }, { label: 'Weight', value: '25–30t' }, { label: 'Lifespan', value: '45–100yr' }],
+    audio: '/assets/sounds/humpback.ogg'
+  },
+  'Blue whale': {
+    scientific: 'Balaenoptera musculus', iucn: 'EN', iucnLabel: 'Endangered',
+    photo: '/assets/images/blue-whale.jpg',
+    description: "The largest animal ever known to have existed on Earth. A blue whale's heart alone weighs as much as a car, and its call can be heard up to 1,600 km away.",
+    facts: [{ label: 'Length', value: '24–33m' }, { label: 'Weight', value: 'up to 200t' }, { label: 'Lifespan', value: '80–90yr' }],
+    audio: '/assets/sounds/blue-whale.ogg'
+  },
+  'Grey whale': {
+    scientific: 'Eschrichtius robustus', iucn: 'LC', iucnLabel: 'Least Concern',
+    photo: '/assets/images/grey-whale.jpg',
+    description: 'Undertakes the longest migration of any mammal — up to 20,000 km round trip between Arctic feeding grounds and warm Mexican lagoons.',
+    facts: [{ label: 'Length', value: '13–15m' }, { label: 'Weight', value: '15–35t' }, { label: 'Migration', value: '20,000km' }],
+    audio: '/assets/sounds/grey-whale.ogg'
+  },
+  'Sperm whale': {
+    scientific: 'Physeter macrocephalus', iucn: 'VU', iucnLabel: 'Vulnerable',
+    photo: '/assets/images/sperm-whale.jpg',
+    description: 'The largest toothed predator on Earth, capable of diving to 3,000m for over 90 minutes. Their clicks are the loudest sounds made by any animal.',
+    facts: [{ label: 'Length', value: '15–20m' }, { label: 'Dive', value: '3,000m' }, { label: 'Lifespan', value: '60–70yr' }],
+    audio: '/assets/sounds/sperm-whale.ogg'
+  },
+  'Fin whale': {
+    scientific: 'Balaenoptera physalus', iucn: 'VU', iucnLabel: 'Vulnerable',
+    photo: '/assets/images/fin-whale.jpg',
+    description: 'The second largest animal on Earth, known as the "greyhound of the sea" for its slender build and speed.',
+    facts: [{ label: 'Length', value: '18–26m' }, { label: 'Speed', value: '37 km/h' }, { label: 'Lifespan', value: '80–90yr' }],
+    audio: '/assets/sounds/fin-whale.ogg'
+  },
+  'Orca': {
+    scientific: 'Orcinus orca', iucn: 'DD', iucnLabel: 'Data Deficient',
+    photo: '/assets/images/orca.jpg',
+    description: 'The apex predator of the ocean, found in every sea from Arctic to Antarctic. Orcas live in tight family pods with distinct cultural traditions.',
+    facts: [{ label: 'Length', value: '6–8m' }, { label: 'Weight', value: '3–6t' }, { label: 'Lifespan', value: '50–90yr' }],
+    audio: '/assets/sounds/orca.ogg'
+  }
+}
+
+const activeSpeciesData = computed(() => selectedSpecies.value ? SPECIES_DATA[selectedSpecies.value] : null)
 
 const SPECIES_COLORS = {
   'Humpback whale': '#00e5ff',
@@ -146,6 +235,7 @@ const filteredRoutes = computed(() => {
 function onSpeciesChange(species) {
   selectedSpecies.value = species
   sheetOpen.value = false
+  infoOpen.value = false
 }
 
 async function loadData() {
@@ -305,7 +395,70 @@ onUnmounted(() => window.removeEventListener('resize', checkMobile))
 .bar-stat b { color: var(--cyan); font-family: var(--font-mono); }
 .bar-divider { width: 1px; height: 16px; background: var(--border); }
 
-/* ── Sheet transition ──────────────────────────────────────── */
+/* ── Info button ───────────────────────────────────────────── */
+.info-btn {
+  position: fixed;
+  top: 16px; left: 68px;
+  z-index: 500;
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  background: rgba(8, 13, 26, 0.92);
+  backdrop-filter: blur(12px);
+  border: 1px solid;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+
+/* ── Info sheet ─────────────────────────────────────────────── */
+.info-sheet { bottom: 0 !important; }
+
+.info-scroll {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+}
+
+.info-img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  display: block;
+}
+
+.info-body { padding: 16px 20px 32px; }
+
+.info-sci {
+  font-size: 12px; color: var(--text-muted);
+  font-style: italic; margin-bottom: 10px;
+}
+
+.info-badges { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.iucn-badge {
+  font-size: 10px; font-weight: 700; padding: 2px 8px;
+  border-radius: 4px; font-family: var(--font-mono);
+}
+.iucn-badge.lc  { background: rgba(0,180,100,0.2); color: #00b464; border: 1px solid rgba(0,180,100,0.3); }
+.iucn-badge.en  { background: rgba(255,140,0,0.2); color: #ff8c00; border: 1px solid rgba(255,140,0,0.3); }
+.iucn-badge.vu  { background: rgba(255,200,0,0.2); color: #ffc800; border: 1px solid rgba(255,200,0,0.3); }
+.iucn-badge.dd  { background: rgba(150,150,180,0.2); color: #9696b4; border: 1px solid rgba(150,150,180,0.3); }
+.iucn-label { font-size: 11px; color: var(--text-muted); }
+
+.info-facts {
+  display: flex; justify-content: space-around;
+  padding: 12px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  margin-bottom: 14px;
+}
+.info-fact { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.info-fact-value { font-size: 14px; font-weight: 600; color: var(--text-primary); font-family: var(--font-mono); }
+.info-fact-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+
+.info-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.7; margin-bottom: 16px; }
+.info-audio-label { font-size: 10px; color: var(--text-muted); margin-bottom: 6px; }
+.info-audio { width: 100%; height: 36px; filter: invert(1) hue-rotate(180deg) brightness(0.8); }
+
+/* ── Sheet transition ───────────────────────────────────────── */
 .sheet-enter-active, .sheet-leave-active {
   transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
 }
