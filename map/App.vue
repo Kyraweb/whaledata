@@ -123,11 +123,29 @@
       </span>
     </div>
 
+    <!-- Year range slider — desktop -->
+    <div v-if="!isMobile" class="year-slider-wrap">
+      <div class="year-slider-label">
+        <span>📅 {{ yearRange[0] }}</span>
+        <span class="year-slider-title">Year Range</span>
+        <span>{{ yearRange[1] }}</span>
+      </div>
+      <div class="year-slider-track">
+        <input type="range" min="1900" max="2026" :value="yearRange[0]"
+          @input="e => yearRange = [parseInt(e.target.value), yearRange[1]]"
+          class="year-slider" />
+        <input type="range" min="1900" max="2026" :value="yearRange[1]"
+          @input="e => yearRange = [yearRange[0], parseInt(e.target.value)]"
+          class="year-slider" />
+      </div>
+    </div>
+
     <div class="map-area">
       <GlobeMap
         :sightings="filteredSightings"
         :migrationRoutes="filteredRoutes"
         :selectedSpecies="selectedSpecies"
+        :yearRange="yearRange"
       />
     </div>
   </div>
@@ -146,6 +164,7 @@ const speciesSummary  = ref([])
 const selectedSpecies = ref('')
 const loading         = ref(true)
 const isMobile        = ref(false)
+const yearRange       = ref([1990, 2026])
 const sheetOpen       = ref(false)
 const infoOpen        = ref(false)
 
@@ -463,4 +482,76 @@ onUnmounted(() => window.removeEventListener('resize', checkMobile))
   transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
 }
 .sheet-enter-from, .sheet-leave-to { transform: translateY(100%); }
+/* ── Year range slider ─────────────────────────────────────── */
+.year-slider-wrap {
+  position: fixed;
+  bottom: 32px;
+  left: 300px; /* sidebar width */
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  z-index: 150;
+  pointer-events: none;
+}
+
+.year-slider-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  background: rgba(8, 13, 26, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 14px;
+  pointer-events: auto;
+}
+
+.year-slider-title {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.year-slider-track {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: rgba(8, 13, 26, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 16px;
+  pointer-events: auto;
+}
+
+.year-slider {
+  -webkit-appearance: none;
+  width: 160px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border-bright);
+  outline: none;
+  cursor: pointer;
+}
+.year-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--cyan);
+  cursor: pointer;
+  border: 2px solid var(--bg-deep, #080d1a);
+}
+.year-slider::-moz-range-thumb {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--cyan);
+  cursor: pointer;
+  border: 2px solid #080d1a;
+}
 </style>
