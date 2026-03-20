@@ -214,3 +214,49 @@ def logs_page(request: Request, user: str = Depends(require_auth)):
     return templates.TemplateResponse("logs.html", {
         "request": request, "now": now(), "logs": logs,
     })
+
+
+# ── Manual Sync ───────────────────────────────────────────────
+
+@router.get("/sync", response_class=HTMLResponse)
+def sync_page(request: Request, user: str = Depends(require_auth)):
+    try:
+        conn = get_connection()
+        cur  = conn.cursor()
+        cur.execute("""
+            SELECT source, status, started_at, records_inserted, records_skipped
+            FROM sync_log ORDER BY started_at DESC LIMIT 10;
+        """)
+        logs = cur.fetchall()
+        cur.close()
+        conn.close()
+    except Exception:
+        logs = []
+    return templates.TemplateResponse("sync.html", {
+        "request": request, "now": now(), "logs": logs,
+    })
+
+
+@router.post("/sync/run/{job}")
+def run_sync(job: str, user: str = Depends(require_auth)):
+    import subprocess
+    allowed = {
+        "gbif": "app.admin.sync_gbif",
+        "obis": "app.admin.sync_obis",
+    }
+    if job not in allowed:
+        from fastapi.responses import JSONResponse
+        return JSONResponse({"status": "error", "output": "Unknown job"})
+
+    try:
+        result = subprocess.run(
+            ["python", "-m", allowed[job]],
+            capture_output=True, text=True, timeout=3600,
+            cwd="/app"
+        )
+        output = result.stdout + ("\n--- STDERR ---\n" + result.stderr if result.stderr.strip() else "")
+        return {"status": "success" if result.returncode == 0 else "error", "output": output[-4000:]}
+    except subprocess.TimeoutExpired:
+        return {"status": "error", "output": "Timed out after 1 hour"}
+    except Exception as e:
+        return {"status": "error", "output": str(e)}

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Manual Sync — whaledata admin{% endblock %}
+{% block content %}
+<div class="page-hdr">
+  <div class="page-title">Manual Sync</div>
+  <div class="page-sub">Trigger data sync jobs manually — may take several minutes</div>
+</div>
+
+<div class="sync-cards">
+  <div class="sync-card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+      <div>
+        <div class="sync-card-title">GBIF Sync</div>
+        <div class="sync-card-sub">All 6 species — Humpback, Blue, Grey, Orca, Sperm, Fin whale</div>
+      </div>
+      <span class="tag gbif">GBIF</span>
+    </div>
+    <p class="muted" style="font-size:13px;line-height:1.6;margin-bottom:14px">
+      Fetches up to 1,200 verified sightings per species. Excludes records with known geospatial issues.
+    </p>
+    <button class="btn btn-cyan" style="width:100%;justify-content:center" onclick="runSync('gbif',this)">▶ Run GBIF Sync</button>
+    <div id="out-gbif" class="sync-output"></div>
+  </div>
+
+  <div class="sync-card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+      <div>
+        <div class="sync-card-title">OBIS Sync</div>
+        <div class="sync-card-sub">Fin whale only — supplements sparse GBIF data</div>
+      </div>
+      <span class="tag obis">OBIS</span>
+    </div>
+    <p class="muted" style="font-size:13px;line-height:1.6;margin-bottom:14px">
+      Fetches Fin whale sightings from the Ocean Biodiversity Information System.
+    </p>
+    <button class="btn btn-cyan" style="width:100%;justify-content:center" onclick="runSync('obis',this)">▶ Run OBIS Sync</button>
+    <div id="out-obis" class="sync-output"></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Last 10 Runs</div>
+  <table class="tbl">
+    <thead><tr><th>Source</th><th>Status</th><th>Started</th><th>Inserted</th><th>Skipped</th></tr></thead>
+    <tbody>
+      {% for r in logs %}
+      <tr>
+        <td><span class="tag {{ r.source }}">{{ r.source.upper() }}</span></td>
+        <td><span class="tag {{ r.status }}">{{ r.status }}</span></td>
+        <td class="mono muted">{{ r.started_at.strftime('%Y-%m-%d %H:%M') if r.started_at else '—' }}</td>
+        <td class="mono green">{{ r.records_inserted or 0 }}</td>
+        <td class="mono muted">{{ r.records_skipped or 0 }}</td>
+      </tr>
+      {% endfor %}
+      {% if not logs %}<tr><td colspan="5" class="empty">No sync logs yet</td></tr>{% endif %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+async function runSync(job, btn) {
+  const out = document.getElementById('out-' + job)
+  btn.disabled = true
+  btn.textContent = '⏳ Running...'
+  out.style.display = 'block'
+  out.classList.remove('err-out')
+  out.textContent = 'Starting ' + job.toUpperCase() + ' sync...\n'
+
+  try {
+    const res  = await fetch('/admin/sync/run/' + job, { method: 'POST' })
+    const data = await res.json()
+    out.textContent = data.output || 'No output.'
+    if (data.status !== 'success') out.classList.add('err-out')
+    btn.textContent = data.status === 'success' ? '✓ Done — refresh to see updated logs' : '✗ Error'
+  } catch(e) {
+    out.textContent = 'Request failed: ' + e.message
+    out.classList.add('err-out')
+    btn.textContent = '✗ Error'
+  }
+  btn.disabled = false
+}
+</script>
+{% endblock %}
