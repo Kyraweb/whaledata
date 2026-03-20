@@ -83,13 +83,12 @@ def finish_sync_log(conn, log_id: int, fetched: int, inserted: int, updated: int
 def fetch_gbif_page(taxon_key: int, offset: int) -> list:
     """Fetch one page of GBIF occurrences for a taxon."""
     params = {
-        "taxonKey":            taxon_key,
-        "hasCoordinate":       "true",
-        "hasGeospatialIssue":  "false",   # exclude records GBIF flagged as bad coordinates
-        "occurrenceStatus":    "PRESENT",
-        "basisOfRecord":       "HUMAN_OBSERVATION,MACHINE_OBSERVATION",  # exclude fossils/specimens
-        "limit":               BATCH_SIZE,
-        "offset":              offset,
+        "taxonKey":           taxon_key,
+        "hasCoordinate":      "true",
+        "hasGeospatialIssue": "false",
+        "occurrenceStatus":   "PRESENT",
+        "limit":              BATCH_SIZE,
+        "offset":             offset,
     }
     response = requests.get(GBIF_API, params=params, timeout=30)
     response.raise_for_status()
