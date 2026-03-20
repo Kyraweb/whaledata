@@ -1,5 +1,6 @@
 <template>
-  <aside class="sidebar" :class="{ collapsed, 'sidebar--mobile': isMobile, 'sidebar--sheet-open': isMobile && sheetOpen }">
+  <Transition name="sheet">
+  <aside v-if="!isMobile || sheetOpen" class="sidebar" :class="{ collapsed, 'sidebar--mobile': isMobile, 'sidebar--sheet-open': isMobile && sheetOpen }">
 
     <!-- Header -->
     <div class="sidebar-header">
@@ -134,6 +135,7 @@
 
     </div>
   </aside>
+  </Transition>
 </template>
 
 <script setup>
