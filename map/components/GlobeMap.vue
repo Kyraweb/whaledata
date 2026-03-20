@@ -408,12 +408,12 @@ watch(() => props.migrationRoutes, (val) => {
 
 @media (max-width: 767px) {
   .ship-lanes-btn {
-    bottom: 80px;
+    bottom: 76px;
     font-size: 12px;
     padding: 8px 16px;
   }
   .route-panel {
-    bottom: 80px;
+    bottom: 76px;
     right: 12px;
     left: 12px;
     width: auto;

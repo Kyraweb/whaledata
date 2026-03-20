@@ -1,5 +1,5 @@
 <template>
-  <aside v-if="true" class="sidebar" :class="{ collapsed, 'sidebar--mobile': isMobile, 'sidebar--sheet-open': isMobile && sheetOpen }">
+  <aside class="sidebar" :class="{ collapsed }">
 
     <!-- Header -->
     <div class="sidebar-header">
@@ -10,10 +10,9 @@
           <div class="brand-sub">Global sightings map</div>
         </div>
       </div>
-      <button v-if="!isMobile" class="collapse-btn" @click="collapsed = !collapsed">
+      <button class="collapse-btn" @click="collapsed = !collapsed">
         {{ collapsed ? '›' : '‹' }}
       </button>
-      <button v-else class="collapse-btn" @click="emit('close')">✕</button>
     </div>
 
     <div class="sidebar-body" v-show="!collapsed">
@@ -145,10 +144,9 @@ const props = defineProps({
   filteredCount:   { type: Number,  default: 0 },
   selectedSpecies: { type: String,  default: '' },
   loading:         { type: Boolean, default: false },
-  isMobile:        { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['species-change', 'close'])
+const emit = defineEmits(['species-change'])
 const collapsed = ref(false)
 
 const SPECIES_COLORS = {
