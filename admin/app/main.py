@@ -3,7 +3,7 @@ import secrets
 import subprocess
 from datetime import datetime
 
-from fastapi import FastAPI, Request, Depends, HTTPException, status
+from fastapi import FastAPI, Request, Depends, HTTPException, status, Form
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
@@ -207,3 +207,155 @@ def trigger_sync(job: str, user: str = Depends(require_auth)):
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "whaledata-admin"}
+
+
+# ── Species edit ──────────────────────────────────────────────
+
+@app.post("/species/edit", response_class=HTMLResponse)
+def edit_species(
+    request: Request,
+    species_id: int = Form(...),
+    conservation_status: str = Form(...),
+    population_trend: str = Form(...),
+    user: str = Depends(require_auth)
+):
+    message = None
+    error   = False
+    try:
+        conn = get_connection()
+        cur  = conn.cursor()
+        cur.execute("""
+            UPDATE species
+            SET conservation_status = %s, population_trend = %s, updated_at = NOW()
+            WHERE id = %s;
+        """, (conservation_status, population_trend, species_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        message = "Species updated successfully."
+    except Exception as e:
+        error   = True
+        message = f"Error: {e}"
+    return await species_page_with_message(request, user, message, error)
+
+
+async def species_page_with_message(request, user, message, error):
+    try:
+        conn = get_connection()
+        cur  = conn.cursor()
+        cur.execute("""
+            SELECT s.id, s.common_name, s.scientific_name, s.conservation_status,
+                   s.population_trend, COUNT(si.id) as sighting_count,
+                   MIN(si.sighted_on) as earliest, MAX(si.sighted_on) as latest
+            FROM species s
+            LEFT JOIN sightings si ON si.common_name = s.common_name
+            GROUP BY s.id, s.common_name, s.scientific_name, s.conservation_status, s.population_trend
+            ORDER BY s.common_name;
+        """)
+        species = cur.fetchall()
+        cur.close()
+        conn.close()
+    except Exception:
+        species = []
+    return templates.TemplateResponse("species.html", {
+        "request": request, "user": user,
+        "species": species, "message": message, "error": error,
+        "now": datetime.now().strftime("%Y-%m-%d %H:%M UTC"),
+    })
+
+
+# ── Sightings manager ─────────────────────────────────────────
+
+@app.get("/sightings", response_class=HTMLResponse)
+def sightings_page(
+    request: Request,
+    species: str = "",
+    source: str = "",
+    region: str = "",
+    user: str = Depends(require_auth)
+):
+    try:
+        conn = get_connection()
+        cur  = conn.cursor()
+
+        # Species list for filter dropdown
+        cur.execute("SELECT DISTINCT common_name FROM sightings ORDER BY common_name;")
+        species_list = [r["common_name"] for r in cur.fetchall()]
+
+        # Total count
+        cur.execute("SELECT COUNT(*) as total FROM sightings;")
+        total = cur.fetchone()["total"]
+
+        # Build filtered query
+        conditions = []
+        params     = []
+        if species:
+            conditions.append("common_name = %s")
+            params.append(species)
+        if source:
+            conditions.append("source = %s")
+            params.append(source)
+        if region:
+            conditions.append("region ILIKE %s")
+            params.append(f"%{region}%")
+
+        where = "WHERE " + " AND ".join(conditions) if conditions else ""
+        params.append(200)  # limit
+
+        cur.execute(f"""
+            SELECT id, common_name, source, sighted_on, region,
+                   ST_Y(location::geometry) as latitude,
+                   ST_X(location::geometry) as longitude
+            FROM sightings
+            {where}
+            ORDER BY id DESC
+            LIMIT %s;
+        """, params)
+        sightings = cur.fetchall()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        species_list = []
+        sightings    = []
+        total        = 0
+
+    return templates.TemplateResponse("sightings.html", {
+        "request":          request,
+        "user":             user,
+        "sightings":        sightings,
+        "species_list":     species_list,
+        "total":            total,
+        "selected_species": species,
+        "selected_source":  source,
+        "selected_region":  region,
+        "message":          None,
+        "error":            False,
+        "now":              datetime.now().strftime("%Y-%m-%d %H:%M UTC"),
+    })
+
+
+@app.post("/sightings/delete", response_class=HTMLResponse)
+def delete_sighting(
+    request: Request,
+    sighting_id: int = Form(...),
+    redirect_species: str = Form(""),
+    redirect_source:  str = Form(""),
+    redirect_region:  str = Form(""),
+    user: str = Depends(require_auth)
+):
+    from fastapi.responses import RedirectResponse
+    try:
+        conn = get_connection()
+        cur  = conn.cursor()
+        cur.execute("DELETE FROM sightings WHERE id = %s;", (sighting_id,))
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception:
+        pass
+    params = []
+    if redirect_species: params.append(f"species={redirect_species}")
+    if redirect_source:  params.append(f"source={redirect_source}")
+    if redirect_region:  params.append(f"region={redirect_region}")
+    qs = "?" + "&".join(params) if params else ""
+    return RedirectResponse(f"/sightings{qs}", status_code=303)

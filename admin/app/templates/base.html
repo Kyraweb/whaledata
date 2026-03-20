@@ -20,6 +20,7 @@
       <a href="/species" class="nav-link {% if request.url.path == '/species' %}active{% endif %}">Species</a>
       <a href="/logs" class="nav-link {% if request.url.path == '/logs' %}active{% endif %}">Sync Logs</a>
       <a href="/sync" class="nav-link {% if request.url.path == '/sync' %}active{% endif %}">Manual Sync</a>
+      <a href="/sightings" class="nav-link {% if '/sightings' in request.url.path %}active{% endif %}">Sightings</a>
     </div>
     <div class="nav-meta">
       <span class="nav-time">{{ now }}</span>
