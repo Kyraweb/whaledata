@@ -4,7 +4,7 @@ import subprocess
 from datetime import datetime
 
 from fastapi import FastAPI, Request, Depends, HTTPException, status, Form
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -212,7 +212,7 @@ def health():
 # ── Species edit ──────────────────────────────────────────────
 
 @app.post("/species/edit", response_class=HTMLResponse)
-def edit_species(
+async def edit_species(
     request: Request,
     species_id: int = Form(...),
     conservation_status: str = Form(...),
@@ -343,7 +343,6 @@ def delete_sighting(
     redirect_region:  str = Form(""),
     user: str = Depends(require_auth)
 ):
-    from fastapi.responses import RedirectResponse
     try:
         conn = get_connection()
         cur  = conn.cursor()
