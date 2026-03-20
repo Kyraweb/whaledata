@@ -170,7 +170,7 @@ export const SHIP_LANES_GEOJSON = {
       type: 'Feature',
       properties: { name: 'North Pacific — Korea/Japan to Canada', traffic: 'medium' },
       geometry: { type: 'LineString', coordinates: [
-        [129, 35], [140, 40], [152, 44], [165, 48], [180, 50], [-170, 52], [-155, 52], [-130, 50], [-123, 49]
+        [129, 35], [138, 38], [148, 42], [160, 46], [172, 48], [180, 48], [-172, 48], [-158, 48], [-140, 49], [-128, 49], [-123, 49]
       ]}
     },
 
@@ -212,8 +212,8 @@ export const SHIP_LANES_GEOJSON = {
       type: 'Feature',
       properties: { name: 'Australia — East Coast to Asia', traffic: 'high' },
       geometry: { type: 'LineString', coordinates: [
-        [151, -34], [153, -25], [150, -18], [145, -12], [138, -8],
-        [128, -5], [118, 2], [112, 5], [108, 4], [104, 1]
+        [151, -34], [154, -26], [156, -18], [155, -12], [152, -8],
+        [148, -5], [140, -2], [130, 0], [120, 2], [112, 4], [108, 4], [104, 1]
       ]}
     },
     {
@@ -227,7 +227,7 @@ export const SHIP_LANES_GEOJSON = {
       type: 'Feature',
       properties: { name: 'Australia — East to West Coast', traffic: 'medium' },
       geometry: { type: 'LineString', coordinates: [
-        [151, -34], [140, -38], [125, -38], [115, -35]
+        [151, -34], [148, -40], [140, -44], [128, -44], [118, -40], [115, -35]
       ]}
     },
 
