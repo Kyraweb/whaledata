@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Species — whaledata admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Species</h1>
+  <p class="page-sub">All species in the database with sighting counts</p>
+</div>
+
+<div class="section">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Common Name</th>
+        <th>Scientific Name</th>
+        <th>IUCN Status</th>
+        <th>Population Trend</th>
+        <th>Sightings</th>
+        <th>Earliest</th>
+        <th>Latest</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in species %}
+      <tr>
+        <td><strong>{{ s.common_name }}</strong></td>
+        <td class="mono muted italic">{{ s.scientific_name }}</td>
+        <td>
+          <span class="iucn-tag {{ s.conservation_status|lower if s.conservation_status else 'dd' }}">
+            {{ s.conservation_status or 'DD' }}
+          </span>
+        </td>
+        <td class="muted">{{ s.population_trend or '—' }}</td>
+        <td class="mono green">{{ "{:,}".format(s.sighting_count) }}</td>
+        <td class="mono muted">{{ s.earliest or '—' }}</td>
+        <td class="mono muted">{{ s.latest or '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
