@@ -1,6 +1,5 @@
 <template>
-  <Transition name="sheet">
-  <aside v-if="!isMobile || sheetOpen" class="sidebar" :class="{ collapsed, 'sidebar--mobile': isMobile, 'sidebar--sheet-open': isMobile && sheetOpen }">
+  <aside v-if="true" class="sidebar" :class="{ collapsed, 'sidebar--mobile': isMobile, 'sidebar--sheet-open': isMobile && sheetOpen }">
 
     <!-- Header -->
     <div class="sidebar-header">
@@ -14,7 +13,7 @@
       <button v-if="!isMobile" class="collapse-btn" @click="collapsed = !collapsed">
         {{ collapsed ? '›' : '‹' }}
       </button>
-      <button v-else class="collapse-btn" @click="emit('sheet-close')">✕</button>
+      <button v-else class="collapse-btn" @click="emit('close')">✕</button>
     </div>
 
     <div class="sidebar-body" v-show="!collapsed">
@@ -135,7 +134,6 @@
 
     </div>
   </aside>
-  </Transition>
 </template>
 
 <script setup>
@@ -148,10 +146,9 @@ const props = defineProps({
   selectedSpecies: { type: String,  default: '' },
   loading:         { type: Boolean, default: false },
   isMobile:        { type: Boolean, default: false },
-  sheetOpen:       { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['species-change', 'sheet-close'])
+const emit = defineEmits(['species-change', 'close'])
 const collapsed = ref(false)
 
 const SPECIES_COLORS = {

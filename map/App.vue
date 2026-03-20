@@ -1,40 +1,32 @@
 <template>
   <div class="app">
-    <Sidebar
-      :speciesList="speciesSummary"
-      :totalCount="totalCount"
-      :filteredCount="filteredSightings.length"
-      :selectedSpecies="selectedSpecies"
-      :loading="loading"
-      :isMobile="isMobile"
-      :sheetOpen="sheetOpen"
-      @species-change="onSpeciesChange"
-      @sheet-close="sheetOpen = false"
-    />
+    <!-- Hamburger — mobile only -->
+    <button v-if="isMobile" class="hamburger" @click="sheetOpen = !sheetOpen">
+      <span v-if="!sheetOpen">☰</span>
+      <span v-else>✕</span>
+    </button>
 
-    <!-- Mobile bottom bar -->
-    <div v-if="isMobile" class="mobile-bar" @click="sheetOpen = true">
-      <div class="mobile-bar-stats">
-        <span class="mobile-stat">
-          <span class="mobile-stat-value">{{ totalCount.toLocaleString() }}</span>
-          <span class="mobile-stat-label">sightings</span>
-        </span>
-        <span class="mobile-stat-divider" />
-        <span class="mobile-stat">
-          <span class="mobile-stat-value">{{ speciesSummary.length }}</span>
-          <span class="mobile-stat-label">species</span>
-        </span>
-      </div>
-      <div class="mobile-bar-cta">
-        <span>{{ selectedSpecies || 'All species' }}</span>
-        <span class="mobile-bar-arrow">▲</span>
-      </div>
-    </div>
-
-    <!-- Sheet backdrop -->
-    <Transition name="backdrop">
-      <div v-if="isMobile && sheetOpen" class="sheet-backdrop" @click="sheetOpen = false" />
+    <!-- Sidebar / bottom sheet -->
+    <Transition name="sheet">
+      <Sidebar
+        v-if="!isMobile || sheetOpen"
+        :speciesList="speciesSummary"
+        :totalCount="totalCount"
+        :filteredCount="filteredSightings.length"
+        :selectedSpecies="selectedSpecies"
+        :loading="loading"
+        :isMobile="isMobile"
+        @species-change="onSpeciesChange"
+        @close="sheetOpen = false"
+      />
     </Transition>
+
+    <!-- Backdrop — tap outside to close, behind sheet -->
+    <div
+      v-if="isMobile && sheetOpen"
+      class="backdrop"
+      @click="sheetOpen = false"
+    />
 
     <div class="map-area">
       <GlobeMap
@@ -53,16 +45,17 @@ import Sidebar from './components/Sidebar.vue'
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://api.whaledata.org'
 
-const allSightings      = ref([])
-const allRoutes         = ref([])
-const speciesSummary    = ref([])
-const selectedSpecies   = ref('')
-const loading           = ref(true)
-const isMobile          = ref(false)
-const sheetOpen         = ref(false)
+const allSightings    = ref([])
+const allRoutes       = ref([])
+const speciesSummary  = ref([])
+const selectedSpecies = ref('')
+const loading         = ref(true)
+const isMobile        = ref(false)
+const sheetOpen       = ref(false)
 
 function checkMobile() {
   isMobile.value = window.innerWidth < 768
+  if (!isMobile.value) sheetOpen.value = false
 }
 
 const totalCount = computed(() => allSightings.value.filter(isOceanSighting).length)
@@ -102,12 +95,9 @@ async function loadData() {
       fetch(`${API_URL}/sightings/species-summary`),
       fetch(`${API_URL}/routes/`)
     ])
-    const sightingsData = await sightingsRes.json()
-    const summaryData   = await summaryRes.json()
-    const routesData    = await routesRes.json()
-    allSightings.value   = sightingsData.data || []
-    speciesSummary.value = summaryData.data   || []
-    allRoutes.value      = routesData.data    || []
+    allSightings.value   = (await sightingsRes.json()).data || []
+    speciesSummary.value = (await summaryRes.json()).data   || []
+    allRoutes.value      = (await routesRes.json()).data    || []
   } catch (err) {
     console.error('Failed to load whale data:', err)
   } finally {
@@ -120,10 +110,7 @@ onMounted(() => {
   window.addEventListener('resize', checkMobile)
   loadData()
 })
-
-onUnmounted(() => {
-  window.removeEventListener('resize', checkMobile)
-})
+onUnmounted(() => window.removeEventListener('resize', checkMobile))
 </script>
 
 <style scoped>
@@ -136,82 +123,48 @@ onUnmounted(() => {
 
 .map-area {
   position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
+  inset: 0;
 }
 
-/* ── Mobile bottom bar ─────────────────────────────────────── */
-.mobile-bar {
+/* Hamburger button */
+.hamburger {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 64px;
-  background: rgba(8, 13, 26, 0.95);
-  backdrop-filter: blur(20px);
-  border-top: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
-  z-index: 150;
+  top: 16px;
+  left: 16px;
+  z-index: 400;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(8, 13, 26, 0.92);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-bright);
+  color: var(--cyan);
+  font-size: 20px;
   cursor: pointer;
-}
-
-.mobile-bar-stats {
   display: flex;
   align-items: center;
-  gap: 14px;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.hamburger:hover {
+  background: var(--cyan-glow);
 }
 
-.mobile-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.mobile-stat-value {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--cyan);
-  font-family: var(--font-mono);
-  line-height: 1;
-}
-
-.mobile-stat-label {
-  font-size: 9px;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin-top: 2px;
-}
-
-.mobile-stat-divider {
-  width: 1px;
-  height: 24px;
-  background: var(--border);
-}
-
-.mobile-bar-cta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-.mobile-bar-arrow {
-  color: var(--cyan);
-  font-size: 10px;
-}
-
-/* ── Sheet backdrop ────────────────────────────────────────── */
-.sheet-backdrop {
+/* Backdrop — z-index BELOW sheet (300) */
+.backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 199;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 299;
 }
 
-.backdrop-enter-active, .backdrop-leave-active { transition: opacity 0.25s ease; }
-.backdrop-enter-from, .backdrop-leave-to { opacity: 0; }
+/* Sheet transition */
+.sheet-enter-active,
+.sheet-leave-active {
+  transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.sheet-enter-from,
+.sheet-leave-to {
+  transform: translateY(100%);
+}
 </style>
