@@ -7,7 +7,7 @@ to supplement the sparse GBIF data for Balaenoptera physalus.
 OBIS API docs: https://api.obis.org/v3
 """
 
-from app.database import get_connection
+from app.sync_database import get_connection
 from datetime import datetime
 
 OBIS_API = "https://api.obis.org/v3"

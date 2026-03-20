@@ -19,7 +19,7 @@ Usage:
 import requests
 import psycopg2
 from datetime import datetime, date
-from app.database import get_connection
+from app.sync_database import get_connection
 
 # ----------------------------
 # GBIF taxon keys for target species

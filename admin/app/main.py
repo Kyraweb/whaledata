@@ -92,11 +92,12 @@ def get_dashboard_data():
             "error":           None,
         }
     except Exception as e:
+        import traceback
         return {
             "total_sightings": 0, "species_counts": [],
             "recent_syncs": [], "db_size": "unknown",
             "species_list": [], "routes_count": 0,
-            "error": str(e),
+            "error": traceback.format_exc(),
         }
 
 
