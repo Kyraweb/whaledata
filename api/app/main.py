@@ -1,13 +1,13 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import species, sightings, routes
+from app.routers import species, sightings, routes, strandings, acoustics, inaturalist, historical, layers
 from app.admin.admin import router as admin_router
 
 app = FastAPI(
     title="whaledata.org API",
     description="Open whale population, sighting, and migration data from around the world.",
-    version="0.1.0"
+    version="2.0.0"
 )
 
 app.add_middleware(
@@ -21,11 +21,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Core routers
 app.include_router(species.router)
 app.include_router(sightings.router)
 app.include_router(routes.router)
+
+# Phase 2 — Data layers
+app.include_router(strandings.router)
+app.include_router(acoustics.router)
+app.include_router(inaturalist.router)
+app.include_router(historical.router)
+app.include_router(layers.router)
+
+# Admin panel
 app.include_router(admin_router)
 
 @app.get("/health", tags=["System"])
 def health():
-    return {"status": "ok", "service": "whaledata-api"}
+    return {"status": "ok", "service": "whaledata-api", "version": "2.0.0"}

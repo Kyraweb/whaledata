@@ -248,8 +248,12 @@ def sync_page(request: Request, user: str = Depends(require_auth)):
 def run_sync(job: str, user: str = Depends(require_auth)):
     import subprocess
     allowed = {
-        "gbif": "app.admin.sync_gbif",
-        "obis": "app.admin.sync_obis",
+        "gbif":        "app.admin.sync_gbif",
+        "obis":        "app.admin.sync_obis",
+        "strandings":  "app.admin.sync_strandings",
+        "acoustics":   "app.admin.sync_acoustics",
+        "inaturalist": "app.admin.sync_inaturalist",
+        "historical":  "app.admin.sync_historical",
     }
     if job not in allowed:
         from fastapi.responses import JSONResponse
