@@ -201,10 +201,10 @@ def logs_page(request: Request, user: str = Depends(require_auth)):
         conn = get_connection()
         cur  = conn.cursor()
         cur.execute("""
-            SELECT source, status, started_at, finished_at,
+            SELECT source, status, started_at, completed_at,
                    records_fetched, records_inserted, records_skipped, error_message,
-                   CASE WHEN finished_at IS NOT NULL AND started_at IS NOT NULL
-                        THEN EXTRACT(EPOCH FROM (finished_at - started_at))::int
+                   CASE WHEN completed_at IS NOT NULL AND started_at IS NOT NULL
+                        THEN EXTRACT(EPOCH FROM (completed_at - started_at))::int
                         ELSE NULL END as duration_sec
             FROM sync_log ORDER BY started_at DESC LIMIT 100;
         """)
