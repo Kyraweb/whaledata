@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Sync Logs — whaledata admin{% endblock %}
 {% block content %}
+{% if error %}
+<div class="alert err" style="white-space:pre-wrap;font-family:monospace;font-size:11px">{{ error }}</div>
+{% endif %}
 <div class="page-hdr">
   <div class="page-title">Sync Logs</div>
   <div class="page-sub">Full history of all data sync runs</div>

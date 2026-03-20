@@ -211,10 +211,15 @@ def logs_page(request: Request, user: str = Depends(require_auth)):
         logs = cur.fetchall()
         cur.close()
         conn.close()
-    except Exception:
+    except Exception as e:
         logs = []
+        import traceback
+        error = traceback.format_exc()
+        return templates.TemplateResponse("logs.html", {
+            "request": request, "now": now(), "logs": logs, "error": error,
+        })
     return templates.TemplateResponse("logs.html", {
-        "request": request, "now": now(), "logs": logs,
+        "request": request, "now": now(), "logs": logs, "error": None,
     })
 
 
