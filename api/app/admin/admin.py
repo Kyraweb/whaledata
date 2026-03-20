@@ -65,7 +65,7 @@ def dashboard(request: Request, user: str = Depends(require_auth)):
 
     try:
         cur.execute("""
-            SELECT source, status, started_at, finished_at,
+            SELECT source, status, started_at,
                    records_fetched, records_inserted, records_skipped, error_message
             FROM sync_log ORDER BY started_at DESC LIMIT 10;
         """)
@@ -203,7 +203,9 @@ def logs_page(request: Request, user: str = Depends(require_auth)):
         cur.execute("""
             SELECT source, status, started_at, finished_at,
                    records_fetched, records_inserted, records_skipped, error_message,
-                   EXTRACT(EPOCH FROM (finished_at - started_at))::int as duration_sec
+                   CASE WHEN finished_at IS NOT NULL AND started_at IS NOT NULL
+                        THEN EXTRACT(EPOCH FROM (finished_at - started_at))::int
+                        ELSE NULL END as duration_sec
             FROM sync_log ORDER BY started_at DESC LIMIT 100;
         """)
         logs = cur.fetchall()

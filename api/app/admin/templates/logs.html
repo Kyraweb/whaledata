@@ -15,7 +15,7 @@
         <td><span class="tag {{ r.source }}">{{ r.source.upper() }}</span></td>
         <td><span class="tag {{ r.status }}">{{ r.status }}</span></td>
         <td class="mono muted">{{ r.started_at.strftime('%Y-%m-%d %H:%M') if r.started_at else '—' }}</td>
-        <td class="mono muted">{{ (r.duration_sec|string + 's') if r.duration_sec else '—' }}</td>
+        <td class="mono muted">{{ (r.duration_sec|string + 's') if r.duration_sec is not none else '—' }}</td>
         <td class="mono">{{ r.records_fetched or 0 }}</td>
         <td class="mono green">{{ r.records_inserted or 0 }}</td>
         <td class="mono muted">{{ r.records_skipped or 0 }}</td>
