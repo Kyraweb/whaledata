@@ -672,6 +672,24 @@ onUnmounted(() => { window.removeEventListener('resize', checkMobile); window.re
   transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
 }
 .sheet-enter-from, .sheet-leave-to { transform: translateY(100%); }
+/* ── Bottom button base (year filter) ──────────────────────── */
+.bottom-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 18px;
+  background: rgba(8, 13, 26, 0.92);
+  backdrop-filter: blur(16px);
+  border-radius: 30px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.bottom-btn.loading { opacity: 0.6; cursor: wait; }
+
 /* ── Top-right actions ──────────────────────────────────────── */
 .top-actions {
   position: fixed;
