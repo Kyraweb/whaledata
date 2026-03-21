@@ -735,7 +735,7 @@ watch(() => props.selectedSpecies, (species) => {
 .panel-enter-from, .panel-leave-to { opacity: 0; transform: translateY(8px); }
 
 .ship-lanes-btn {
-  position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+  position: fixed; bottom: 32px; left: calc(50% + 60px); transform: translateX(-50%);
   display: flex; align-items: center; gap: 8px; padding: 10px 18px;
   background: rgba(8, 13, 26, 0.92); backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 159, 67, 0.25); border-radius: 30px;
@@ -748,7 +748,7 @@ watch(() => props.selectedSpecies, (species) => {
 .ship-lanes-icon { font-size: 15px; }
 
 @media (max-width: 767px) {
-  .ship-lanes-btn { bottom: 76px; font-size: 12px; padding: 8px 16px; }
+  .ship-lanes-btn { bottom: 76px; left: 50%; transform: translateX(-50%); font-size: 12px; padding: 8px 16px; }
   .route-panel { bottom: 76px; right: 12px; left: 12px; width: auto; }
 }
 </style>

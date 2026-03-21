@@ -123,13 +123,15 @@
       </span>
     </div>
 
-    <!-- Share + Near Me — desktop -->
-    <button v-if="!isMobile" class="bottom-btn btn-share" @click="shareMap">
-      {{ shareCopied ? '✓ Copied!' : '🔗 Share' }}
-    </button>
-    <button v-if="!isMobile" class="bottom-btn btn-nearme" @click="nearMe" :class="{ loading: nearMeLoading }">
-      {{ nearMeLoading ? '...' : '📍 Near me' }}
-    </button>
+    <!-- Bottom action bar — desktop -->
+    <div v-if="!isMobile" class="bottom-bar">
+      <button class="bottom-btn btn-share" @click="shareMap">
+        {{ shareCopied ? '✓ Copied!' : '🔗 Share' }}
+      </button>
+      <button class="bottom-btn btn-nearme" @click="nearMe" :class="{ loading: nearMeLoading }">
+        {{ nearMeLoading ? '...' : '📍 Near me' }}
+      </button>
+    </div>
 
     <!-- Year range slider — desktop -->
     <div v-if="!isMobile" class="year-slider-wrap">
@@ -642,10 +644,17 @@ onUnmounted(() => { window.removeEventListener('resize', checkMobile); window.re
   transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
 }
 .sheet-enter-from, .sheet-leave-to { transform: translateY(100%); }
-/* ── Bottom buttons (shared base) ──────────────────────────── */
-.bottom-btn {
+/* ── Bottom action bar ──────────────────────────────────────── */
+.bottom-bar {
   position: fixed;
   bottom: 32px;
+  right: 360px; /* sit left of year slider */
+  display: flex;
+  gap: 8px;
+  z-index: 150;
+}
+
+.bottom-btn {
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -657,19 +666,13 @@ onUnmounted(() => { window.removeEventListener('resize', checkMobile); window.re
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  z-index: 150;
   transition: all 0.2s;
   white-space: nowrap;
 }
 .bottom-btn.loading { opacity: 0.6; cursor: wait; }
 
-/* Ship lanes — orange (lives in GlobeMap but overriding position here) */
-
 /* Share — purple */
 .btn-share {
-  left: 50%;
-  transform: translateX(-50%);
-  margin-left: -100px;
   border: 1px solid rgba(180, 100, 255, 0.3);
   color: rgba(180, 100, 255, 0.8);
 }
@@ -682,9 +685,6 @@ onUnmounted(() => { window.removeEventListener('resize', checkMobile); window.re
 
 /* Near me — blue */
 .btn-nearme {
-  left: 50%;
-  transform: translateX(-50%);
-  margin-left: 60px;
   border: 1px solid rgba(77, 159, 255, 0.3);
   color: rgba(77, 159, 255, 0.8);
 }
