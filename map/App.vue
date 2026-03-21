@@ -166,7 +166,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import GlobeMap from './components/GlobeMap.vue'
 import Sidebar from './components/Sidebar.vue'
 import LayersPanel from './components/LayersPanel.vue'
