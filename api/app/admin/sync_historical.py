@@ -100,7 +100,7 @@ def insert_historical(conn, record: dict, common_name: str, scientific_name: str
             return "skipped"
 
         year       = parse_year(record)
-        sighted_on = record.get("eventDate", "")[:10] or None
+        sighted_on = parse_date(record.get("eventDate"))
         region     = record.get("country") or record.get("stateProvince") or ""
 
         # Try to extract vessel name from occurrenceRemarks or dataset
