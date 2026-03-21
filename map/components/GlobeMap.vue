@@ -45,6 +45,7 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import * as maptilersdk from '@maptiler/sdk'
 import { SHIP_LANES_GEOJSON } from './ShipLanes.js'
+import { FEEDING_GROUNDS, SONAR_ZONES } from './ConservationLayers.js'
 import '@maptiler/sdk/dist/maptiler-sdk.css'
 
 const props = defineProps({
@@ -54,6 +55,9 @@ const props = defineProps({
   yearRange:       { type: Array,  default: () => [1900, 2030] },
   activeLayers:    { type: Object, default: () => ({}) },
   layerData:       { type: Object, default: () => ({}) },
+  activeConservation: { type: Object, default: () => ({}) },
+  userLocation:       { type: Object, default: null },
+  globeRotating:      { type: Boolean, default: true },
 })
 
 const emit = defineEmits(['user-interacted'])
@@ -490,6 +494,82 @@ function initLayers() {
     })
   }
 
+  // ── Conservation layers ──────────────────────────────────────
+
+  // Feeding grounds
+  map.addSource('feeding-grounds', { type: 'geojson', data: FEEDING_GROUNDS })
+  map.addLayer({ id: 'feeding-fill', type: 'fill', source: 'feeding-grounds',
+    paint: { 'fill-color': ['get', 'color'], 'fill-opacity': 0.08 },
+    layout: { visibility: 'none' }
+  })
+  map.addLayer({ id: 'feeding-border', type: 'line', source: 'feeding-grounds',
+    paint: { 'line-color': ['get', 'color'], 'line-width': 1.5, 'line-opacity': 0.5, 'line-dasharray': [3, 2] },
+    layout: { visibility: 'none' }
+  })
+  map.addLayer({ id: 'feeding-hit', type: 'fill', source: 'feeding-grounds',
+    paint: { 'fill-color': 'transparent', 'fill-opacity': 0 },
+    layout: { visibility: 'none' }
+  })
+  map.on('mouseenter', 'feeding-hit', (e) => {
+    map.getCanvas().style.cursor = 'pointer'
+    const p = e.features[0].properties
+    const color = p.color
+    if (popup) popup.remove()
+    popup = new maptilersdk.Popup({ closeButton: false, closeOnClick: false, offset: 4, maxWidth: '220px' })
+      .setLngLat(e.lngLat)
+      .setHTML(`
+        <div style="font-family:'Syne',sans-serif;padding:2px 0">
+          <div style="font-size:10px;font-weight:700;color:${color};text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">🐋 Feeding Ground</div>
+          <div style="font-size:13px;font-weight:600;color:#e8f4f8;margin-bottom:4px">${p.name}</div>
+          <div style="font-size:11px;color:#7a9bb5">${p.species}</div>
+        </div>
+      `).addTo(map)
+  })
+  map.on('mouseleave', 'feeding-hit', () => {
+    map.getCanvas().style.cursor = ''
+    if (popup) { popup.remove(); popup = null }
+  })
+
+  // Sonar zones
+  map.addSource('sonar-zones', { type: 'geojson', data: SONAR_ZONES })
+  map.addLayer({ id: 'sonar-fill', type: 'fill', source: 'sonar-zones',
+    paint: {
+      'fill-color': ['match', ['get', 'risk'], 'high', '#ff4444', 'medium', '#ff9f43', '#ffff00'],
+      'fill-opacity': 0.07
+    },
+    layout: { visibility: 'none' }
+  })
+  map.addLayer({ id: 'sonar-border', type: 'line', source: 'sonar-zones',
+    paint: {
+      'line-color': ['match', ['get', 'risk'], 'high', '#ff4444', 'medium', '#ff9f43', '#ffff00'],
+      'line-width': 1.5, 'line-opacity': 0.6, 'line-dasharray': [4, 3]
+    },
+    layout: { visibility: 'none' }
+  })
+  map.addLayer({ id: 'sonar-hit', type: 'fill', source: 'sonar-zones',
+    paint: { 'fill-color': 'transparent', 'fill-opacity': 0 },
+    layout: { visibility: 'none' }
+  })
+  map.on('mouseenter', 'sonar-hit', (e) => {
+    map.getCanvas().style.cursor = 'pointer'
+    const p = e.features[0].properties
+    const color = p.risk === 'high' ? '#ff4444' : '#ff9f43'
+    if (popup) popup.remove()
+    popup = new maptilersdk.Popup({ closeButton: false, closeOnClick: false, offset: 4, maxWidth: '220px' })
+      .setLngLat(e.lngLat)
+      .setHTML(`
+        <div style="font-family:'Syne',sans-serif;padding:2px 0">
+          <div style="font-size:10px;font-weight:700;color:${color};text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">⚠️ Sonar Exercise Zone</div>
+          <div style="font-size:13px;font-weight:600;color:#e8f4f8;margin-bottom:4px">${p.name}</div>
+          <div style="font-size:11px;color:#7a9bb5">${p.authority} · ${p.risk} risk</div>
+        </div>
+      `).addTo(map)
+  })
+  map.on('mouseleave', 'sonar-hit', () => {
+    map.getCanvas().style.cursor = ''
+    if (popup) { popup.remove(); popup = null }
+  })
+
   layersReady = true
   animateDash()
 
@@ -582,6 +662,31 @@ watch(() => props.activeLayers, (layers) => {
         map.setLayoutProperty(`layer-${key}-${suffix}`, 'visibility', v)
     }
   }
+}, { deep: true })
+
+// Watch userLocation — fly globe to user position
+watch(() => props.userLocation, (loc) => {
+  if (!loc || !map) return
+  userInteracted = true
+  stopRotate()
+  map.flyTo({ center: [loc.lng, loc.lat], zoom: 4, duration: 2000, essential: true })
+})
+
+// Watch globeRotating — toggle auto-rotate from keyboard
+watch(() => props.globeRotating, (rotating) => {
+  if (rotating) { userInteracted = false; startRotate() }
+  else { userInteracted = true; stopRotate() }
+})
+
+// Watch conservation layers
+watch(() => props.activeConservation, (conservation) => {
+  if (!layersReady) return
+  const fv = conservation.feeding ? 'visible' : 'none'
+  const sv = conservation.sonar   ? 'visible' : 'none'
+  for (const id of ['feeding-fill','feeding-border','feeding-hit'])
+    if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', fv)
+  for (const id of ['sonar-fill','sonar-border','sonar-hit'])
+    if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', sv)
 }, { deep: true })
 
 // Watch layerData — update GeoJSON when data is loaded

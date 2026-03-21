@@ -46,6 +46,28 @@
         </div>
       </div>
 
+      <!-- Conservation section -->
+      <div class="lp-section-title">Conservation</div>
+      <div class="lp-body" style="padding-top:0">
+        <div
+          v-for="layer in CONSERVATION"
+          :key="layer.key"
+          class="lp-layer"
+          :class="{ active: conservationValue[layer.key] }"
+        >
+          <div class="lp-layer-header" @click="toggleConservation(layer.key)">
+            <div class="lp-dot" :style="{ background: layer.color, boxShadow: `0 0 6px ${layer.color}`, borderRadius: '3px' }"></div>
+            <div class="lp-layer-info">
+              <div class="lp-layer-name">{{ layer.label }}</div>
+              <div class="lp-layer-source">{{ layer.desc }}</div>
+            </div>
+            <div class="lp-switch" :class="{ on: conservationValue[layer.key] }">
+              <div class="lp-switch-thumb"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="lp-footer">
         <button class="lp-all" @click="setAll(true)">All on</button>
         <button class="lp-all" @click="setAll(false)">All off</button>
@@ -58,13 +80,19 @@
 import { ref, computed } from 'vue'
 
 const props = defineProps({
-  modelValue:      { type: Object,  required: true },   // { sightings: bool, strandings: bool, ... }
-  layersSummary:   { type: Object,  default: () => ({}) },
-  selectedSpecies: { type: String,  default: '' },
+  modelValue:        { type: Object, required: true },
+  conservationValue: { type: Object, required: true },
+  layersSummary:     { type: Object, default: () => ({}) },
+  selectedSpecies:   { type: String, default: '' },
 })
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'update:conservationValue'])
 
 const open = ref(false)
+
+const CONSERVATION = [
+  { key: 'feeding', label: 'Feeding Grounds',  desc: 'Known foraging areas per species', color: '#00c97a' },
+  { key: 'sonar',   label: 'Sonar Exercise Zones', desc: 'Naval sonar exercise areas — risk to cetaceans', color: '#ff4444' },
+]
 
 const LAYERS = [
   { key: 'sightings',   label: 'Sightings',   source: 'GBIF · OBIS',     color: '#00e5ff' },
@@ -95,6 +123,10 @@ function speciesCount(layerKey, species) {
 
 function toggle(key) {
   emit('update:modelValue', { ...props.modelValue, [key]: !props.modelValue[key] })
+}
+
+function toggleConservation(key) {
+  emit('update:conservationValue', { ...props.conservationValue, [key]: !props.conservationValue[key] })
 }
 
 function setAll(val) {
@@ -285,6 +317,16 @@ function setAll(val) {
   transition: all 0.15s;
 }
 .lp-all:hover { border-color: var(--border-bright); color: var(--text-primary); }
+
+.lp-section-title {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 8px 16px 4px;
+  border-top: 1px solid var(--border);
+}
 
 /* Transition */
 .layers-panel-enter-active, .layers-panel-leave-active { transition: all 0.2s ease; }

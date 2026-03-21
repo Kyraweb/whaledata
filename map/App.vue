@@ -123,6 +123,16 @@
       </span>
     </div>
 
+    <!-- Share + Near Me buttons — desktop -->
+    <div v-if="!isMobile" class="map-actions">
+      <button class="action-btn" @click="shareMap" title="Share this view">
+        <span>{{ shareCopied ? '✓ Copied!' : '🔗 Share' }}</span>
+      </button>
+      <button class="action-btn" @click="nearMe" title="Find whales near me" :class="{ loading: nearMeLoading }">
+        <span>{{ nearMeLoading ? '...' : '📍 Near me' }}</span>
+      </button>
+    </div>
+
     <!-- Year range slider — desktop -->
     <div v-if="!isMobile" class="year-slider-wrap">
       <div class="year-slider-header">
@@ -148,6 +158,7 @@
 
     <LayersPanel
       v-model="activeLayers"
+      v-model:conservationValue="activeConservation"
       :layersSummary="layersSummary"
       :selectedSpecies="selectedSpecies"
     />
@@ -160,6 +171,9 @@
         :yearRange="yearRange"
         :activeLayers="activeLayers"
         :layerData="filteredLayerData"
+        :activeConservation="activeConservation"
+        :userLocation="userLocation"
+        :globeRotating="globeRotating"
       />
     </div>
   </div>
@@ -188,6 +202,9 @@ const activeLayers    = ref({
   inaturalist: false,
   historical:  false,
 })
+const activeConservation = ref({ feeding: false, sonar: false })
+const shareCopied    = ref(false)
+const nearMeLoading  = ref(false)
 const layerData = ref({
   strandings:  [],
   acoustics:   [],
@@ -340,6 +357,65 @@ async function loadLayerData(key, url) {
 
 // Watch activeLayers — fetch data when a layer is turned on
 
+// ── Share ─────────────────────────────────────────────────────
+function shareMap() {
+  const params = new URLSearchParams()
+  if (selectedSpecies.value) params.set('species', selectedSpecies.value)
+  if (yearRange.value[0] !== 1990) params.set('from', yearRange.value[0])
+  if (yearRange.value[1] !== 2026) params.set('to', yearRange.value[1])
+  const activeLayers_ = Object.entries(activeLayers.value)
+    .filter(([k, v]) => v && k !== 'sightings')
+    .map(([k]) => k).join(',')
+  if (activeLayers_) params.set('layers', activeLayers_)
+  const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`
+  navigator.clipboard.writeText(url).then(() => {
+    shareCopied.value = true
+    setTimeout(() => shareCopied.value = false, 2500)
+  })
+}
+
+// ── Near Me ───────────────────────────────────────────────────
+function nearMe() {
+  if (!navigator.geolocation) return
+  nearMeLoading.value = true
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      nearMeLoading.value = false
+      // Emit to GlobeMap to fly to user location
+      userLocation.value = { lng: pos.coords.longitude, lat: pos.coords.latitude }
+    },
+    () => { nearMeLoading.value = false }
+  )
+}
+const userLocation = ref(null)
+
+// ── URL state restore ─────────────────────────────────────────
+function restoreFromURL() {
+  const params = new URLSearchParams(window.location.search)
+  if (params.get('species')) selectedSpecies.value = params.get('species')
+  if (params.get('from'))    yearRange.value[0] = parseInt(params.get('from'))
+  if (params.get('to'))      yearRange.value[1] = parseInt(params.get('to'))
+  if (params.get('layers')) {
+    params.get('layers').split(',').forEach(k => {
+      if (activeLayers.value.hasOwnProperty(k)) activeLayers.value[k] = true
+    })
+  }
+}
+
+// ── Keyboard shortcuts ────────────────────────────────────────
+const SPECIES_KEYS = {
+  '1': 'Humpback whale', '2': 'Blue whale', '3': 'Grey whale',
+  '4': 'Sperm whale',    '5': 'Fin whale',  '6': 'Orca',
+}
+function onKeydown(e) {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return
+  if (SPECIES_KEYS[e.key]) { onSpeciesChange(SPECIES_KEYS[e.key]); return }
+  if (e.key === '0') { onSpeciesChange(''); return }
+  if (e.key === 'Escape') { sheetOpen.value = false; infoOpen.value = false; return }
+  if (e.key === ' ') { e.preventDefault(); globeRotating.value = !globeRotating.value; return }
+}
+const globeRotating = ref(true)
+
 const LAYER_URLS = {
   strandings:  '/strandings/',
   acoustics:   '/acoustics/',
@@ -355,8 +431,14 @@ watch(activeLayers, (layers) => {
   }
 }, { deep: true })
 
-onMounted(() => { checkMobile(); window.addEventListener('resize', checkMobile); loadData() })
-onUnmounted(() => window.removeEventListener('resize', checkMobile))
+onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+  window.addEventListener('keydown', onKeydown)
+  restoreFromURL()
+  loadData()
+})
+onUnmounted(() => { window.removeEventListener('resize', checkMobile); window.removeEventListener('keydown', onKeydown) })
 </script>
 
 <style scoped>
@@ -562,6 +644,41 @@ onUnmounted(() => window.removeEventListener('resize', checkMobile))
   transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
 }
 .sheet-enter-from, .sheet-leave-to { transform: translateY(100%); }
+/* ── Map action buttons ────────────────────────────────────── */
+.map-actions {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 150;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: rgba(8, 13, 26, 0.92);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border-bright);
+  border-radius: 30px;
+  color: var(--text-secondary);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.action-btn:hover {
+  background: rgba(0, 229, 255, 0.08);
+  border-color: rgba(0, 229, 255, 0.3);
+  color: var(--cyan);
+}
+.action-btn.loading { opacity: 0.6; cursor: wait; }
+
 /* ── Year range slider ─────────────────────────────────────── */
 .year-slider-wrap {
   position: fixed;
