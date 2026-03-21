@@ -73,12 +73,28 @@ def fetch_obis_strandings(aphia_id: int, offset: int) -> dict:
 
 
 def parse_date(raw):
+    """Handle messy date formats from OBIS: full dates, year-month, year-only, ranges."""
     if not raw:
         return None
+    raw = str(raw).strip()
+    # Range like "1970/1970" or "1940/1941" — take the first part
+    if "/" in raw:
+        raw = raw.split("/")[0].strip()
+    # Full date YYYY-MM-DD
+    if len(raw) == 10 and raw.count("-") == 2:
+        return raw
+    # Year-month YYYY-MM
+    if len(raw) == 7 and raw.count("-") == 1:
+        return raw + "-01"
+    # Year only YYYY
+    if len(raw) == 4 and raw.isdigit():
+        return raw + "-01-01"
+    # Fallback: try first 10 chars
     try:
-        return str(raw)[:10]
+        return raw[:10]
     except Exception:
         return None
+
 
 
 def insert_stranding(conn, record: dict, common_name: str, scientific_name: str) -> str:
