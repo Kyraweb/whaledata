@@ -736,15 +736,15 @@ watch(() => props.selectedSpecies, (species) => {
 
 .ship-lanes-btn {
   position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
-  display: flex; align-items: center; gap: 8px; padding: 10px 20px;
-  background: rgba(8, 13, 26, 0.9); backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 159, 67, 0.3); border-radius: 30px;
+  display: flex; align-items: center; gap: 8px; padding: 10px 18px;
+  background: rgba(8, 13, 26, 0.92); backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 159, 67, 0.25); border-radius: 30px;
   color: rgba(255, 159, 67, 0.7); font-family: var(--font-display);
-  font-size: 13px; font-weight: 500; cursor: pointer; z-index: 200;
-  transition: all 0.2s ease; white-space: nowrap;
+  font-size: 13px; font-weight: 600; cursor: pointer; z-index: 200;
+  transition: all 0.2s; white-space: nowrap;
 }
-.ship-lanes-btn:hover { background: rgba(255, 159, 67, 0.12); border-color: rgba(255, 159, 67, 0.6); color: rgba(255, 159, 67, 1); }
-.ship-lanes-btn.active { background: rgba(255, 159, 67, 0.15); border-color: rgba(255, 159, 67, 0.8); color: #ff9f43; box-shadow: 0 0 20px rgba(255, 159, 67, 0.2); }
+.ship-lanes-btn:hover { background: rgba(255, 159, 67, 0.1); border-color: rgba(255, 159, 67, 0.5); color: #ff9f43; box-shadow: 0 0 16px rgba(255, 159, 67, 0.15); }
+.ship-lanes-btn.active { background: rgba(255, 159, 67, 0.12); border-color: rgba(255, 159, 67, 0.6); color: #ff9f43; box-shadow: 0 0 20px rgba(255, 159, 67, 0.2); }
 .ship-lanes-icon { font-size: 15px; }
 
 @media (max-width: 767px) {

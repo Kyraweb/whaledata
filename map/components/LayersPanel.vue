@@ -1,14 +1,21 @@
 <template>
-  <!-- Toggle button -->
-  <button class="layers-toggle" :class="{ active: open }" @click="open = !open">
-    <span class="layers-toggle-icon">⚡</span>
-    <span class="layers-toggle-label">Layers</span>
-    <span v-if="activeCount > 1" class="layers-badge">{{ activeCount }}</span>
+  <!-- Data Layers button -->
+  <button class="map-btn btn-data" :class="{ active: open }" @click="open = !open; conservationOpen = false">
+    <span>⚡</span>
+    <span>Data Layers</span>
+    <span v-if="activeCount > 1" class="map-btn-badge">{{ activeCount }}</span>
   </button>
 
-  <!-- Panel -->
+  <!-- Conservation button -->
+  <button class="map-btn btn-conservation" :class="{ active: conservationOpen }" @click="conservationOpen = !conservationOpen; open = false">
+    <span>🌿</span>
+    <span>Conservation</span>
+    <span v-if="activeConservationCount > 0" class="map-btn-badge conservation-badge">{{ activeConservationCount }}</span>
+  </button>
+
+  <!-- Data Layers Panel -->
   <Transition name="layers-panel">
-    <div v-if="open" class="layers-panel">
+    <div v-if="open" class="layers-panel layers-panel-data">
       <div class="lp-header">
         <span class="lp-title">Data Layers</span>
         <button class="lp-close" @click="open = false">✕</button>
@@ -46,9 +53,21 @@
         </div>
       </div>
 
-      <!-- Conservation section -->
-      <div class="lp-section-title">Conservation</div>
-      <div class="lp-body" style="padding-top:0">
+      <div class="lp-footer">
+        <button class="lp-all" @click="setAll(true)">All on</button>
+        <button class="lp-all" @click="setAll(false)">All off</button>
+      </div>
+    </div>
+  </Transition>
+
+  <!-- Conservation Panel -->
+  <Transition name="layers-panel">
+    <div v-if="conservationOpen" class="layers-panel layers-panel-conservation">
+      <div class="lp-header">
+        <span class="lp-title">Conservation Layers</span>
+        <button class="lp-close" @click="conservationOpen = false">✕</button>
+      </div>
+      <div class="lp-body">
         <div
           v-for="layer in CONSERVATION"
           :key="layer.key"
@@ -67,10 +86,9 @@
           </div>
         </div>
       </div>
-
       <div class="lp-footer">
-        <button class="lp-all" @click="setAll(true)">All on</button>
-        <button class="lp-all" @click="setAll(false)">All off</button>
+        <button class="lp-all" @click="toggleConservation('feeding'); toggleConservation('sonar')">All on</button>
+        <button class="lp-all" @click="emit('update:conservationValue', { feeding: false, sonar: false })">All off</button>
       </div>
     </div>
   </Transition>
@@ -87,7 +105,8 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:modelValue', 'update:conservationValue'])
 
-const open = ref(false)
+const open             = ref(false)
+const conservationOpen = ref(false)
 
 const CONSERVATION = [
   { key: 'feeding', label: 'Feeding Grounds',  desc: 'Known foraging areas per species', color: '#00c97a' },
@@ -109,7 +128,8 @@ const SPECIES_COLORS = {
 }
 function speciesColor(name) { return SPECIES_COLORS[name] || '#fff' }
 
-const activeCount = computed(() => Object.values(props.modelValue).filter(Boolean).length)
+const activeCount             = computed(() => Object.values(props.modelValue).filter(Boolean).length)
+const activeConservationCount = computed(() => Object.values(props.conservationValue).filter(Boolean).length)
 
 function layerTotal(key) {
   return props.layersSummary[key]?.total || 0
@@ -138,20 +158,17 @@ function setAll(val) {
 </script>
 
 <style scoped>
-/* ── Toggle button ─────────────────────────────────────────── */
-.layers-toggle {
+/* ── Map buttons (shared base) ─────────────────────────────── */
+.map-btn {
   position: fixed;
   bottom: 32px;
-  left: 320px; /* just outside sidebar */
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 10px 16px;
+  padding: 10px 18px;
   background: rgba(8, 13, 26, 0.92);
   backdrop-filter: blur(16px);
-  border: 1px solid var(--border-bright);
   border-radius: 30px;
-  color: var(--text-secondary);
   font-family: var(--font-display);
   font-size: 13px;
   font-weight: 600;
@@ -160,27 +177,47 @@ function setAll(val) {
   transition: all 0.2s;
   white-space: nowrap;
 }
-.layers-toggle:hover, .layers-toggle.active {
-  background: rgba(0, 229, 255, 0.08);
-  border-color: rgba(0, 229, 255, 0.3);
-  color: var(--cyan);
+
+/* Data Layers — cyan */
+.btn-data {
+  left: 320px;
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  color: rgba(0, 229, 255, 0.7);
 }
-.layers-toggle-icon { font-size: 14px; }
-.layers-badge {
-  background: var(--cyan);
+.btn-data:hover, .btn-data.active {
+  background: rgba(0, 229, 255, 0.1);
+  border-color: rgba(0, 229, 255, 0.5);
+  color: #00e5ff;
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.15);
+}
+
+/* Conservation — green */
+.btn-conservation {
+  left: 480px;
+  border: 1px solid rgba(0, 201, 122, 0.25);
+  color: rgba(0, 201, 122, 0.7);
+}
+.btn-conservation:hover, .btn-conservation.active {
+  background: rgba(0, 201, 122, 0.1);
+  border-color: rgba(0, 201, 122, 0.5);
+  color: #00c97a;
+  box-shadow: 0 0 16px rgba(0, 201, 122, 0.15);
+}
+
+.map-btn-badge {
+  background: #00e5ff;
   color: #050810;
   font-size: 10px;
   font-weight: 700;
   border-radius: 10px;
   padding: 1px 6px;
-  margin-left: 2px;
 }
+.conservation-badge { background: #00c97a; }
 
-/* ── Panel ─────────────────────────────────────────────────── */
+/* ── Panels ────────────────────────────────────────────────── */
 .layers-panel {
   position: fixed;
   bottom: 80px;
-  left: 320px;
   width: 280px;
   background: rgba(8, 13, 26, 0.97);
   backdrop-filter: blur(24px);
@@ -190,6 +227,9 @@ function setAll(val) {
   box-shadow: 0 0 40px rgba(0, 229, 255, 0.06);
   overflow: hidden;
 }
+
+.layers-panel-data        { left: 320px; }
+.layers-panel-conservation { left: 480px; }
 
 .lp-header {
   display: flex;
@@ -318,22 +358,13 @@ function setAll(val) {
 }
 .lp-all:hover { border-color: var(--border-bright); color: var(--text-primary); }
 
-.lp-section-title {
-  font-size: 9px;
-  font-weight: 700;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  padding: 8px 16px 4px;
-  border-top: 1px solid var(--border);
-}
-
 /* Transition */
 .layers-panel-enter-active, .layers-panel-leave-active { transition: all 0.2s ease; }
 .layers-panel-enter-from, .layers-panel-leave-to { opacity: 0; transform: translateY(8px); }
 
 @media (max-width: 767px) {
-  .layers-toggle { left: 16px; bottom: 76px; }
-  .layers-panel  { left: 12px; right: 12px; width: auto; bottom: 130px; }
+  .btn-data         { left: 12px;  bottom: 76px; font-size: 12px; padding: 8px 14px; }
+  .btn-conservation { left: 150px; bottom: 76px; font-size: 12px; padding: 8px 14px; }
+  .layers-panel-data, .layers-panel-conservation { left: 12px; right: 12px; width: auto; bottom: 130px; }
 }
 </style>

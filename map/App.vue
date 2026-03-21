@@ -123,15 +123,13 @@
       </span>
     </div>
 
-    <!-- Share + Near Me buttons — desktop -->
-    <div v-if="!isMobile" class="map-actions">
-      <button class="action-btn" @click="shareMap" title="Share this view">
-        <span>{{ shareCopied ? '✓ Copied!' : '🔗 Share' }}</span>
-      </button>
-      <button class="action-btn" @click="nearMe" title="Find whales near me" :class="{ loading: nearMeLoading }">
-        <span>{{ nearMeLoading ? '...' : '📍 Near me' }}</span>
-      </button>
-    </div>
+    <!-- Share + Near Me — desktop -->
+    <button v-if="!isMobile" class="bottom-btn btn-share" @click="shareMap">
+      {{ shareCopied ? '✓ Copied!' : '🔗 Share' }}
+    </button>
+    <button v-if="!isMobile" class="bottom-btn btn-nearme" @click="nearMe" :class="{ loading: nearMeLoading }">
+      {{ nearMeLoading ? '...' : '📍 Near me' }}
+    </button>
 
     <!-- Year range slider — desktop -->
     <div v-if="!isMobile" class="year-slider-wrap">
@@ -644,40 +642,58 @@ onUnmounted(() => { window.removeEventListener('resize', checkMobile); window.re
   transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
 }
 .sheet-enter-from, .sheet-leave-to { transform: translateY(100%); }
-/* ── Map action buttons ────────────────────────────────────── */
-.map-actions {
+/* ── Bottom buttons (shared base) ──────────────────────────── */
+.bottom-btn {
   position: fixed;
   bottom: 32px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 8px;
-  z-index: 150;
-}
-
-.action-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 10px 16px;
+  gap: 7px;
+  padding: 10px 18px;
   background: rgba(8, 13, 26, 0.92);
   backdrop-filter: blur(16px);
-  border: 1px solid var(--border-bright);
   border-radius: 30px;
-  color: var(--text-secondary);
   font-family: var(--font-display);
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
+  z-index: 150;
   transition: all 0.2s;
   white-space: nowrap;
 }
-.action-btn:hover {
-  background: rgba(0, 229, 255, 0.08);
-  border-color: rgba(0, 229, 255, 0.3);
-  color: var(--cyan);
+.bottom-btn.loading { opacity: 0.6; cursor: wait; }
+
+/* Ship lanes — orange (lives in GlobeMap but overriding position here) */
+
+/* Share — purple */
+.btn-share {
+  left: 50%;
+  transform: translateX(-50%);
+  margin-left: -100px;
+  border: 1px solid rgba(180, 100, 255, 0.3);
+  color: rgba(180, 100, 255, 0.8);
 }
-.action-btn.loading { opacity: 0.6; cursor: wait; }
+.btn-share:hover {
+  background: rgba(180, 100, 255, 0.1);
+  border-color: rgba(180, 100, 255, 0.6);
+  color: #b464ff;
+  box-shadow: 0 0 16px rgba(180, 100, 255, 0.15);
+}
+
+/* Near me — blue */
+.btn-nearme {
+  left: 50%;
+  transform: translateX(-50%);
+  margin-left: 60px;
+  border: 1px solid rgba(77, 159, 255, 0.3);
+  color: rgba(77, 159, 255, 0.8);
+}
+.btn-nearme:hover {
+  background: rgba(77, 159, 255, 0.1);
+  border-color: rgba(77, 159, 255, 0.6);
+  color: #4d9fff;
+  box-shadow: 0 0 16px rgba(77, 159, 255, 0.15);
+}
 
 /* ── Year range slider ─────────────────────────────────────── */
 .year-slider-wrap {
