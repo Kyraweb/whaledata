@@ -96,7 +96,7 @@ def insert_stranding(conn, record: dict, common_name: str, scientific_name: str)
         stranded_on = parse_date(record.get("eventDate"))
         region   = record.get("locality") or record.get("datasetName") or ""
         country  = record.get("country") or ""
-        count    = record.get("individualCount") or 1
+        count    = int(float(record.get("individualCount") or 1))
         status   = record.get("occurrenceStatus", "").lower()
         condition = "dead" if "dead" in status else "alive" if "alive" in status else "unknown"
 
