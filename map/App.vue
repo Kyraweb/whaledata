@@ -123,12 +123,12 @@
       </span>
     </div>
 
-    <!-- Bottom action bar — desktop -->
-    <div v-if="!isMobile" class="bottom-bar">
-      <button class="bottom-btn btn-share" @click="shareMap">
+    <!-- Top-right action bar — desktop -->
+    <div v-if="!isMobile" class="top-actions">
+      <button class="top-btn btn-share" @click="shareMap">
         {{ shareCopied ? '✓ Copied!' : '🔗 Share' }}
       </button>
-      <button class="bottom-btn btn-nearme" @click="nearMe" :class="{ loading: nearMeLoading }">
+      <button class="top-btn btn-nearme" @click="nearMe" :class="{ loading: nearMeLoading }">
         {{ nearMeLoading ? '...' : '📍 Near me' }}
       </button>
     </div>
@@ -672,21 +672,21 @@ onUnmounted(() => { window.removeEventListener('resize', checkMobile); window.re
   transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
 }
 .sheet-enter-from, .sheet-leave-to { transform: translateY(100%); }
-/* ── Bottom action bar ──────────────────────────────────────── */
-.bottom-bar {
+/* ── Top-right actions ──────────────────────────────────────── */
+.top-actions {
   position: fixed;
-  bottom: 32px;
-  right: 360px; /* sit left of year slider */
+  top: 16px;
+  right: 56px; /* clear MapTiler controls */
   display: flex;
   gap: 8px;
-  z-index: 150;
+  z-index: 200;
 }
 
-.bottom-btn {
+.top-btn {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 10px 18px;
+  padding: 9px 16px;
   background: rgba(8, 13, 26, 0.92);
   backdrop-filter: blur(16px);
   border-radius: 30px;
@@ -697,7 +697,7 @@ onUnmounted(() => { window.removeEventListener('resize', checkMobile); window.re
   transition: all 0.2s;
   white-space: nowrap;
 }
-.bottom-btn.loading { opacity: 0.6; cursor: wait; }
+.top-btn.loading { opacity: 0.6; cursor: wait; }
 
 /* Share — purple */
 .btn-share {
