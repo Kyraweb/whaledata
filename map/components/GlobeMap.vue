@@ -52,6 +52,8 @@ const props = defineProps({
   migrationRoutes: { type: Array,  default: () => [] },
   selectedSpecies: { type: String, default: '' },
   yearRange:       { type: Array,  default: () => [1900, 2030] },
+  activeLayers:    { type: Object, default: () => ({}) },
+  layerData:       { type: Object, default: () => ({}) },
 })
 
 const emit = defineEmits(['user-interacted'])
@@ -90,6 +92,20 @@ const SPECIES_CENTERS = {
 }
 
 function getSpeciesColor(name) { return SPECIES_COLORS[name] || '#ffffff' }
+
+const LAYER_COLORS = {
+  strandings:  '#ff5a5a',
+  acoustics:   '#9664ff',
+  inaturalist: '#64c864',
+  historical:  '#ffb432',
+}
+
+const LAYER_LABELS = {
+  strandings:  'Stranding',
+  acoustics:   'Acoustic Detection',
+  inaturalist: 'iNaturalist',
+  historical:  'Historical',
+}
 
 function sightingsGeoJSON(sightings, yearRange) {
   const [minYear, maxYear] = yearRange || [1900, 2030]
@@ -143,6 +159,28 @@ function routeEndpointsGeoJSON(routes) {
     features.push({ type: 'Feature', geometry: { type: 'Point', coordinates: coords[coords.length - 1] }, properties: { color } })
   })
   return { type: 'FeatureCollection', features }
+}
+
+function layerGeoJSON(records, layerKey) {
+  const color = LAYER_COLORS[layerKey] || '#ffffff'
+  const dateField = { strandings: 'stranded_on', acoustics: 'detected_on', inaturalist: 'observed_on', historical: 'sighted_on' }[layerKey] || 'sighted_on'
+  return {
+    type: 'FeatureCollection',
+    features: (records || [])
+      .filter(r => r.longitude != null && r.latitude != null)
+      .map(r => ({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [parseFloat(r.longitude), parseFloat(r.latitude)] },
+        properties: {
+          common_name: r.common_name || '',
+          date:        r[dateField] || '',
+          region:      r.region || r.country || '',
+          layer:       layerKey,
+          label:       LAYER_LABELS[layerKey] || layerKey,
+          color,
+        }
+      }))
+  }
 }
 
 // ── Auto-rotate ───────────────────────────────────────────────
@@ -353,6 +391,56 @@ function initLayers() {
     map.setPaintProperty('ship-lanes-line', 'line-width', ['match', ['get', 'traffic'], 'high', 2, 'medium', 1.5, 1])
   })
 
+  // ── Phase 2 data layers ──────────────────────────────────────
+  for (const key of ['strandings','acoustics','inaturalist','historical']) {
+    map.addSource(`layer-${key}`, { type: 'geojson', data: { type: 'FeatureCollection', features: [] } })
+
+    map.addLayer({ id: `layer-${key}-glow`, type: 'circle', source: `layer-${key}`,
+      paint: { 'circle-radius': 12, 'circle-color': ['get', 'color'], 'circle-opacity': 0.12, 'circle-blur': 1 },
+      layout: { visibility: 'none' }
+    })
+    map.addLayer({ id: `layer-${key}-dot`, type: 'circle', source: `layer-${key}`,
+      paint: {
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 4, 5, 6, 10, 8],
+        'circle-color': ['get', 'color'],
+        'circle-opacity': 0.85,
+        'circle-stroke-width': 1,
+        'circle-stroke-color': '#050810',
+        'circle-stroke-opacity': 0.5,
+      },
+      layout: { visibility: 'none' }
+    })
+    map.addLayer({ id: `layer-${key}-hit`, type: 'circle', source: `layer-${key}`,
+      paint: { 'circle-radius': 12, 'circle-color': 'transparent', 'circle-opacity': 0 },
+      layout: { visibility: 'none' }
+    })
+
+    // Hover popup for layer dots
+    map.on('mouseenter', `layer-${key}-hit`, (e) => {
+      map.getCanvas().style.cursor = 'pointer'
+      const f = e.features[0]
+      const p = f.properties
+      const color = p.color
+      if (popup) popup.remove()
+      popup = new maptilersdk.Popup({ closeButton: false, closeOnClick: false, offset: 12, maxWidth: '220px' })
+        .setLngLat(f.geometry.coordinates.slice())
+        .setHTML(`
+          <div style="font-family:'Syne',sans-serif;padding:2px 0">
+            <div style="font-size:10px;font-weight:700;color:${color};text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">${p.label}</div>
+            <div style="font-size:13px;font-weight:600;color:#e8f4f8;margin-bottom:6px">${p.common_name}</div>
+            <div style="font-size:11px;color:#7a9bb5;line-height:2">
+              ${p.region ? '📍 ' + p.region + '<br/>' : ''}
+              ${p.date ? '📅 ' + p.date : ''}
+            </div>
+          </div>
+        `).addTo(map)
+    })
+    map.on('mouseleave', `layer-${key}-hit`, () => {
+      map.getCanvas().style.cursor = ''
+      if (popup) { popup.remove(); popup = null }
+    })
+  }
+
   layersReady = true
   animateDash()
 
@@ -426,6 +514,27 @@ watch(() => props.migrationRoutes, (val) => {
   if (layersReady && map?.getSource('routes')) {
     map.getSource('routes').setData(routesGeoJSON(val))
     map.getSource('route-endpoints').setData(routeEndpointsGeoJSON(val))
+  }
+}, { deep: true })
+
+// Watch activeLayers — show/hide layer dot groups
+watch(() => props.activeLayers, (layers) => {
+  if (!layersReady) return
+  for (const key of ['strandings','acoustics','inaturalist','historical']) {
+    const v = layers[key] ? 'visible' : 'none'
+    for (const suffix of ['glow','dot','hit']) {
+      if (map.getLayer(`layer-${key}-${suffix}`))
+        map.setLayoutProperty(`layer-${key}-${suffix}`, 'visibility', v)
+    }
+  }
+}, { deep: true })
+
+// Watch layerData — update GeoJSON when data is loaded
+watch(() => props.layerData, (data) => {
+  if (!layersReady) return
+  for (const key of ['strandings','acoustics','inaturalist','historical']) {
+    const source = map?.getSource(`layer-${key}`)
+    if (source) source.setData(layerGeoJSON(data[key] || [], key))
   }
 }, { deep: true })
 

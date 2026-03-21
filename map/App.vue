@@ -146,12 +146,20 @@
       </div>
     </div>
 
+    <LayersPanel
+      v-model="activeLayers"
+      :layersSummary="layersSummary"
+      :selectedSpecies="selectedSpecies"
+    />
+
     <div class="map-area">
       <GlobeMap
         :sightings="filteredSightings"
         :migrationRoutes="filteredRoutes"
         :selectedSpecies="selectedSpecies"
         :yearRange="yearRange"
+        :activeLayers="activeLayers"
+        :layerData="filteredLayerData"
       />
     </div>
   </div>
@@ -161,6 +169,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import GlobeMap from './components/GlobeMap.vue'
 import Sidebar from './components/Sidebar.vue'
+import LayersPanel from './components/LayersPanel.vue'
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://api.whaledata.org'
 
@@ -171,6 +180,20 @@ const selectedSpecies = ref('')
 const loading         = ref(true)
 const isMobile        = ref(false)
 const yearRange       = ref([1990, 2026])
+const layersSummary   = ref({})
+const activeLayers    = ref({
+  sightings:   true,
+  strandings:  false,
+  acoustics:   false,
+  inaturalist: false,
+  historical:  false,
+})
+const layerData = ref({
+  strandings:  [],
+  acoustics:   [],
+  inaturalist: [],
+  historical:  [],
+})
 
 const fillStyle = computed(() => {
   const min = 1900, max = 2026, range = max - min
@@ -228,6 +251,17 @@ const SPECIES_DATA = {
 
 const activeSpeciesData = computed(() => selectedSpecies.value ? SPECIES_DATA[selectedSpecies.value] : null)
 
+const filteredLayerData = computed(() => {
+  const species = selectedSpecies.value
+  const result  = {}
+  for (const key of ['strandings','acoustics','inaturalist','historical']) {
+    result[key] = species
+      ? (layerData.value[key] || []).filter(r => r.common_name === species)
+      : (layerData.value[key] || [])
+  }
+  return result
+})
+
 const SPECIES_COLORS = {
   'Humpback whale': '#00e5ff',
   'Blue whale':     '#4d9fff',
@@ -273,20 +307,49 @@ function onSpeciesChange(species) {
 async function loadData() {
   loading.value = true
   try {
-    const [a, b, c] = await Promise.all([
+    const [a, b, c, d] = await Promise.all([
       fetch(`${API_URL}/sightings/?limit=5000`),
       fetch(`${API_URL}/sightings/species-summary`),
-      fetch(`${API_URL}/routes/`)
+      fetch(`${API_URL}/routes/`),
+      fetch(`${API_URL}/layers/summary`),
     ])
     allSightings.value   = (await a.json()).data || []
     speciesSummary.value = (await b.json()).data || []
     allRoutes.value      = (await c.json()).data || []
+    layersSummary.value  = (await d.json()).layers || {}
   } catch (err) {
     console.error('Failed to load whale data:', err)
   } finally {
     loading.value = false
   }
 }
+
+async function loadLayerData(key, url) {
+  try {
+    const res = await fetch(`${API_URL}${url}?limit=5000`)
+    const data = await res.json()
+    layerData.value[key] = data.data || []
+  } catch (err) {
+    console.error(`Failed to load ${key}:`, err)
+  }
+}
+
+// Watch activeLayers — fetch data when a layer is turned on
+
+const LAYER_URLS = {
+  strandings:  '/strandings/',
+  acoustics:   '/acoustics/',
+  inaturalist: '/inaturalist/',
+  historical:  '/historical/',
+}
+
+watch(activeLayers, (layers) => {
+  for (const [key, active] of Object.entries(layers)) {
+    if (active && key !== 'sightings' && layerData.value[key]?.length === 0) {
+      loadLayerData(key, LAYER_URLS[key])
+    }
+  }
+}, { deep: true })
 
 onMounted(() => { checkMobile(); window.addEventListener('resize', checkMobile); loadData() })
 onUnmounted(() => window.removeEventListener('resize', checkMobile))
