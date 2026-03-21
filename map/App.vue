@@ -51,13 +51,17 @@
           </div>
         </div>
 
-        <div class="sheet-label">Layers</div>
+        <div class="sheet-label">Data Layers</div>
         <div style="display:flex;gap:8px;padding:0 12px 12px;flex-wrap:wrap">
-          <button class="sheet-layer-btn" :class="{ active: activeLayers.strandings }" @click="activeLayers.strandings = !activeLayers.strandings">🔴 Strandings</button>
+          <button class="sheet-layer-btn" :class="{ active: activeLayers.strandings }"  @click="activeLayers.strandings  = !activeLayers.strandings">🔴 Strandings</button>
+          <button class="sheet-layer-btn" :class="{ active: activeLayers.acoustics }"   @click="activeLayers.acoustics   = !activeLayers.acoustics">🔵 Acoustics</button>
           <button class="sheet-layer-btn" :class="{ active: activeLayers.inaturalist }" @click="activeLayers.inaturalist = !activeLayers.inaturalist">🟢 iNaturalist</button>
-          <button class="sheet-layer-btn" :class="{ active: activeLayers.historical }" @click="activeLayers.historical = !activeLayers.historical">🟡 Historical</button>
-          <button class="sheet-layer-btn" :class="{ active: activeConservation.feeding }" @click="activeConservation.feeding = !activeConservation.feeding">🌿 Feeding</button>
-          <button class="sheet-layer-btn" :class="{ active: activeConservation.sonar }" @click="activeConservation.sonar = !activeConservation.sonar">⚠️ Sonar</button>
+          <button class="sheet-layer-btn" :class="{ active: activeLayers.historical }"  @click="activeLayers.historical  = !activeLayers.historical">🟡 Historical</button>
+        </div>
+        <div class="sheet-label">Conservation</div>
+        <div style="display:flex;gap:8px;padding:0 12px 12px;flex-wrap:wrap">
+          <button class="sheet-layer-btn" :class="{ active: activeConservation.feeding }" @click="activeConservation.feeding = !activeConservation.feeding">🌿 Feeding Grounds</button>
+          <button class="sheet-layer-btn" :class="{ active: activeConservation.sonar }"   @click="activeConservation.sonar   = !activeConservation.sonar">⚠️ Sonar Zones</button>
         </div>
 
         <div class="sheet-label">Species</div>

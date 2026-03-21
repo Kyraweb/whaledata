@@ -368,6 +368,8 @@ function setAll(val) {
 .layers-panel-enter-from, .layers-panel-leave-to { opacity: 0; transform: translateY(8px); }
 
 @media (max-width: 767px) {
+  .lp-btn-row { left: 12px; bottom: 76px; gap: 6px; }
+  .map-btn { font-size: 12px; padding: 8px 12px; }
   .layers-panel-data, .layers-panel-conservation { left: 12px; right: 12px; width: auto; bottom: 130px; }
 }
 </style>
