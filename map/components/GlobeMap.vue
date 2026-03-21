@@ -748,7 +748,8 @@ watch(() => props.selectedSpecies, (species) => {
 .ship-lanes-icon { font-size: 15px; }
 
 @media (max-width: 767px) {
-  .ship-lanes-btn { bottom: 76px; left: 50%; transform: translateX(-50%); font-size: 12px; padding: 8px 16px; }
+  .ship-lanes-btn { bottom: 76px; left: auto; right: 12px; transform: none; font-size: 12px; padding: 8px 12px; }
+  .ship-lanes-label { display: none; } /* icon only on mobile */
   .route-panel { bottom: 76px; right: 12px; left: 12px; width: auto; }
 }
 </style>

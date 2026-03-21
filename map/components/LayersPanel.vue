@@ -370,6 +370,7 @@ function setAll(val) {
 @media (max-width: 767px) {
   .lp-btn-row { left: 12px; bottom: 76px; gap: 6px; }
   .map-btn { font-size: 12px; padding: 8px 12px; }
+  .map-btn span:last-child:not(.map-btn-badge) { display: none; } /* hide label, keep icon */
   .layers-panel-data, .layers-panel-conservation { left: 12px; right: 12px; width: auto; bottom: 130px; }
 }
 </style>
