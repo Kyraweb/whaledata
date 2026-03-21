@@ -392,17 +392,52 @@ function initLayers() {
   })
 
   // ── Phase 2 data layers ──────────────────────────────────────
-  for (const key of ['strandings','acoustics','inaturalist','historical']) {
-    map.addSource(`layer-${key}`, { type: 'geojson', data: { type: 'FeatureCollection', features: [] } })
+  const LAYER_COLORS_MAP = { strandings: '#ff5a5a', acoustics: '#9664ff', inaturalist: '#64c864', historical: '#ffb432' }
 
-    map.addLayer({ id: `layer-${key}-glow`, type: 'circle', source: `layer-${key}`,
-      paint: { 'circle-radius': 12, 'circle-color': ['get', 'color'], 'circle-opacity': 0.12, 'circle-blur': 1 },
+  for (const key of ['strandings','acoustics','inaturalist','historical']) {
+    const color = LAYER_COLORS_MAP[key]
+
+    map.addSource(`layer-${key}`, {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] },
+      cluster: true,
+      clusterMaxZoom: 4,
+      clusterRadius: 40,
+    })
+
+    // Cluster bubble
+    map.addLayer({ id: `layer-${key}-cluster`, type: 'circle', source: `layer-${key}`,
+      filter: ['has', 'point_count'],
+      paint: {
+        'circle-color': color,
+        'circle-radius': ['step', ['get', 'point_count'], 16, 50, 22, 200, 28],
+        'circle-opacity': 0.75,
+      },
       layout: { visibility: 'none' }
     })
+    // Cluster count label
+    map.addLayer({ id: `layer-${key}-cluster-count`, type: 'symbol', source: `layer-${key}`,
+      filter: ['has', 'point_count'],
+      layout: {
+        'text-field': '{point_count_abbreviated}',
+        'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+        'text-size': 11,
+        'visibility': 'none',
+      },
+      paint: { 'text-color': '#050810' }
+    })
+    // Individual glow
+    map.addLayer({ id: `layer-${key}-glow`, type: 'circle', source: `layer-${key}`,
+      filter: ['!', ['has', 'point_count']],
+      paint: { 'circle-radius': 12, 'circle-color': color, 'circle-opacity': 0.12, 'circle-blur': 1 },
+      layout: { visibility: 'none' }
+    })
+    // Individual dot
     map.addLayer({ id: `layer-${key}-dot`, type: 'circle', source: `layer-${key}`,
+      filter: ['!', ['has', 'point_count']],
       paint: {
         'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 4, 5, 6, 10, 8],
-        'circle-color': ['get', 'color'],
+        'circle-color': color,
         'circle-opacity': 0.85,
         'circle-stroke-width': 1,
         'circle-stroke-color': '#050810',
@@ -410,10 +445,24 @@ function initLayers() {
       },
       layout: { visibility: 'none' }
     })
+    // Hit area for hover
     map.addLayer({ id: `layer-${key}-hit`, type: 'circle', source: `layer-${key}`,
+      filter: ['!', ['has', 'point_count']],
       paint: { 'circle-radius': 12, 'circle-color': 'transparent', 'circle-opacity': 0 },
       layout: { visibility: 'none' }
     })
+
+    // Cluster click → zoom in
+    map.on('click', `layer-${key}-cluster`, (e) => {
+      const features = map.queryRenderedFeatures(e.point, { layers: [`layer-${key}-cluster`] })
+      const clusterId = features[0].properties.cluster_id
+      map.getSource(`layer-${key}`).getClusterExpansionZoom(clusterId, (err, zoom) => {
+        if (err) return
+        map.easeTo({ center: features[0].geometry.coordinates, zoom })
+      })
+    })
+    map.on('mouseenter', `layer-${key}-cluster`, () => { map.getCanvas().style.cursor = 'pointer' })
+    map.on('mouseleave', `layer-${key}-cluster`, () => { map.getCanvas().style.cursor = '' })
 
     // Hover popup for layer dots
     map.on('mouseenter', `layer-${key}-hit`, (e) => {
@@ -528,7 +577,7 @@ watch(() => props.activeLayers, (layers) => {
   // Toggle other layers
   for (const key of ['strandings','acoustics','inaturalist','historical']) {
     const v = layers[key] ? 'visible' : 'none'
-    for (const suffix of ['glow','dot','hit']) {
+    for (const suffix of ['cluster','cluster-count','glow','dot','hit']) {
       if (map.getLayer(`layer-${key}-${suffix}`))
         map.setLayoutProperty(`layer-${key}-${suffix}`, 'visibility', v)
     }

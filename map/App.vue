@@ -255,9 +255,13 @@ const filteredLayerData = computed(() => {
   const species = selectedSpecies.value
   const result  = {}
   for (const key of ['strandings','acoustics','inaturalist','historical']) {
-    result[key] = species
-      ? (layerData.value[key] || []).filter(r => r.common_name === species)
-      : (layerData.value[key] || [])
+    let data = (layerData.value[key] || []).filter(r => {
+      if (r.longitude == null || r.latitude == null) return false
+      // Reuse ocean filter — layer data uses same lat/lng fields
+      return isOceanSighting({ longitude: r.longitude, latitude: r.latitude })
+    })
+    if (species) data = data.filter(r => r.common_name === species)
+    result[key] = data
   }
   return result
 })
