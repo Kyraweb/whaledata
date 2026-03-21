@@ -72,6 +72,23 @@ def parse_year(record: dict):
     return record.get("year") or record.get("eventDate", "")[:4] or None
 
 
+def parse_date(raw):
+    """Handle partial dates: year-only, year-month, full date, ranges."""
+    if not raw:
+        return None
+    raw = str(raw).strip()
+    if "/" in raw:
+        raw = raw.split("/")[0].strip()
+    if len(raw) < 4 or not raw[:4].isdigit() or not (1000 <= int(raw[:4]) <= 2099):
+        return None
+    if len(raw) == 10 and raw.count("-") == 2:
+        return raw
+    if len(raw) == 7 and raw.count("-") == 1:
+        return raw + "-01"
+    if len(raw) == 4:
+        return raw + "-01-01"
+    return raw[:10]
+
 def insert_historical(conn, record: dict, common_name: str, scientific_name: str) -> str:
     cur = conn.cursor()
     try:
