@@ -51,6 +51,15 @@
           </div>
         </div>
 
+        <div class="sheet-label">Layers</div>
+        <div style="display:flex;gap:8px;padding:0 12px 12px;flex-wrap:wrap">
+          <button class="sheet-layer-btn" :class="{ active: activeLayers.strandings }" @click="activeLayers.strandings = !activeLayers.strandings">🔴 Strandings</button>
+          <button class="sheet-layer-btn" :class="{ active: activeLayers.inaturalist }" @click="activeLayers.inaturalist = !activeLayers.inaturalist">🟢 iNaturalist</button>
+          <button class="sheet-layer-btn" :class="{ active: activeLayers.historical }" @click="activeLayers.historical = !activeLayers.historical">🟡 Historical</button>
+          <button class="sheet-layer-btn" :class="{ active: activeConservation.feeding }" @click="activeConservation.feeding = !activeConservation.feeding">🌿 Feeding</button>
+          <button class="sheet-layer-btn" :class="{ active: activeConservation.sonar }" @click="activeConservation.sonar = !activeConservation.sonar">⚠️ Sonar</button>
+        </div>
+
         <div class="sheet-label">Species</div>
         <div class="sheet-species-list">
           <button
@@ -122,6 +131,35 @@
         {{ selectedSpecies || 'All species' }}
       </span>
     </div>
+
+    <!-- Mobile action row -->
+    <div v-if="isMobile" class="mobile-actions">
+      <button class="mob-btn" @click="shareMap">{{ shareCopied ? '✓' : '🔗' }}</button>
+      <button class="mob-btn" @click="nearMe">📍</button>
+      <button class="mob-btn" :class="{ active: yearOpen }" @click="yearOpen = !yearOpen">📅</button>
+    </div>
+
+    <!-- Mobile year popup -->
+    <Transition name="layers-panel">
+      <div v-if="isMobile && yearOpen" class="mobile-year-popup">
+        <div class="year-popup-header">
+          <span class="year-popup-title">{{ yearRange[0] }} – {{ yearRange[1] }}</span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span class="year-reset-link" @click="yearRange = [1900, 2026]">Reset</span>
+            <button class="lp-close-btn" @click="yearOpen = false">✕</button>
+          </div>
+        </div>
+        <div class="year-slider-track" style="margin-top:8px">
+          <div class="year-slider-fill" :style="fillStyle"></div>
+          <input type="range" min="1900" max="2026" :value="yearRange[0]"
+            @input="e => yearRange = [Math.min(parseInt(e.target.value), yearRange[1] - 1), yearRange[1]]"
+            class="year-slider year-slider-min" />
+          <input type="range" min="1900" max="2026" :value="yearRange[1]"
+            @input="e => yearRange = [yearRange[0], Math.max(parseInt(e.target.value), yearRange[0] + 1)]"
+            class="year-slider year-slider-max" />
+        </div>
+      </div>
+    </Transition>
 
     <!-- Top-right action bar — desktop -->
     <div v-if="!isMobile" class="top-actions">
@@ -577,6 +615,16 @@ onUnmounted(() => { window.removeEventListener('resize', checkMobile); window.re
     #7eb8d4 180deg 240deg, #5dd4b8 240deg 300deg, #ff6b9d 300deg 360deg
   );
 }
+.sheet-layer-btn {
+  padding: 7px 12px; border-radius: 20px; font-size: 12px;
+  background: none; border: 1px solid var(--border);
+  color: var(--text-secondary); cursor: pointer; font-family: var(--font-display);
+  transition: all 0.15s;
+}
+.sheet-layer-btn.active {
+  background: var(--cyan-glow-soft); border-color: var(--border-bright);
+  color: var(--text-primary);
+}
 .sheet-species-name { flex: 1; }
 .sheet-species-count { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); }
 
@@ -603,6 +651,46 @@ onUnmounted(() => { window.removeEventListener('resize', checkMobile); window.re
 .bar-stat { font-size: 12px; color: var(--text-secondary); }
 .bar-stat b { color: var(--cyan); font-family: var(--font-mono); }
 .bar-divider { width: 1px; height: 16px; background: var(--border); }
+
+/* ── Mobile action row ──────────────────────────────────────── */
+.mobile-actions {
+  position: fixed;
+  bottom: 65px;
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 300;
+}
+.mob-btn {
+  width: 40px; height: 40px;
+  border-radius: 12px;
+  background: rgba(8, 13, 26, 0.92);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-bright);
+  color: var(--text-secondary);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.mob-btn.active, .mob-btn:hover {
+  background: rgba(0, 229, 255, 0.1);
+  border-color: rgba(0, 229, 255, 0.4);
+  color: var(--cyan);
+}
+.mobile-year-popup {
+  position: fixed;
+  bottom: 220px;
+  right: 12px;
+  width: 240px;
+  background: rgba(8, 13, 26, 0.97);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  border-radius: 14px;
+  padding: 14px 16px 16px;
+  z-index: 400;
+}
 
 /* ── Info button ───────────────────────────────────────────── */
 .info-btn {

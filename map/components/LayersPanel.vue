@@ -1,17 +1,17 @@
 <template>
-  <!-- Data Layers button -->
-  <button class="map-btn btn-data" :class="{ active: open }" @click="open = !open; conservationOpen = false">
-    <span>⚡</span>
-    <span>Data Layers</span>
-    <span v-if="activeCount > 1" class="map-btn-badge">{{ activeCount }}</span>
-  </button>
-
-  <!-- Conservation button -->
-  <button class="map-btn btn-conservation" :class="{ active: conservationOpen }" @click="conservationOpen = !conservationOpen; open = false">
-    <span>🌿</span>
-    <span>Conservation</span>
-    <span v-if="activeConservationCount > 0" class="map-btn-badge conservation-badge">{{ activeConservationCount }}</span>
-  </button>
+  <!-- Bottom-left button row -->
+  <div class="lp-btn-row">
+    <button class="map-btn btn-data" :class="{ active: open }" @click="open = !open; conservationOpen = false">
+      <span>⚡</span>
+      <span>Data Layers</span>
+      <span v-if="activeCount > 1" class="map-btn-badge">{{ activeCount }}</span>
+    </button>
+    <button class="map-btn btn-conservation" :class="{ active: conservationOpen }" @click="conservationOpen = !conservationOpen; open = false">
+      <span>🌿</span>
+      <span>Conservation</span>
+      <span v-if="activeConservationCount > 0" class="map-btn-badge conservation-badge">{{ activeConservationCount }}</span>
+    </button>
+  </div>
 
   <!-- Data Layers Panel -->
   <Transition name="layers-panel">
@@ -158,10 +158,9 @@ function setAll(val) {
 </script>
 
 <style scoped>
-/* ── Map buttons (shared base) ─────────────────────────────── */
+/* ── Map buttons wrapper ────────────────────────────────────── */
+/* Buttons are rendered inside a flex row in the DOM — see template */
 .map-btn {
-  position: fixed;
-  bottom: 32px;
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -173,14 +172,12 @@ function setAll(val) {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  z-index: 200;
   transition: all 0.2s;
   white-space: nowrap;
 }
 
 /* Data Layers — cyan */
 .btn-data {
-  left: 320px;
   border: 1px solid rgba(0, 229, 255, 0.25);
   color: rgba(0, 229, 255, 0.7);
 }
@@ -193,7 +190,6 @@ function setAll(val) {
 
 /* Conservation — green */
 .btn-conservation {
-  left: 480px;
   border: 1px solid rgba(0, 201, 122, 0.25);
   color: rgba(0, 201, 122, 0.7);
 }
@@ -202,6 +198,15 @@ function setAll(val) {
   border-color: rgba(0, 201, 122, 0.5);
   color: #00c97a;
   box-shadow: 0 0 16px rgba(0, 201, 122, 0.15);
+}
+
+.lp-btn-row {
+  position: fixed;
+  bottom: 32px;
+  left: 320px;
+  display: flex;
+  gap: 8px;
+  z-index: 200;
 }
 
 .map-btn-badge {
@@ -229,7 +234,7 @@ function setAll(val) {
 }
 
 .layers-panel-data        { left: 320px; }
-.layers-panel-conservation { left: 480px; }
+.layers-panel-conservation { left: 320px; }
 
 .lp-header {
   display: flex;
@@ -363,8 +368,6 @@ function setAll(val) {
 .layers-panel-enter-from, .layers-panel-leave-to { opacity: 0; transform: translateY(8px); }
 
 @media (max-width: 767px) {
-  .btn-data         { left: 12px;  bottom: 76px; font-size: 12px; padding: 8px 14px; }
-  .btn-conservation { left: 150px; bottom: 76px; font-size: 12px; padding: 8px 14px; }
   .layers-panel-data, .layers-panel-conservation { left: 12px; right: 12px; width: auto; bottom: 130px; }
 }
 </style>
