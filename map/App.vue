@@ -6,7 +6,7 @@
       v-if="!isMobile"
       :speciesList="speciesSummary"
       :totalCount="totalCount"
-      :filteredCount="filteredSightings.length"
+      :filteredCount="shownCount"
       :selectedSpecies="selectedSpecies"
       :loading="loading"
       @species-change="onSpeciesChange"
@@ -46,7 +46,7 @@
           </div>
           <div class="sheet-stat-divider" />
           <div class="sheet-stat">
-            <span class="sheet-stat-value">{{ filteredSightings.length.toLocaleString() }}</span>
+            <span class="sheet-stat-value">{{ shownCount.toLocaleString() }}</span>
             <span class="sheet-stat-label">shown</span>
           </div>
         </div>
@@ -133,27 +133,37 @@
       </button>
     </div>
 
-    <!-- Year range slider — desktop -->
-    <div v-if="!isMobile" class="year-slider-wrap">
-      <div class="year-slider-header">
-        <span class="year-slider-icon">📅</span>
-        <span class="year-slider-title">Sighting Year</span>
-        <span class="year-slider-reset" @click="yearRange = [1900, 2026]" title="Reset">↺</span>
-      </div>
-      <div class="year-slider-values">
-        <span class="year-val">{{ yearRange[0] }}</span>
-        <span class="year-sep">–</span>
-        <span class="year-val">{{ yearRange[1] }}</span>
-      </div>
-      <div class="year-slider-track">
-        <div class="year-slider-fill" :style="fillStyle"></div>
-        <input type="range" min="1900" max="2026" :value="yearRange[0]"
-          @input="e => yearRange = [Math.min(parseInt(e.target.value), yearRange[1] - 1), yearRange[1]]"
-          class="year-slider year-slider-min" />
-        <input type="range" min="1900" max="2026" :value="yearRange[1]"
-          @input="e => yearRange = [yearRange[0], Math.max(parseInt(e.target.value), yearRange[0] + 1)]"
-          class="year-slider year-slider-max" />
-      </div>
+    <!-- Year filter button + popup — desktop -->
+    <div v-if="!isMobile" class="year-btn-wrap">
+      <button class="bottom-btn btn-year" :class="{ active: yearOpen, filtered: yearRange[0] !== 1900 || yearRange[1] !== 2026 }" @click="yearOpen = !yearOpen">
+        📅 {{ yearRange[0] }} – {{ yearRange[1] }}
+        <span v-if="yearRange[0] !== 1900 || yearRange[1] !== 2026" class="year-filtered-dot"></span>
+      </button>
+      <Transition name="layers-panel">
+        <div v-if="yearOpen" class="year-popup">
+          <div class="year-popup-header">
+            <span class="year-popup-title">Year Range</span>
+            <div style="display:flex;gap:8px;align-items:center">
+              <span class="year-reset-link" @click="yearRange = [1900, 2026]">Reset</span>
+              <button class="lp-close-btn" @click="yearOpen = false">✕</button>
+            </div>
+          </div>
+          <div class="year-popup-values">
+            <span class="year-val">{{ yearRange[0] }}</span>
+            <span class="year-sep">–</span>
+            <span class="year-val">{{ yearRange[1] }}</span>
+          </div>
+          <div class="year-slider-track">
+            <div class="year-slider-fill" :style="fillStyle"></div>
+            <input type="range" min="1900" max="2026" :value="yearRange[0]"
+              @input="e => yearRange = [Math.min(parseInt(e.target.value), yearRange[1] - 1), yearRange[1]]"
+              class="year-slider year-slider-min" />
+            <input type="range" min="1900" max="2026" :value="yearRange[1]"
+              @input="e => yearRange = [yearRange[0], Math.max(parseInt(e.target.value), yearRange[0] + 1)]"
+              class="year-slider year-slider-max" />
+          </div>
+        </div>
+      </Transition>
     </div>
 
     <LayersPanel
@@ -204,6 +214,7 @@ const activeLayers    = ref({
 })
 const activeConservation = ref({ feeding: false, sonar: false })
 const shareCopied    = ref(false)
+const yearOpen       = ref(false)
 const nearMeLoading  = ref(false)
 const layerData = ref({
   strandings:  [],
@@ -295,7 +306,13 @@ function speciesColor(name) { return SPECIES_COLORS[name] || '#ffffff' }
 
 function checkMobile() { isMobile.value = window.innerWidth < 768 }
 
-const totalCount = computed(() => allSightings.value.filter(isOceanSighting).length)
+const totalCount = computed(() => {
+  let n = allSightings.value.filter(isOceanSighting).length
+  for (const key of ['strandings','acoustics','inaturalist','historical']) {
+    if (activeLayers.value[key]) n += (layerData.value[key] || []).length
+  }
+  return n
+})
 
 function isOceanSighting(s) {
   const lng = parseFloat(s.longitude)
@@ -312,6 +329,17 @@ const filteredSightings = computed(() => {
   const base = allSightings.value.filter(isOceanSighting)
   if (!selectedSpecies.value) return base
   return base.filter(s => s.common_name === selectedSpecies.value)
+})
+
+const shownCount = computed(() => {
+  let n = filteredSightings.value.length
+  for (const key of ['strandings','acoustics','inaturalist','historical']) {
+    if (activeLayers.value[key]) {
+      const data = filteredLayerData.value[key] || []
+      n += data.length
+    }
+  }
+  return n
 })
 
 const filteredRoutes = computed(() => {
@@ -695,55 +723,90 @@ onUnmounted(() => { window.removeEventListener('resize', checkMobile); window.re
   box-shadow: 0 0 16px rgba(77, 159, 255, 0.15);
 }
 
-/* ── Year range slider ─────────────────────────────────────── */
-.year-slider-wrap {
+/* ── Year filter button + popup ────────────────────────────── */
+.year-btn-wrap {
   position: fixed;
   bottom: 32px;
-  right: 80px;
-  width: 260px;
-  background: rgba(8, 13, 26, 0.92);
-  backdrop-filter: blur(16px);
-  border: 1px solid var(--border-bright);
-  border-radius: 14px;
-  padding: 12px 16px 14px;
-  z-index: 150;
-  pointer-events: auto;
-  box-shadow: 0 0 24px rgba(0, 229, 255, 0.06);
+  right: 24px;
+  z-index: 200;
 }
 
-.year-slider-header {
+.btn-year {
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  color: rgba(0, 229, 255, 0.7);
+  font-family: var(--font-mono);
+  position: relative;
+}
+.btn-year:hover, .btn-year.active {
+  background: rgba(0, 229, 255, 0.1);
+  border-color: rgba(0, 229, 255, 0.5);
+  color: #00e5ff;
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.15);
+}
+.btn-year.filtered {
+  border-color: rgba(0, 229, 255, 0.5);
+  color: #00e5ff;
+}
+.year-filtered-dot {
+  width: 6px; height: 6px;
+  background: var(--cyan);
+  border-radius: 50%;
+  margin-left: 2px;
+}
+
+.year-popup {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  right: 0;
+  width: 260px;
+  background: rgba(8, 13, 26, 0.97);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  border-radius: 14px;
+  padding: 14px 16px 16px;
+  box-shadow: 0 0 30px rgba(0, 229, 255, 0.08);
+}
+
+.year-popup-header {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 8px;
+  justify-content: space-between;
+  margin-bottom: 12px;
 }
-.year-slider-icon { font-size: 13px; }
-.year-slider-title {
-  flex: 1;
+.year-popup-title {
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.12em;
 }
-.year-slider-reset {
-  font-size: 14px;
+.year-reset-link {
+  font-size: 11px;
   color: var(--text-muted);
   cursor: pointer;
   transition: color 0.15s;
-  line-height: 1;
 }
-.year-slider-reset:hover { color: var(--cyan); }
+.year-reset-link:hover { color: var(--cyan); }
+.lp-close-btn {
+  width: 22px; height: 22px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 11px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
 
-.year-slider-values {
+.year-popup-values {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 .year-val {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--cyan);
   font-family: var(--font-mono);
@@ -757,19 +820,14 @@ onUnmounted(() => { window.removeEventListener('resize', checkMobile); window.re
   display: flex;
   align-items: center;
 }
-
-/* Rail background */
 .year-slider-track::before {
   content: '';
   position: absolute;
-  left: 0; right: 0;
-  height: 3px;
+  left: 0; right: 0; height: 3px;
   background: var(--border);
   border-radius: 2px;
   top: 50%; transform: translateY(-50%);
 }
-
-/* Filled range highlight */
 .year-slider-fill {
   position: absolute;
   height: 3px;
@@ -779,13 +837,11 @@ onUnmounted(() => { window.removeEventListener('resize', checkMobile); window.re
   opacity: 0.6;
   pointer-events: none;
 }
-
 .year-slider {
   position: absolute;
   left: 0; right: 0;
   -webkit-appearance: none;
-  width: 100%;
-  height: 3px;
+  width: 100%; height: 3px;
   background: transparent;
   outline: none;
   cursor: pointer;
@@ -800,8 +856,7 @@ onUnmounted(() => { window.removeEventListener('resize', checkMobile); window.re
   border: 2px solid #080d1a;
   box-shadow: 0 0 8px rgba(0, 229, 255, 0.5);
   pointer-events: auto;
-  position: relative;
-  z-index: 1;
+  position: relative; z-index: 1;
 }
 .year-slider::-moz-range-thumb {
   width: 16px; height: 16px;
