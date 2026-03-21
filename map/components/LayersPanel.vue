@@ -101,7 +101,6 @@ function setAll(val) {
   const next = {}
   LAYERS.forEach(l => next[l.key] = val)
   // Always keep sightings on
-  next.sightings = true
   emit('update:modelValue', next)
 }
 </script>

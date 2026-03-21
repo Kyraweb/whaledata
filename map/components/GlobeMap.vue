@@ -520,6 +520,12 @@ watch(() => props.migrationRoutes, (val) => {
 // Watch activeLayers — show/hide layer dot groups
 watch(() => props.activeLayers, (layers) => {
   if (!layersReady) return
+  // Toggle sightings
+  const sv = layers.sightings ? 'visible' : 'none'
+  for (const id of ['sightings-glow','sightings-dot','sightings-hitarea','clusters','cluster-count']) {
+    if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', sv)
+  }
+  // Toggle other layers
   for (const key of ['strandings','acoustics','inaturalist','historical']) {
     const v = layers[key] ? 'visible' : 'none'
     for (const suffix of ['glow','dot','hit']) {
