@@ -31,11 +31,11 @@ INAT_API = "https://api.inaturalist.org/v1"
 # iNaturalist taxon IDs for whale species
 TARGET_SPECIES = [
     {"taxon_id": 41472,  "common_name": "Humpback whale", "scientific_name": "Megaptera novaeangliae"},
-    {"taxon_id": 41473,  "common_name": "Blue whale",     "scientific_name": "Balaenoptera musculus"},
-    {"taxon_id": 41474,  "common_name": "Fin whale",      "scientific_name": "Balaenoptera physalus"},
+    {"taxon_id": 41467,  "common_name": "Blue whale",     "scientific_name": "Balaenoptera musculus"},
+    {"taxon_id": 41468,  "common_name": "Fin whale",      "scientific_name": "Balaenoptera physalus"},
     {"taxon_id": 41476,  "common_name": "Grey whale",     "scientific_name": "Eschrichtius robustus"},
     {"taxon_id": 41490,  "common_name": "Sperm whale",    "scientific_name": "Physeter macrocephalus"},
-    {"taxon_id": 41498,  "common_name": "Orca",           "scientific_name": "Orcinus orca"},
+    {"taxon_id": 41446,  "common_name": "Orca",           "scientific_name": "Orcinus orca"},
 ]
 
 
