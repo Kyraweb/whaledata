@@ -157,10 +157,73 @@
       <button class="top-btn btn-nearme" @click="nearMe" :class="{ loading: nearMeLoading }">
         {{ nearMeLoading ? '...' : '📍 Near me' }}
       </button>
+      <button class="top-btn btn-alerts" @click="alertsOpen = true">
+        🔔 Alerts
+      </button>
       <button class="top-btn btn-help" @click="helpOpen = true">
         ? Help
       </button>
     </div>
+
+    <!-- Alerts subscribe modal -->
+    <Transition name="help-modal">
+      <div v-if="alertsOpen" class="help-backdrop" @click.self="alertsOpen = false">
+        <div class="help-modal" style="max-width:460px">
+          <div class="help-header">
+            <div class="help-title">🔔 Weekly sighting alerts</div>
+            <button class="help-close" @click="alertsOpen = false">✕</button>
+          </div>
+          <div class="help-body" style="padding-bottom:24px">
+            <p class="help-p" style="margin-bottom:20px">
+              Get a weekly email digest of new whale sightings, strandings, and acoustic detections.
+              Filter by species, region, or data layer — or receive all new records.
+            </p>
+
+            <div v-if="alertStatus === 'sent'" class="alert-success">
+              ✓ Check your email to confirm your subscription.
+            </div>
+            <div v-else-if="alertStatus === 'error'" class="alert-error">
+              Something went wrong. Please try again.
+            </div>
+            <div v-else>
+              <div class="form-group-alert">
+                <label class="alert-label">Email address *</label>
+                <input v-model="alertForm.email" type="email" placeholder="you@example.com" class="alert-input" />
+              </div>
+              <div class="form-group-alert">
+                <label class="alert-label">Species (optional — leave blank for all)</label>
+                <select v-model="alertForm.species" class="alert-input">
+                  <option value="">All species</option>
+                  <option v-for="s in speciesSummary" :key="s.common_name" :value="s.common_name">{{ s.common_name }}</option>
+                </select>
+              </div>
+              <div class="form-group-alert">
+                <label class="alert-label">Data layer (optional)</label>
+                <select v-model="alertForm.layer" class="alert-input">
+                  <option value="">All layers</option>
+                  <option value="sightings">Sightings</option>
+                  <option value="strandings">Strandings</option>
+                  <option value="acoustics">Acoustics</option>
+                  <option value="inaturalist">iNaturalist</option>
+                  <option value="historical">Historical</option>
+                </select>
+              </div>
+              <div class="form-group-alert">
+                <label class="alert-label">Region (optional — e.g. "North Atlantic", "Hawaii")</label>
+                <input v-model="alertForm.region" type="text" placeholder="Leave blank for worldwide" class="alert-input" />
+              </div>
+              <button class="alert-submit" :disabled="alertSubmitting" @click="submitAlert">
+                {{ alertSubmitting ? 'Sending...' : '🔔 Subscribe to weekly alerts' }}
+              </button>
+              <p style="font-size:11px;color:var(--text-muted);margin-top:12px;line-height:1.6">
+                Weekly digest every Sunday. Unsubscribe anytime from any email.
+                No spam — only new whale data.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
 
     <!-- Help modal -->
     <Transition name="help-modal">
@@ -334,7 +397,11 @@ const activeLayers    = ref({
 })
 const activeConservation = ref({ feeding: false, sonar: false })
 const shareCopied    = ref(false)
-const helpOpen       = ref(false)
+const helpOpen        = ref(false)
+const alertsOpen      = ref(false)
+const alertStatus     = ref('')  // '' | 'sent' | 'error'
+const alertSubmitting = ref(false)
+const alertForm       = ref({ email: '', species: '', layer: '', region: '' })
 const yearOpen       = ref(false)
 const nearMeLoading  = ref(false)
 const layerData = ref({
@@ -505,6 +572,30 @@ async function loadLayerData(key, url) {
 }
 
 // Watch activeLayers — fetch data when a layer is turned on
+
+// ── Alerts ───────────────────────────────────────────────────
+async function submitAlert() {
+  if (!alertForm.value.email) return
+  alertSubmitting.value = true
+  try {
+    const res = await fetch(`${API_URL}/alerts/subscribe`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email:           alertForm.value.email,
+        species_filter:  alertForm.value.species  || null,
+        layer_filter:    alertForm.value.layer    || null,
+        region_filter:   alertForm.value.region   || null,
+      })
+    })
+    if (res.ok) { alertStatus.value = 'sent' }
+    else        { alertStatus.value = 'error' }
+  } catch {
+    alertStatus.value = 'error'
+  } finally {
+    alertSubmitting.value = false
+  }
+}
 
 // ── Share ─────────────────────────────────────────────────────
 function shareMap() {
@@ -980,6 +1071,30 @@ onUnmounted(() => { window.removeEventListener('resize', checkMobile); window.re
   color: #4d9fff;
   box-shadow: 0 0 16px rgba(77, 159, 255, 0.15);
 }
+
+/* Alerts — orange */
+.btn-alerts {
+  border: 1px solid rgba(255, 159, 67, 0.3);
+  color: rgba(255, 159, 67, 0.8);
+}
+.btn-alerts:hover {
+  background: rgba(255, 159, 67, 0.1);
+  border-color: rgba(255, 159, 67, 0.5);
+  color: #ff9f43;
+  box-shadow: 0 0 16px rgba(255, 159, 67, 0.15);
+}
+
+/* Alert form */
+.form-group-alert { margin-bottom: 14px; }
+.alert-label { display: block; font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 5px; }
+.alert-input { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; color: var(--text-primary); font-family: var(--font-display); font-size: 13px; outline: none; transition: border 0.15s; }
+.alert-input:focus { border-color: var(--border-bright); }
+.alert-input option { background: #0d1528; }
+.alert-submit { width: 100%; padding: 12px; background: rgba(255,159,67,0.1); border: 1px solid rgba(255,159,67,0.3); border-radius: 10px; color: #ff9f43; font-family: var(--font-display); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; margin-top: 4px; }
+.alert-submit:hover:not(:disabled) { background: rgba(255,159,67,0.18); }
+.alert-submit:disabled { opacity: 0.5; cursor: wait; }
+.alert-success { background: rgba(0,201,122,0.1); border: 1px solid rgba(0,201,122,0.3); border-radius: 10px; padding: 16px; color: #00c97a; font-size: 14px; text-align: center; }
+.alert-error { background: rgba(255,90,90,0.1); border: 1px solid rgba(255,90,90,0.3); border-radius: 10px; padding: 16px; color: #ff5a5a; font-size: 14px; text-align: center; }
 
 /* Help — white/muted */
 .btn-help {

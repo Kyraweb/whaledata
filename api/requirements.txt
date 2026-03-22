@@ -5,3 +5,5 @@ python-dotenv
 jinja2
 python-multipart
 requests
+boto3
+email-validator

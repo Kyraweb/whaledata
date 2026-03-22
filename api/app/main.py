@@ -1,7 +1,7 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import species, sightings, routes, strandings, acoustics, inaturalist, historical, layers
+from app.routers import species, sightings, routes, strandings, acoustics, inaturalist, historical, layers, alerts
 from app.admin.admin import router as admin_router
 
 app = FastAPI(
@@ -32,6 +32,7 @@ app.include_router(acoustics.router)
 app.include_router(inaturalist.router)
 app.include_router(historical.router)
 app.include_router(layers.router)
+app.include_router(alerts.router)
 
 # Admin panel
 app.include_router(admin_router)
