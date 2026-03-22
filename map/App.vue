@@ -89,6 +89,14 @@
             <span class="sheet-species-count">{{ s.sighting_count.toLocaleString() }}</span>
           </button>
         </div>
+
+        <!-- Attribution -->
+        <div class="sheet-attribution">
+          Data: GBIF · OBIS · iNaturalist · NOAA · Updated regularly
+          <span class="sheet-attr-divider">·</span>
+          <a href="https://kyraweb.ca" target="_blank">kyraweb.ca</a>
+        </div>
+
       </div>
     </Transition>
 
@@ -713,6 +721,16 @@ onUnmounted(() => { window.removeEventListener('resize', checkMobile); window.re
   color: var(--text-primary);
 }
 .sheet-species-name { flex: 1; }
+.sheet-attribution {
+  padding: 10px 20px 14px;
+  font-size: 10px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  line-height: 1.6;
+}
+.sheet-attribution a { color: var(--cyan-dim); text-decoration: none; }
+.sheet-attr-divider { margin: 0 4px; }
 .sheet-species-count { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); }
 
 /* ── Backdrop ──────────────────────────────────────────────── */
