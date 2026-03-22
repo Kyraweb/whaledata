@@ -356,6 +356,14 @@
       :selectedSpecies="selectedSpecies"
     />
 
+    <!-- API error banner -->
+    <Transition name="panel">
+      <div v-if="apiError" class="api-error-banner">
+        <span>⚠️ Unable to load whale data — the API may be temporarily unavailable.</span>
+        <button @click="loadData(); apiError = false" class="api-error-retry">Retry</button>
+      </div>
+    </Transition>
+
     <div class="map-area">
       <GlobeMap
         :sightings="filteredSightings"
@@ -385,6 +393,7 @@ const allRoutes       = ref([])
 const speciesSummary  = ref([])
 const selectedSpecies = ref('')
 const loading         = ref(true)
+const apiError        = ref(false)
 const isMobile        = ref(false)
 const yearRange       = ref([1990, 2026])
 const layersSummary   = ref({})
@@ -556,6 +565,7 @@ async function loadData() {
     layersSummary.value  = (await d.json()).layers || {}
   } catch (err) {
     console.error('Failed to load whale data:', err)
+    apiError.value = true
   } finally {
     loading.value = false
   }
@@ -683,6 +693,38 @@ onUnmounted(() => { window.removeEventListener('resize', checkMobile); window.re
 
 <style scoped>
 .app { width: 100vw; height: 100vh; overflow: hidden; position: relative; }
+
+/* ── API error banner ───────────────────────────────────────── */
+.api-error-banner {
+  position: fixed;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px;
+  background: rgba(255, 90, 90, 0.12);
+  border: 1px solid rgba(255, 90, 90, 0.3);
+  border-radius: 30px;
+  color: #ff5a5a;
+  font-size: 13px;
+  z-index: 500;
+  white-space: nowrap;
+  backdrop-filter: blur(12px);
+}
+.api-error-retry {
+  padding: 4px 12px;
+  background: rgba(255, 90, 90, 0.15);
+  border: 1px solid rgba(255, 90, 90, 0.3);
+  border-radius: 20px;
+  color: #ff5a5a;
+  font-size: 12px;
+  font-family: var(--font-display);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.api-error-retry:hover { background: rgba(255, 90, 90, 0.25); }
 .map-area { position: absolute; inset: 0; }
 
 /* ── Hamburger ─────────────────────────────────────────────── */
