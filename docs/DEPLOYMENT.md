@@ -1,99 +1,75 @@
 # whaledata.org — Deployment Guide
 
-This guide covers self-hosting whaledata.org on a VPS using [Coolify](https://coolify.io/).
+Self-hosting whaledata.org on a VPS using [Coolify](https://coolify.io/).
 
 ---
 
 ## Prerequisites
 
-### Server Requirements
+### Server
 - **OS:** Debian 11+ or Ubuntu 22.04+
 - **CPU:** 2 vCPU minimum (4 recommended)
 - **RAM:** 2GB minimum (4GB recommended)
 - **Disk:** 20GB minimum
-- **Ports:** 80, 443, 8000 open
+- **Ports:** 80, 443 open
 
-### Required Accounts
-- [MapTiler](https://maptiler.com) — free account, get an API key
-- [GBIF](https://gbif.org) — free account (for data attribution only, API is open)
-- A domain name with DNS access
+### Accounts needed
+- [MapTiler](https://maptiler.com) — free tier, get an API key
+- A domain name with Cloudflare DNS (recommended)
 
 ### Install Coolify
-Follow the official Coolify installation guide at [coolify.io/docs](https://coolify.io/docs).
-
 ```bash
 curl -fsSL https://cdn.coollabs.io/coolify/install.sh | bash
 ```
-
-Access Coolify at `http://your-server-ip:8000` and complete the setup wizard.
+Access at `http://your-server-ip:8000` and complete setup.
 
 ---
 
-## Architecture Overview
+## Architecture
 
 ```
 whaledata/
-├── api/      → FastAPI backend        → api.whaledata.org
-├── map/      → Vue 3 frontend         → whaledata.org
-├── admin/    → (deprecated, use API)  → api.whaledata.org/admin/
-└── jobs/     → Data sync workers      → internal only
+├── api/    → FastAPI backend   → api.yourdomain.com
+├── map/    → Vue 3 frontend    → yourdomain.com
+└── jobs/   → Sync workers      → internal (no domain)
 ```
 
-The admin panel runs **inside the API service** at `/admin/`. There is no separate admin service needed.
+The **admin panel** lives inside the API service at `/admin/` — no separate service needed.
 
 ---
 
 ## Step 1 — Database (PostGIS)
 
-### Create the Database Service
-
-1. In Coolify, go to your project → **New Resource** → **Database** → **PostgreSQL**
-2. Search for `postgis/postgis` and select **PostGIS**
-3. Configure:
-   - **Image:** `postgis/postgis:17-3.5-alpine`
-   - **Database name:** `whaledata`
-   - **Username:** `whaledata_user`
-   - **Password:** generate a strong password and save it
+1. Coolify → project → **New Resource → Database → PostgreSQL**
+2. Select image: `postgis/postgis:17-3.5-alpine`
+3. Set:
+   - Database name: `whaledata`
+   - Username: `whaledata_user`
+   - Password: generate a strong one and save it
 4. Click **Start**
-
-### Apply the Schema
-
-Once the database is running:
-
-1. Go to the database service → **Terminal**
-2. Run:
+5. Go to database service → **Terminal**:
 
 ```bash
 psql -U whaledata_user -d whaledata
 ```
 
-3. Copy the contents of `api/schema.sql` and paste it into the terminal, or:
+Paste the contents of `api/schema.sql`, then `api/schema_phase2.sql`. Verify with `\dt` — you should see 10 tables. Exit with `\q`.
 
-```bash
-psql -U whaledata_user -d whaledata < /path/to/schema.sql
-```
-
-### Note the Internal Hostname
-
-Go to the database service → **Configuration** → note the internal hostname (e.g. `ibxfh07zdq038tccbwy2g7l4`). You'll need this as `DB_HOST` for all other services.
+**Note the internal hostname** from the database configuration (e.g. `ibxfh07zdq038tccbwy2g7l4`). You'll use this as `DB_HOST` everywhere.
 
 ---
 
 ## Step 2 — API Service
 
-### Create the Application
-
-1. Coolify → **New Resource** → **Application** → **GitHub** (or your Git provider)
-2. Select the `whaledata` repository
-3. Configure:
+1. Coolify → **New Resource → Application → GitHub**
+2. Select the `whaledata` repo
+3. Configuration:
    - **Base Directory:** `/api`
    - **Build Pack:** `Dockerfile`
    - **Port:** `8000`
    - **Domain:** `https://api.yourdomain.com`
-
-### Environment Variables
-
-Go to **Environment Variables** and add all of these with **Available at Runtime** checked:
+4. **Configuration → Custom Docker Options:** `--network=coolify`
+5. **Environment Variables** (all Runtime):
 
 | Variable | Value |
 |----------|-------|
@@ -102,238 +78,144 @@ Go to **Environment Variables** and add all of these with **Available at Runtime
 | `DB_NAME` | `whaledata` |
 | `DB_USER` | `whaledata_user` |
 | `DB_PASSWORD` | your DB password |
-| `ADMIN_USER` | your chosen admin username |
-| `ADMIN_PASSWORD` | your chosen admin password |
+| `ADMIN_USER` | your admin username |
+| `ADMIN_PASSWORD` | your admin password |
 
-### Network Configuration
-
-1. Go to **Configuration** → **Custom Docker Options**
-2. Add `--network=coolify` to ensure the API can reach the database
-
-### Deploy
-
-Click **Deploy**. Once running, verify:
-
+6. **Deploy**. Verify:
 ```bash
 curl https://api.yourdomain.com/health
-# {"status":"ok","service":"whaledata-api"}
+# {"status":"ok","service":"whaledata-api","version":"2.0.0"}
 ```
 
-### Admin Panel
-
-The admin panel is available at `https://api.yourdomain.com/admin/`
-
-Your browser will prompt for the `ADMIN_USER` and `ADMIN_PASSWORD` you set above.
-
-To access it via a cleaner URL (e.g. `admin.yourdomain.com`), set up a Cloudflare Redirect Rule:
-- **When:** Hostname equals `admin.yourdomain.com`
-- **Redirect to:** `https://api.yourdomain.com/admin/`
-- **Type:** 301
+Admin panel: `https://api.yourdomain.com/admin/`
+API docs: `https://api.yourdomain.com/docs`
 
 ---
 
 ## Step 3 — Map Frontend
 
-### Create the Application
-
-1. Coolify → **New Resource** → **Application** → **GitHub**
-2. Select the `whaledata` repository
-3. Configure:
+1. Coolify → **New Resource → Application → GitHub**
+2. Select the `whaledata` repo
+3. Configuration:
    - **Base Directory:** `/map`
    - **Build Pack:** `Dockerfile`
    - **Port:** `80`
    - **Domain:** `https://yourdomain.com`
-
-### Environment Variables
-
-Go to **Environment Variables** and add both with **Available at Buildtime AND Runtime** checked:
+4. **Environment Variables** (both **Buildtime AND Runtime**):
 
 | Variable | Value |
 |----------|-------|
 | `VITE_API_URL` | `https://api.yourdomain.com` |
 | `VITE_MAPTILER_KEY` | your MapTiler API key |
 
-> ⚠️ **Important:** Vite bakes environment variables at build time. Both `VITE_*` variables must have **Available at Buildtime** checked, otherwise the map will fail to load.
+> ⚠️ `VITE_*` variables must have **Available at Buildtime** checked — Vite bakes them in at build time.
 
-### Deploy
-
-Click **Deploy**. Visit `https://yourdomain.com` — the globe should load with whale data.
+5. **Deploy**. Visit `https://yourdomain.com` — the globe loads with data.
 
 ---
 
-## Step 4 — Jobs Service (Data Sync)
+## Step 4 — Jobs Service
 
-### Create the Application
-
-1. Coolify → **New Resource** → **Application** → **GitHub**
-2. Select the `whaledata` repository
-3. Configure:
+1. Coolify → **New Resource → Application → GitHub**
+2. Select the `whaledata` repo
+3. Configuration:
    - **Base Directory:** `/jobs`
    - **Build Pack:** `Dockerfile`
    - **No domain needed**
+4. **Custom Docker Options:** `--network=coolify`
+5. Same DB environment variables as API service (no `ADMIN_*` needed)
+6. **Deploy**
 
-### Environment Variables
+### Seed initial data
 
-Same DB variables as the API service:
-
-| Variable | Value |
-|----------|-------|
-| `DB_HOST` | your PostGIS internal hostname |
-| `DB_PORT` | `5432` |
-| `DB_NAME` | `whaledata` |
-| `DB_USER` | `whaledata_user` |
-| `DB_PASSWORD` | your DB password |
-
-### Network Configuration
-
-Add `--network=coolify` to **Custom Docker Options** (same as API).
-
-### Initial Data Load
-
-Once deployed, go to the jobs service → **Terminal** and run:
+Go to jobs service → **Terminal**:
 
 ```bash
 python -m app.sync_gbif
 python -m app.sync_obis
+python -m app.sync_strandings
+python -m app.sync_acoustics
+python -m app.sync_inaturalist
+python -m app.sync_historical
 ```
 
-This will populate the database with ~7,500 whale sightings. Expect it to take 2–5 minutes.
+Each takes 1–5 minutes. Total: ~25,000 records across all sources.
 
-### Scheduled Sync (Keep Data Fresh)
+Alternatively trigger syncs from the admin panel at `api.yourdomain.com/admin/` → **Manual Sync**.
 
-Set up daily automatic syncs:
+### Scheduled tasks
 
-1. Go to the **jobs** service → **Scheduled Tasks**
-2. Add two tasks:
+Go to jobs service → **Scheduled Tasks** → **Add** for each:
 
-**GBIF Sync (daily at 3:00 AM):**
-- Command: `python -m app.sync_gbif`
-- Schedule: `0 3 * * *`
-- Timeout: `3600`
-
-**OBIS Sync (daily at 3:30 AM):**
-- Command: `python -m app.sync_obis`
-- Schedule: `30 3 * * *`
-- Timeout: `3600`
-
-> Note: You can also trigger syncs manually from the admin panel at `api.yourdomain.com/admin/` → **Manual Sync**.
+| Name | Command | Schedule | Timeout |
+|------|---------|----------|---------|
+| GBIF sync | `python -m app.sync_gbif` | `0 3 * * 0` | 3600 |
+| OBIS sync | `python -m app.sync_obis` | `0 4 * * 0` | 3600 |
+| Strandings | `python -m app.sync_strandings` | `0 3 1 * *` | 3600 |
+| Acoustics | `python -m app.sync_acoustics` | `0 4 1 * *` | 3600 |
+| iNaturalist | `python -m app.sync_inaturalist` | `0 3 * * 3` | 3600 |
+| Historical | `python -m app.sync_historical` | `0 5 1 1 *` | 3600 |
 
 ---
 
-## Step 5 — DNS & Cloudflare Setup
+## Step 5 — DNS & Cloudflare
 
-### DNS Records
-
-In your DNS provider (or Cloudflare), add:
-
+### DNS records
 | Type | Name | Value |
 |------|------|-------|
 | `A` | `@` | your server IP |
 | `A` | `www` | your server IP |
 | `A` | `api` | your server IP |
 
-### Cloudflare Settings (if using Cloudflare)
+### Cloudflare settings
+- SSL/TLS: **Full (strict)**
+- Always Use HTTPS: **On**
 
-- Set SSL/TLS mode to **Full (strict)**
-- Enable **Always Use HTTPS**
-- Coolify handles SSL certificates via Let's Encrypt automatically
+### Admin URL redirect (optional)
+Cloudflare → **Rules → Redirect Rules → Create**:
+- When: Hostname equals `admin.yourdomain.com`
+- Then: Redirect to `https://api.yourdomain.com/admin/`
+- Type: 301
 
-### Auto Deploy via Webhook
-
-To auto-deploy when you push to GitHub:
-
-1. Go to your map/API service → **Webhooks**
-2. Copy the GitHub webhook URL
-3. In GitHub → your repo → **Settings → Webhooks → Add webhook**
-4. Paste the URL, set content type to `application/json`, select **Just the push event**
-
----
-
-## Environment Variables Reference
-
-### API Service (`/api`)
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `DB_HOST` | ✅ | PostGIS internal hostname from Coolify |
-| `DB_PORT` | ✅ | Database port (default: `5432`) |
-| `DB_NAME` | ✅ | Database name (default: `whaledata`) |
-| `DB_USER` | ✅ | Database username |
-| `DB_PASSWORD` | ✅ | Database password |
-| `ADMIN_USER` | ✅ | Admin panel username |
-| `ADMIN_PASSWORD` | ✅ | Admin panel password |
-
-### Map Service (`/map`)
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `VITE_API_URL` | ✅ | Full URL of your API (e.g. `https://api.yourdomain.com`) |
-| `VITE_MAPTILER_KEY` | ✅ | MapTiler API key from [maptiler.com](https://maptiler.com) |
-
-### Jobs Service (`/jobs`)
-
-Same DB variables as API service. No additional variables needed.
+### Auto-deploy via webhook
+1. Coolify → service → **Webhooks** → copy URL
+2. GitHub → repo → **Settings → Webhooks → Add**
+3. Paste URL, content type `application/json`, trigger: push event
 
 ---
 
 ## Troubleshooting
 
-### Map shows blank / no data
-- Check `VITE_API_URL` is set with **Available at Buildtime** checked
-- Verify the API health check: `curl https://api.yourdomain.com/health`
-- Check CORS — the API's `main.py` must include your map domain in `allow_origins`
+**Globe loads but no data**
+- Check `VITE_API_URL` has Buildtime checked, redeploy map service
+- Verify: `curl https://api.yourdomain.com/sightings/species-summary`
 
-### Admin panel shows 0s / no data
-- Ensure `--network=coolify` is in the API service's Custom Docker Options
-- Verify all `DB_*` env vars are set correctly in the API service
-- Check the API logs in Coolify for database connection errors
+**Admin shows all zeros**
+- Confirm `--network=coolify` in API service Custom Docker Options
+- Check all `DB_*` env vars are set correctly in the API service
 
-### Database connection refused
-- Confirm the PostGIS service is running (green status in Coolify)
-- Use the exact internal hostname from the database service configuration
-- Both services must be on the same Coolify network
+**DB connection refused**
+- Confirm PostGIS service is running (green in Coolify)
+- Use exact internal hostname from database service configuration
 
-### GBIF sync returns 400 error
-- This was caused by an invalid `basisOfRecord` parameter — ensure you're using the latest `sync_gbif.py`
-- Check GBIF API status at [gbif.org](https://gbif.org)
+**GBIF sync fails with 400**
+- Ensure you're on the latest `sync_gbif.py` (removed invalid `basisOfRecord` param)
 
-### Map tiles not loading
-- Verify your MapTiler API key is valid at [cloud.maptiler.com](https://cloud.maptiler.com)
-- Ensure the key has no domain restrictions that would block your domain
-- Check browser console for 401 errors from MapTiler
+**Manual sync fails with "No module named..."**
+- The sync scripts in `api/app/admin/` use `from app.admin.sync_db import get_connection`
+- The scripts in `jobs/app/` use `from app.database import get_connection`
+- Do not mix them between services
 
-### Auto-deploy not triggering
-- Verify the GitHub webhook is configured with the correct Coolify URL
-- Check Coolify **Webhooks** page for delivery history
-- Ensure **Auto Deploy** is checked in the service's **Advanced** settings
+**Map tiles not loading**
+- Verify MapTiler key at [cloud.maptiler.com](https://cloud.maptiler.com)
+- Check browser console for 401 errors
 
 ---
 
-## Updating whaledata.org
+## Updating
 
-### Code Updates
-Push to your GitHub repository. If webhooks are configured, Coolify will auto-deploy. Otherwise, click **Redeploy** in the Coolify service.
+Push to GitHub — Coolify auto-deploys if webhooks are configured, otherwise click **Redeploy**.
 
-### Database Password Change
-1. Update the password in the Coolify database service
-2. Update `DB_PASSWORD` in all services (API, jobs) that connect to it
-3. Redeploy API and jobs services
+**After schema changes:** Connect to DB terminal and run the new SQL before deploying the API.
 
-### Adding New Species Data
-Use the admin panel → **Manual Sync** to trigger a fresh data pull, or run manually in the jobs terminal:
-```bash
-python -m app.sync_gbif
-python -m app.sync_obis
-```
-
----
-
-## Data Sources & Attribution
-
-whaledata.org uses openly licensed data:
-
-- **GBIF** — [gbif.org](https://gbif.org) — CC BY 4.0
-- **OBIS** — [obis.org](https://obis.org) — CC BY 4.0
-- **MapTiler** — map tiles — [maptiler.com](https://maptiler.com)
-
-If you host a public instance of whaledata.org, please maintain attribution to these data sources.
+**After adding new sync scripts:** Copy them to both `jobs/app/` and `api/app/admin/` (with different import paths).

@@ -2,255 +2,292 @@
 
 Base URL: `https://api.whaledata.org`
 
-All endpoints return JSON. No authentication required for public endpoints.
+All endpoints return JSON. No authentication required. Interactive docs: [api.whaledata.org/docs](https://api.whaledata.org/docs)
 
 ---
 
-## Endpoints
+## Core endpoints
 
-### Health Check
-
+### Health check
 ```
 GET /health
 ```
-
-Returns service status.
-
-**Response**
 ```json
-{
-  "status": "ok",
-  "service": "whaledata-api"
-}
+{ "status": "ok", "service": "whaledata-api", "version": "2.0.0" }
 ```
 
 ---
 
-### List Species
-
+### Species
 ```
 GET /species
 ```
+Returns all species with conservation metadata.
 
-Returns all species in the database with conservation metadata.
-
-**Response**
 ```json
 {
-  "data": [
-    {
-      "id": 1,
-      "scientific_name": "Megaptera novaeangliae",
-      "common_name": "Humpback whale",
-      "conservation_status": "LC",
-      "population_trend": "increasing"
-    }
-  ]
+  "data": [{
+    "id": 1,
+    "scientific_name": "Megaptera novaeangliae",
+    "common_name": "Humpback whale",
+    "conservation_status": "LC",
+    "population_trend": "increasing"
+  }]
 }
 ```
-
----
-
-### Get Species by ID
 
 ```
 GET /species/{id}
 ```
-
-Returns a single species record.
-
-**Parameters**
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `id` | integer | Species ID |
-
-**Example**
-```bash
-curl https://api.whaledata.org/species/1
-```
+Returns a single species by ID.
 
 ---
 
-### List Sightings
-
+### Sightings
 ```
 GET /sightings/
 ```
 
-Returns whale sighting records with coordinates. Designed to feed directly into map visualisations.
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `species` | string | Filter by common name e.g. `Humpback whale` |
+| `from_date` | string | Start date `YYYY-MM-DD` |
+| `to_date` | string | End date `YYYY-MM-DD` |
+| `limit` | integer | Max records (default: 5000, max: 10000) |
 
-**Query Parameters**
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `species` | string | — | Filter by common name, e.g. `Humpback whale` |
-| `from_date` | string | — | Start date, format `YYYY-MM-DD` |
-| `to_date` | string | — | End date, format `YYYY-MM-DD` |
-| `limit` | integer | `5000` | Max records to return (max: `10000`) |
-
-**Example**
 ```bash
-# All sightings (up to 5000)
-curl https://api.whaledata.org/sightings/
+# All sightings
+curl "https://api.whaledata.org/sightings/?limit=5000"
 
-# Blue whale sightings only
-curl "https://api.whaledata.org/sightings/?species=Blue+whale"
-
-# Sightings from 2020 onwards
-curl "https://api.whaledata.org/sightings/?from_date=2020-01-01"
-
-# Combined filters
-curl "https://api.whaledata.org/sightings/?species=Humpback+whale&from_date=2022-01-01&limit=100"
+# Species + date filter
+curl "https://api.whaledata.org/sightings/?species=Blue+whale&from_date=2020-01-01"
 ```
 
-**Response**
 ```json
 {
-  "data": [
-    {
-      "id": 1234,
-      "common_name": "Humpback whale",
-      "scientific_name": "Megaptera novaeangliae",
-      "longitude": -157.823,
-      "latitude": 21.304,
-      "sighted_on": "2024-03-15",
-      "region": "Hawaii",
-      "source": "gbif",
-      "source_url": "https://www.gbif.org/occurrence/4567890",
-      "individual_count": 1
+  "data": [{
+    "id": 1234,
+    "common_name": "Humpback whale",
+    "scientific_name": "Megaptera novaeangliae",
+    "longitude": -157.823,
+    "latitude": 21.304,
+    "sighted_on": "2024-03-15",
+    "region": "Hawaii",
+    "source": "gbif",
+    "source_url": "https://www.gbif.org/occurrence/4567890"
+  }],
+  "count": 1200
+}
+```
+
+```
+GET /sightings/species-summary
+```
+Returns count per species with date ranges. Used to populate the species filter UI.
+
+---
+
+### Migration routes
+```
+GET /routes/
+```
+Returns migration routes as GeoJSON LineStrings. Each route has waypoint coordinates ready to render on a map.
+
+```json
+{
+  "data": [{
+    "id": 1,
+    "name": "North Pacific — Hawaii to Alaska",
+    "common_name": "Humpback whale",
+    "season": "summer",
+    "direction": "northbound",
+    "origin_region": "Hawaii",
+    "destination_region": "Gulf of Alaska",
+    "distance_km": 5000,
+    "geojson": {
+      "type": "LineString",
+      "coordinates": [[-158, 21], [-155, 25], [-148, 57]]
     }
-  ],
-  "count": 1200,
-  "filters": {
-    "species": "Humpback whale",
-    "from_date": null,
-    "to_date": null
+  }]
+}
+```
+
+---
+
+## Phase 2 — Data layer endpoints
+
+All layer endpoints share the same pattern: filtered list + summary.
+
+### Strandings
+```
+GET /strandings/
+```
+Whale stranding events (beached or dead on shore). Source: NOAA via OBIS.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `species` | string | Filter by common name |
+| `from_date` | string | Start date `YYYY-MM-DD` |
+| `to_date` | string | End date `YYYY-MM-DD` |
+| `condition` | string | `alive` / `dead` / `unknown` |
+| `limit` | integer | Max records (default: 2000) |
+
+```json
+{
+  "data": [{
+    "id": 1,
+    "common_name": "Humpback whale",
+    "longitude": -70.123,
+    "latitude": 42.456,
+    "stranded_on": "2023-04-12",
+    "condition": "dead",
+    "region": "Cape Cod",
+    "country": "United States",
+    "source": "obis"
+  }],
+  "layer": "strandings"
+}
+```
+
+```
+GET /strandings/summary
+```
+Count per species with date ranges.
+
+---
+
+### Acoustics
+```
+GET /acoustics/
+```
+Underwater acoustic detections from hydrophones. Source: NOAA PACM via OBIS.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `species` | string | Filter by common name |
+| `from_date` | string | Start date |
+| `to_date` | string | End date |
+| `call_type` | string | `song` / `contact` / `click` / `unknown` |
+| `limit` | integer | Max records (default: 2000) |
+
+```json
+{
+  "data": [{
+    "id": 1,
+    "common_name": "Humpback whale",
+    "longitude": -158.5,
+    "latitude": 22.1,
+    "detected_on": "2022-11-03",
+    "call_type": "song",
+    "confidence": "high",
+    "platform": "HARP buoy Hawaii"
+  }],
+  "layer": "acoustics"
+}
+```
+
+```
+GET /acoustics/summary
+```
+
+---
+
+### iNaturalist
+```
+GET /inaturalist/
+```
+Community-verified research-grade whale observations. Source: iNaturalist.org.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `species` | string | Filter by common name |
+| `from_date` | string | Start date |
+| `to_date` | string | End date |
+| `quality_grade` | string | `research` / `needs_id` / `casual` |
+| `limit` | integer | Max records (default: 2000) |
+
+```json
+{
+  "data": [{
+    "id": 1,
+    "common_name": "Grey whale",
+    "longitude": -124.3,
+    "latitude": 48.5,
+    "observed_on": "2024-02-14",
+    "quality_grade": "research",
+    "region": "Olympic Peninsula",
+    "source_url": "https://www.inaturalist.org/observations/12345",
+    "observer": "ocean_watcher"
+  }],
+  "layer": "inaturalist"
+}
+```
+
+```
+GET /inaturalist/summary
+```
+
+---
+
+### Historical
+```
+GET /historical/
+```
+Pre-1950 records from digitised whaling logs and historical surveys. Source: GBIF.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `species` | string | Filter by common name |
+| `from_year` | integer | Start year e.g. `1800` |
+| `to_year` | integer | End year e.g. `1950` |
+| `limit` | integer | Max records (default: 2000) |
+
+```json
+{
+  "data": [{
+    "id": 1,
+    "common_name": "Sperm whale",
+    "longitude": -30.5,
+    "latitude": 15.2,
+    "sighted_on": "1847-01-01",
+    "year": 1847,
+    "vessel": "Ship log — Pacific voyage",
+    "region": "North Atlantic"
+  }],
+  "layer": "historical"
+}
+```
+
+```
+GET /historical/summary
+```
+Returns count per species with earliest and latest year.
+
+---
+
+### Layers summary
+```
+GET /layers/summary
+```
+Returns counts for **all layers in one request**. Used by the frontend to populate the layers panel without 4 separate API calls.
+
+```json
+{
+  "layers": {
+    "sightings":   { "total": 7590,  "data": [{ "common_name": "...", "source": "gbif", "count": 1213 }] },
+    "strandings":  { "total": 12000, "data": [{ "common_name": "...", "count": 2000 }] },
+    "acoustics":   { "total": 750,   "data": [{ "common_name": "...", "count": 662 }] },
+    "inaturalist": { "total": 3298,  "data": [{ "common_name": "...", "count": 1200 }] },
+    "historical":  { "total": 1496,  "data": [{ "common_name": "...", "count": 1200 }] }
   }
 }
 ```
 
 ---
 
-### Species Sighting Summary
-
-```
-GET /sightings/species-summary
-```
-
-Returns a count of sightings per species with date ranges. Used to populate species filter UI.
-
-**Example**
-```bash
-curl https://api.whaledata.org/sightings/species-summary
-```
-
-**Response**
-```json
-{
-  "data": [
-    {
-      "common_name": "Humpback whale",
-      "scientific_name": "Megaptera novaeangliae",
-      "sighting_count": 1203,
-      "earliest": "2023-01-01",
-      "latest": "2026-02-28"
-    },
-    {
-      "common_name": "Blue whale",
-      "scientific_name": "Balaenoptera musculus",
-      "sighting_count": 1202,
-      "earliest": "2024-01-10",
-      "latest": "2026-03-11"
-    }
-  ]
-}
-```
-
----
-
-### Migration Routes
-
-```
-GET /routes/
-```
-
-Returns all whale migration routes as GeoJSON LineStrings. Used to render animated migration arcs on the globe.
-
-**Example**
-```bash
-curl https://api.whaledata.org/routes/
-```
-
-**Response**
-```json
-{
-  "data": [
-    {
-      "id": 1,
-      "name": "North Pacific — Hawaii to Alaska",
-      "common_name": "Humpback whale",
-      "scientific_name": "Megaptera novaeangliae",
-      "season": "summer",
-      "direction": "northbound",
-      "origin_region": "Hawaii",
-      "destination_region": "Gulf of Alaska",
-      "distance_km": 5000,
-      "description": "Humpbacks winter in warm Hawaiian waters to breed and calve, then migrate north to rich Alaskan feeding grounds each summer.",
-      "geojson": {
-        "type": "LineString",
-        "coordinates": [
-          [-158, 21],
-          [-155, 25],
-          [-152, 30],
-          [-148, 38],
-          [-143, 46],
-          [-140, 52],
-          [-148, 57],
-          [-152, 58.5]
-        ]
-      }
-    }
-  ],
-  "count": 7
-}
-```
-
----
-
-## Species Reference
-
-| Common Name | Scientific Name | IUCN | GBIF Records |
-|-------------|----------------|------|-------------|
-| Humpback whale | *Megaptera novaeangliae* | LC | 1,200 |
-| Blue whale | *Balaenoptera musculus* | EN | 1,200 |
-| Grey whale | *Eschrichtius robustus* | LC | 1,200 |
-| Orca | *Orcinus orca* | DD | 1,200 |
-| Sperm whale | *Physeter macrocephalus* | VU | 687 |
-| Fin whale | *Balaenoptera physalus* | VU | 1,986 (OBIS) |
-
----
-
-## Data Sources
-
-Sighting data is sourced from:
-
-- **GBIF** (Global Biodiversity Information Facility) — [gbif.org](https://gbif.org)
-  - Taxon keys used: Humpback (2440898), Blue (2440718), Orca (2440483), Grey (2440714), Sperm (2440764), Fin (2440706)
-  - Filtered with `hasCoordinate=true` and `hasGeospatialIssue=false`
-
-- **OBIS** (Ocean Biodiversity Information System) — [obis.org](https://obis.org)
-  - Used for Fin whale data supplementation
-  - AphiaID: 137092
-
-Data is updated daily via scheduled sync.
-
----
-
-## Usage Examples
+## Usage examples
 
 ### Fetch all sightings for a map
-
 ```javascript
 const res  = await fetch('https://api.whaledata.org/sightings/?limit=5000')
 const data = await res.json()
@@ -265,67 +302,53 @@ const geojson = {
 }
 ```
 
-### Filter by species and date range
-
+### Load all layer counts
 ```javascript
-const params = new URLSearchParams({
-  species:   'Blue whale',
-  from_date: '2020-01-01',
-  limit:     '1000'
-})
-const res  = await fetch(`https://api.whaledata.org/sightings/?${params}`)
-const data = await res.json()
-```
-
-### Load migration routes
-
-```javascript
-const res    = await fetch('https://api.whaledata.org/routes/')
+const res    = await fetch('https://api.whaledata.org/layers/summary')
 const data   = await res.json()
-const routes = data.data
+const layers = data.layers
 
-// Each route has a .geojson property ready to use as a GeoJSON geometry
-routes.forEach(route => {
-  console.log(route.name, route.geojson.coordinates.length, 'waypoints')
-})
+console.log(`Sightings: ${layers.sightings.total}`)
+console.log(`Strandings: ${layers.strandings.total}`)
 ```
 
-### Get species summary for a filter UI
-
+### Filter by species across layers
 ```javascript
-const res     = await fetch('https://api.whaledata.org/sightings/species-summary')
-const data    = await res.json()
-const species = data.data
-
-species.forEach(s => {
-  console.log(`${s.common_name}: ${s.sighting_count} sightings`)
-})
+const species = 'Humpback whale'
+const [sightings, strandings, inat] = await Promise.all([
+  fetch(`https://api.whaledata.org/sightings/?species=${encodeURIComponent(species)}&limit=2000`).then(r => r.json()),
+  fetch(`https://api.whaledata.org/strandings/?species=${encodeURIComponent(species)}&limit=2000`).then(r => r.json()),
+  fetch(`https://api.whaledata.org/inaturalist/?species=${encodeURIComponent(species)}&limit=2000`).then(r => r.json()),
+])
 ```
 
 ---
 
-## Rate Limits
+## Species reference
 
-There are currently no enforced rate limits. Please be considerate — avoid hammering the API with high-frequency requests. For bulk data access, consider downloading from [GBIF](https://gbif.org) or [OBIS](https://obis.org) directly.
+| Common Name | Scientific Name | IUCN | GBIF Taxon Key |
+|-------------|----------------|------|----------------|
+| Humpback whale | *Megaptera novaeangliae* | LC | 2440898 |
+| Blue whale | *Balaenoptera musculus* | EN | 2440718 |
+| Grey whale | *Eschrichtius robustus* | LC | 2440714 |
+| Orca | *Orcinus orca* | DD | 2440483 |
+| Sperm whale | *Physeter macrocephalus* | VU | 2440764 |
+| Fin whale | *Balaenoptera physalus* | VU | 2440706 |
 
 ---
+
+## Rate limits
+
+No enforced rate limits. For bulk data access download directly from [GBIF](https://gbif.org) or [OBIS](https://obis.org).
 
 ## CORS
 
-The API allows cross-origin requests from any origin for public endpoints. If you are self-hosting and restricting access, update `allow_origins` in `api/app/main.py`.
+Public endpoints allow all origins. If self-hosting with restricted CORS, update `allow_origins` in `api/app/main.py`.
 
----
+## Self-hosting
 
-## Self-Hosting
-
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for instructions on running your own instance.
-
----
+See [DEPLOYMENT.md](./DEPLOYMENT.md).
 
 ## Attribution
 
-If you use this API in a project, please credit:
-
-- **whaledata.org** — [whaledata.org](https://whaledata.org)
-- **GBIF** — [gbif.org](https://gbif.org)
-- **OBIS** — [obis.org](https://obis.org)
+If using this API please credit: **whaledata.org**, **GBIF**, **OBIS**, **NOAA**, **iNaturalist**.
