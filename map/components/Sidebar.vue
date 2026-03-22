@@ -124,7 +124,7 @@
 
       <!-- Footer -->
       <div class="sidebar-footer">
-        <div class="footer-note">Data: GBIF · Updated daily</div>
+        <div class="footer-note">Data: GBIF · OBIS · iNaturalist · NOAA · Updated regularly</div>
         <div class="footer-note">
           Hobby project ·
           <a href="https://kyraweb.ca" target="_blank" rel="noopener">kyraweb.ca</a>

@@ -890,6 +890,10 @@ onUnmounted(() => { window.removeEventListener('resize', checkMobile); window.re
 .help-grid {
   display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
 }
+@media (max-width: 767px) {
+  .help-grid { grid-template-columns: 1fr; }
+  .help-modal { border-radius: 14px; }
+}
 .help-item {
   display: flex; align-items: center; gap: 10px;
   padding: 8px 10px;
