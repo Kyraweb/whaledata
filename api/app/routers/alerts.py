@@ -149,7 +149,9 @@ def subscribe(req: SubscribeRequest):
 
         sent = send_confirmation_email(req.email, token, req.dict())
         if not sent:
-            raise HTTPException(status_code=500, detail="Failed to send confirmation email.")
+            # Roll back the insert so they can retry
+            conn.rollback()
+            raise HTTPException(status_code=500, detail="Failed to send confirmation email. Please check AWS SES configuration.")
 
         return {"status": "pending", "message": "Check your email to confirm your subscription."}
 
