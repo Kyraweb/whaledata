@@ -271,3 +271,82 @@ def run_sync(job: str, user: str = Depends(require_auth)):
         return {"status": "error", "output": "Timed out after 1 hour"}
     except Exception as e:
         return {"status": "error", "output": str(e)}
+
+
+# ── Alert Subscribers ─────────────────────────────────────────
+
+@router.get("/subscribers", response_class=HTMLResponse)
+def subscribers_page(request: Request, user: str = Depends(require_auth)):
+    try:
+        conn = get_connection()
+        cur  = conn.cursor()
+        cur.execute("""
+            SELECT id, email, confirmed, species_filter, region_filter, layer_filter,
+                   created_at, last_sent_at
+            FROM alert_subscribers
+            ORDER BY created_at DESC;
+        """)
+        subscribers = cur.fetchall()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        subscribers = []
+    return templates.TemplateResponse("subscribers.html", {
+        "request": request, "now": now(),
+        "subscribers": subscribers,
+        "total": len(subscribers),
+        "confirmed": sum(1 for s in subscribers if s["confirmed"]),
+    })
+
+
+@router.get("/subscribers/export")
+def export_subscribers(user: str = Depends(require_auth)):
+    from fastapi.responses import StreamingResponse
+    import csv, io
+
+    conn = get_connection()
+    cur  = conn.cursor()
+    cur.execute("""
+        SELECT email, confirmed, species_filter, region_filter, layer_filter,
+               created_at, last_sent_at
+        FROM alert_subscribers
+        WHERE confirmed = TRUE
+        ORDER BY created_at DESC;
+    """)
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["email", "confirmed", "species", "region", "layer", "subscribed_at", "last_sent_at"])
+    for r in rows:
+        writer.writerow([
+            r["email"], r["confirmed"],
+            r["species_filter"] or "all",
+            r["region_filter"]  or "all",
+            r["layer_filter"]   or "all",
+            r["created_at"].strftime("%Y-%m-%d") if r["created_at"] else "",
+            r["last_sent_at"].strftime("%Y-%m-%d") if r["last_sent_at"] else "never",
+        ])
+
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=whaledata_subscribers.csv"}
+    )
+
+
+@router.post("/subscribers/delete")
+def delete_subscriber(
+    subscriber_id: int = Form(...),
+    user: str = Depends(require_auth),
+):
+    conn = get_connection()
+    cur  = conn.cursor()
+    cur.execute("DELETE FROM alert_subscribers WHERE id = %s;", (subscriber_id,))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return RedirectResponse("/admin/subscribers?msg=Deleted", status_code=303)
