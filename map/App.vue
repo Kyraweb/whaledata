@@ -31,7 +31,10 @@
             <span>🐋</span>
             <span class="sheet-brand-title">whaledata<span class="sheet-brand-tld">.org</span></span>
           </div>
-          <button class="sheet-close" @click="sheetOpen = false">✕</button>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="sheet-help-btn" @click="helpOpen = true; sheetOpen = false">?</button>
+            <button class="sheet-close" @click="sheetOpen = false">✕</button>
+          </div>
         </div>
 
         <div class="sheet-stats">
@@ -146,7 +149,101 @@
       <button class="top-btn btn-nearme" @click="nearMe" :class="{ loading: nearMeLoading }">
         {{ nearMeLoading ? '...' : '📍 Near me' }}
       </button>
+      <button class="top-btn btn-help" @click="helpOpen = true">
+        ? Help
+      </button>
     </div>
+
+    <!-- Help modal -->
+    <Transition name="help-modal">
+      <div v-if="helpOpen" class="help-backdrop" @click.self="helpOpen = false">
+        <div class="help-modal">
+          <div class="help-header">
+            <div class="help-title">How to use whaledata.org</div>
+            <button class="help-close" @click="helpOpen = false">✕</button>
+          </div>
+          <div class="help-body">
+
+            <div class="help-section">
+              <div class="help-section-title">🌍 Navigating the globe</div>
+              <div class="help-grid">
+                <div class="help-item"><span class="help-key">Drag</span><span class="help-desc">Rotate the globe</span></div>
+                <div class="help-item"><span class="help-key">Scroll</span><span class="help-desc">Zoom in and out</span></div>
+                <div class="help-item"><span class="help-key">Click cluster</span><span class="help-desc">Expand grouped sightings</span></div>
+                <div class="help-item"><span class="help-key">Hover dot</span><span class="help-desc">See sighting details</span></div>
+              </div>
+            </div>
+
+            <div class="help-section">
+              <div class="help-section-title">⌨️ Keyboard shortcuts</div>
+              <div class="help-grid">
+                <div class="help-item"><span class="help-key">1 – 6</span><span class="help-desc">Select species</span></div>
+                <div class="help-item"><span class="help-key">0</span><span class="help-desc">Show all species</span></div>
+                <div class="help-item"><span class="help-key">Space</span><span class="help-desc">Toggle globe rotation</span></div>
+                <div class="help-item"><span class="help-key">Esc</span><span class="help-desc">Close panels</span></div>
+              </div>
+            </div>
+
+            <div class="help-section">
+              <div class="help-section-title">⚡ Data layers explained</div>
+              <div class="help-layers">
+                <div class="help-layer">
+                  <span class="help-dot" style="background:#00e5ff"></span>
+                  <div><strong>Sightings</strong> — Verified visual observations from GBIF and OBIS scientific databases. These are confirmed whale encounters submitted by researchers and field observers.</div>
+                </div>
+                <div class="help-layer">
+                  <span class="help-dot" style="background:#ff5a5a"></span>
+                  <div><strong>Strandings</strong> — Whales found dead or alive on beaches and shores. Compiled from NOAA stranding network reports. Strandings can indicate disease, injury, pollution, or disorientation from sonar.</div>
+                </div>
+                <div class="help-layer">
+                  <span class="help-dot" style="background:#9664ff"></span>
+                  <div><strong>Acoustics</strong> — Detections from underwater hydrophone networks. Whales are heard but not seen — useful for tracking species in deep water or at night.</div>
+                </div>
+                <div class="help-layer">
+                  <span class="help-dot" style="background:#64c864"></span>
+                  <div><strong>iNaturalist</strong> — Research-grade citizen science observations verified by the community. Anyone can submit a sighting; only those confirmed by experts appear here.</div>
+                </div>
+                <div class="help-layer">
+                  <span class="help-dot" style="background:#ffb432"></span>
+                  <div><strong>Historical</strong> — Pre-1950 records from digitised 19th and early 20th century whaling logs. Shows where whales roamed before industrial hunting began.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="help-section">
+              <div class="help-section-title">🌿 Conservation layers</div>
+              <div class="help-layers">
+                <div class="help-layer">
+                  <span class="help-dot" style="background:#00c97a;border-radius:3px"></span>
+                  <div><strong>Feeding Grounds</strong> — Known areas where whales concentrate to feed. Protecting these zones is critical — disruption during feeding season can affect an animal's survival through winter.</div>
+                </div>
+                <div class="help-layer">
+                  <span class="help-dot" style="background:#ff4444;border-radius:3px"></span>
+                  <div><strong>Sonar Exercise Zones</strong> — Naval areas where active sonar is used. High-intensity sonar can cause acoustic trauma, disorientation, and mass strandings in cetaceans. Compare these zones against feeding grounds and strandings data.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="help-section">
+              <div class="help-section-title">🚢 Ship lanes</div>
+              <p class="help-p">Toggle the shipping lane overlay to see where major commercial shipping corridors cross whale habitats. Ship strikes are a leading cause of death for large whales — Blue, Fin, and Humpback whales are most affected.</p>
+            </div>
+
+            <div class="help-section">
+              <div class="help-section-title">📅 Year range filter</div>
+              <p class="help-p">Slide the year filter to explore how sighting data changes over time. Historical records go back to the 1780s. Modern verified sightings begin in earnest from the 1990s as scientific monitoring programmes expanded.</p>
+            </div>
+
+            <div class="help-footer">
+              Data updated regularly from open scientific sources.
+              <a href="https://api.whaledata.org/docs" target="_blank">API docs</a> ·
+              <a href="https://github.com/Kyraweb/whaledata" target="_blank">GitHub</a>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </Transition>
 
     <!-- Year filter button + popup — desktop -->
     <div v-if="!isMobile" class="year-btn-wrap">
@@ -229,6 +326,7 @@ const activeLayers    = ref({
 })
 const activeConservation = ref({ feeding: false, sonar: false })
 const shareCopied    = ref(false)
+const helpOpen       = ref(false)
 const yearOpen       = ref(false)
 const nearMeLoading  = ref(false)
 const layerData = ref({
@@ -540,6 +638,12 @@ onUnmounted(() => { window.removeEventListener('resize', checkMobile); window.re
 }
 .sheet-brand-tld { color: var(--cyan); }
 
+.sheet-help-btn {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: none; border: 1px solid var(--border);
+  color: var(--text-secondary); font-size: 15px; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
 .sheet-close {
   width: 32px; height: 32px;
   border-radius: 8px;
@@ -723,6 +827,87 @@ onUnmounted(() => { window.removeEventListener('resize', checkMobile); window.re
 }
 .bottom-btn.loading { opacity: 0.6; cursor: wait; }
 
+/* ── Help modal ─────────────────────────────────────────────── */
+.help-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 600;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.help-modal {
+  background: rgba(8, 13, 26, 0.99);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(0,229,255,0.2);
+  border-radius: 18px;
+  width: 580px; max-width: 100%;
+  max-height: 85vh;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 0 60px rgba(0,229,255,0.08);
+}
+.help-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.help-title { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+.help-close {
+  width: 30px; height: 30px; border-radius: 8px;
+  background: none; border: 1px solid var(--border);
+  color: var(--text-secondary); font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.help-body {
+  overflow-y: auto; padding: 20px 24px 8px;
+  -webkit-overflow-scrolling: touch;
+}
+.help-section { margin-bottom: 24px; }
+.help-section-title {
+  font-size: 12px; font-weight: 700;
+  color: var(--cyan); margin-bottom: 10px;
+  text-transform: uppercase; letter-spacing: 0.08em;
+}
+.help-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+}
+.help-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border); border-radius: 8px;
+}
+.help-key {
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--cyan); background: rgba(0,229,255,0.08);
+  border: 1px solid rgba(0,229,255,0.2);
+  padding: 2px 8px; border-radius: 6px;
+  white-space: nowrap; flex-shrink: 0;
+}
+.help-desc { font-size: 12px; color: var(--text-secondary); }
+.help-layers { display: flex; flex-direction: column; gap: 10px; }
+.help-layer {
+  display: flex; gap: 12px; align-items: flex-start;
+  font-size: 13px; color: var(--text-secondary); line-height: 1.6;
+}
+.help-dot {
+  width: 12px; height: 12px; border-radius: 50%;
+  flex-shrink: 0; margin-top: 4px;
+}
+.help-layer strong { color: var(--text-primary); }
+.help-p { font-size: 13px; color: var(--text-secondary); line-height: 1.7; }
+.help-footer {
+  margin-top: 16px; padding: 16px 0;
+  border-top: 1px solid var(--border);
+  font-size: 11px; color: var(--text-muted);
+  display: flex; gap: 12px; align-items: center;
+}
+.help-footer a { color: var(--cyan-dim); text-decoration: none; }
+.help-footer a:hover { color: var(--cyan); }
+.help-modal-enter-active, .help-modal-leave-active { transition: all 0.25s ease; }
+.help-modal-enter-from, .help-modal-leave-to { opacity: 0; transform: scale(0.97); }
+
 /* ── Top-right actions ──────────────────────────────────────── */
 .top-actions {
   position: fixed;
@@ -772,6 +957,17 @@ onUnmounted(() => { window.removeEventListener('resize', checkMobile); window.re
   border-color: rgba(77, 159, 255, 0.6);
   color: #4d9fff;
   box-shadow: 0 0 16px rgba(77, 159, 255, 0.15);
+}
+
+/* Help — white/muted */
+.btn-help {
+  border: 1px solid var(--border-bright);
+  color: var(--text-secondary);
+}
+.btn-help:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.3);
+  color: var(--text-primary);
 }
 
 /* ── Year filter button + popup ────────────────────────────── */
