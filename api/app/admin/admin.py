@@ -13,13 +13,7 @@ router   = APIRouter(prefix="/admin")
 security = HTTPBasic()
 
 BASE_DIR  = os.path.dirname(os.path.abspath(__file__))
-from jinja2 import Environment, FileSystemLoader
-_jinja_env = Environment(
-    loader=FileSystemLoader(os.path.join(BASE_DIR, "templates")),
-    cache_size=0,       # disable LRU cache — prevents unhashable dict error in threads
-    auto_reload=True,
-)
-templates = Jinja2Templates(env=_jinja_env)
+templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
 ADMIN_USER     = os.getenv("ADMIN_USER", "admin")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "changeme")

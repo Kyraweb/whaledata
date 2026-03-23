@@ -3,7 +3,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import species, sightings, routes, strandings, acoustics, inaturalist, historical, layers, alerts
 from app.admin.admin import router as admin_router
-from app.middleware import APIUsageMiddleware
+from app.middleware import log_request_bg, should_log
+import time
 
 app = FastAPI(
     title="whaledata.org API",
@@ -11,7 +12,24 @@ app = FastAPI(
     version="2.0.0"
 )
 
-app.add_middleware(APIUsageMiddleware)
+@app.middleware("http")
+async def usage_logging(request, call_next):
+    from starlette.requests import Request
+    import threading
+    path = request.url.path
+    start = time.time()
+    response = await call_next(request)
+    if should_log(path):
+        duration = round((time.time() - start) * 1000)
+        ip = (request.headers.get("x-forwarded-for") or
+              (request.client.host if request.client else "unknown")).split(",")[0].strip()
+        threading.Thread(
+            target=log_request_bg,
+            args=(ip, path, request.method, response.status_code, duration),
+            daemon=True
+        ).start()
+    return response
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
