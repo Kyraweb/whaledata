@@ -367,4 +367,4 @@ Built with assistance from Claude by Anthropic — used for architecture decisio
 
 ---
 
-*Built with assistance from Claude by Anthropic — used for architecture decisions, code generation, debugging, and documentation across the entire build.*
+*Built with assistance from [Claude](https://claude.ai/) by [Anthropic](https://www.anthropic.com/) — used for architecture decisions, code generation, debugging, and documentation across the entire build.*
