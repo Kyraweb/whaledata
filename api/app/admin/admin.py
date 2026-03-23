@@ -76,16 +76,13 @@ def dashboard(request: Request, user: str = Depends(require_auth)):
     cur.close()
     conn.close()
 
-    return templates.TemplateResponse("dashboard.html", {
-        "request":        request,
-        "now":            now(),
+    return templates.TemplateResponse(request, "dashboard.html", {"now":            now(),
         "total_sightings": total_sightings,
         "species_counts": species_counts,
         "db_size":        db_size,
         "species_total":  species_total,
         "routes_total":   routes_total,
-        "sync_logs":      sync_logs,
-    })
+        "sync_logs":      sync_logs,})
 
 
 # ── Species ───────────────────────────────────────────────────
@@ -105,10 +102,8 @@ def species_page(request: Request, user: str = Depends(require_auth), msg: str =
     species = cur.fetchall()
     cur.close()
     conn.close()
-    return templates.TemplateResponse("species.html", {
-        "request": request, "now": now(),
-        "species": species, "msg": msg,
-    })
+    return templates.TemplateResponse(request, "species.html", {"now": now(),
+        "species": species, "msg": msg,})
 
 
 @router.post("/species/edit")
@@ -169,13 +164,11 @@ def sightings_page(
     cur.close()
     conn.close()
 
-    return templates.TemplateResponse("sightings.html", {
-        "request": request, "now": now(),
+    return templates.TemplateResponse(request, "sightings.html", {"now": now(),
         "sightings": sightings, "total": total,
         "species_list": species_list,
         "sel_species": species, "sel_source": source, "sel_region": region,
-        "msg": msg,
-    })
+        "msg": msg,})
 
 
 @router.post("/sightings/delete")
@@ -215,12 +208,8 @@ def logs_page(request: Request, user: str = Depends(require_auth)):
         logs = []
         import traceback
         error = traceback.format_exc()
-        return templates.TemplateResponse("logs.html", {
-            "request": request, "now": now(), "logs": logs, "error": error,
-        })
-    return templates.TemplateResponse("logs.html", {
-        "request": request, "now": now(), "logs": logs, "error": None,
-    })
+        return templates.TemplateResponse(request, "logs.html", {"now": now(), "logs": logs, "error": error,})
+    return templates.TemplateResponse(request, "logs.html", {"now": now(), "logs": logs, "error": None,})
 
 
 # ── Manual Sync ───────────────────────────────────────────────
@@ -239,9 +228,7 @@ def sync_page(request: Request, user: str = Depends(require_auth)):
         conn.close()
     except Exception:
         logs = []
-    return templates.TemplateResponse("sync.html", {
-        "request": request, "now": now(), "logs": logs,
-    })
+    return templates.TemplateResponse(request, "sync.html", {"now": now(), "logs": logs,})
 
 
 @router.post("/sync/run/{job}")
@@ -291,12 +278,10 @@ def subscribers_page(request: Request, user: str = Depends(require_auth)):
         conn.close()
     except Exception as e:
         subscribers = []
-    return templates.TemplateResponse("subscribers.html", {
-        "request": request, "now": now(),
+    return templates.TemplateResponse(request, "subscribers.html", {"now": now(),
         "subscribers": subscribers,
         "total": len(subscribers),
-        "confirmed": sum(1 for s in subscribers if s["confirmed"]),
-    })
+        "confirmed": sum(1 for s in subscribers if s["confirmed"]),})
 
 
 @router.get("/subscribers/export")
@@ -410,9 +395,7 @@ def usage_page(request: Request, user: str = Depends(require_auth)):
     threshold = int(os.getenv("API_THRESHOLD", "500"))
     flagged   = [ip for ip in top_ips if ip["n"] >= threshold]
 
-    return templates.TemplateResponse("usage.html", {
-        "request": request, "now": now(),
+    return templates.TemplateResponse(request, "usage.html", {"now": now(),
         "last_24h": last_24h, "last_7d": last_7d,
         "top_paths": top_paths, "top_ips": top_ips,
-        "daily": daily, "threshold": threshold, "flagged": flagged,
-    })
+        "daily": daily, "threshold": threshold, "flagged": flagged,})
