@@ -672,7 +672,7 @@ async function submitContact() {
   if (!contactForm.value.email || !contactForm.value.message) return
   contactSubmitting.value = true
   try {
-    const res = await fetch(`${API_URL}/contact`, {
+    const res = await fetch(`${API_URL}/alerts/contact`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(contactForm.value)
