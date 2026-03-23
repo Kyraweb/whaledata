@@ -1,5 +1,7 @@
 # 🐋 whaledata.org
 
+![whaledata.org](https://whaledata.org/og-image.jpg)
+
 **An interactive 3D globe visualising global whale sightings, migration routes, conservation zones, and shipping lane conflicts.**
 
 Live: [whaledata.org](https://whaledata.org) · API: [api.whaledata.org](https://api.whaledata.org)
