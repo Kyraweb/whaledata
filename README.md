@@ -2,7 +2,7 @@
 
 **An interactive 3D globe visualising global whale sightings, migration routes, conservation zones, and shipping lane conflicts.**
 
-Live: [whaledata.org](https://whaledata.org) · API: [api.whaledata.org](https://api.whaledata.org) · Admin: [api.whaledata.org/admin](https://api.whaledata.org/admin)
+Live: [whaledata.org](https://whaledata.org) · API: [api.whaledata.org](https://api.whaledata.org)
 
 ---
 
@@ -37,7 +37,7 @@ whaledata.org aggregates open ocean data from five global sources and renders it
 - Keyboard shortcuts — `1–6` select species, `0` all, `Space` toggle rotation, `Esc` close panels
 
 ### Admin panel
-Full admin at `api.whaledata.org/admin/` — live DB stats, species editor, sightings manager, manual sync triggers for all 6 data sources, full sync logs.
+Full admin — live DB stats, species editor, sightings manager, manual sync triggers for all 6 data sources, full sync logs.
 
 ---
 
