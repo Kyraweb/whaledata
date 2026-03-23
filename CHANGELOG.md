@@ -3,7 +3,7 @@
 All notable changes to this project documented across every iteration.
 Built over approximately 12 months from initial concept to production platform.
 
-Built with assistance from [Claude](https://claude.ai) by [Anthropic](https://anthropic.com).
+Built with assistance from Claude by Anthropic — used for architecture decisions, code generation, debugging, and documentation across the entire build.
 
 ---
 
@@ -367,4 +367,4 @@ Built with assistance from [Claude](https://claude.ai) by [Anthropic](https://an
 
 ---
 
-*Built with [Claude](https://claude.ai) by [Anthropic](https://anthropic.com)*
+*Built with assistance from Claude by Anthropic — used for architecture decisions, code generation, debugging, and documentation across the entire build.*
