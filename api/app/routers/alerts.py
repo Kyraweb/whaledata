@@ -253,3 +253,59 @@ def _page(title: str, body: str, cta: str, url: str) -> str:
   </div>
 </body>
 </html>"""
+
+
+# ── Contact form ──────────────────────────────────────────────
+
+class ContactRequest(BaseModel):
+    name:    str = ""
+    email:   EmailStr
+    subject: str = "other"
+    message: str
+
+
+@router.post("/contact")
+def contact(req: ContactRequest):
+    """Send a contact form submission to alerts@whaledata.org via SES."""
+    import boto3
+    from botocore.exceptions import ClientError
+
+    subject_labels = {
+        "bug": "Bug Report",
+        "suggestion": "Suggestion / Feature Request",
+        "data": "Data Question",
+        "collaboration": "Collaboration Inquiry",
+        "other": "General Enquiry",
+    }
+    label = subject_labels.get(req.subject, "Message")
+
+    html = f"""
+<html><body style="font-family:Arial,sans-serif;padding:20px;background:#f5f5f5">
+<div style="background:white;padding:24px;border-radius:8px;max-width:560px">
+  <h2 style="color:#0a1628;margin-top:0">whaledata.org — {label}</h2>
+  <p><strong>From:</strong> {req.name or "—"} &lt;{req.email}&gt;</p>
+  <p><strong>Subject:</strong> {label}</p>
+  <hr style="border:1px solid #eee">
+  <p style="white-space:pre-wrap">{req.message}</p>
+</div>
+</body></html>"""
+
+    text = f"whaledata.org contact form\n\nFrom: {req.name} <{req.email}>\nSubject: {label}\n\n{req.message}"
+
+    try:
+        client = boto3.client("ses", region_name=os.getenv("AWS_SES_REGION", "us-east-2"))
+        client.send_email(
+            Source="alerts@whaledata.org",
+            Destination={"ToAddresses": ["alerts@whaledata.org"]},
+            ReplyToAddresses=[req.email],
+            Message={
+                "Subject": {"Data": f"[whaledata.org] {label}", "Charset": "UTF-8"},
+                "Body": {
+                    "Html": {"Data": html, "Charset": "UTF-8"},
+                    "Text": {"Data": text, "Charset": "UTF-8"},
+                },
+            },
+        )
+        return {"status": "sent"}
+    except ClientError as e:
+        raise HTTPException(status_code=500, detail=str(e))

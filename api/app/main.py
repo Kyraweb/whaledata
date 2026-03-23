@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import species, sightings, routes, strandings, acoustics, inaturalist, historical, layers, alerts
 from app.admin.admin import router as admin_router
+from app.middleware import APIUsageMiddleware
 
 app = FastAPI(
     title="whaledata.org API",
@@ -10,6 +11,7 @@ app = FastAPI(
     version="2.0.0"
 )
 
+app.add_middleware(APIUsageMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[

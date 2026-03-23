@@ -133,6 +133,7 @@
     <a href="/admin/logs" class="nav-link {% if '/logs' in request.url.path %}active{% endif %}">Sync Logs</a>
     <a href="/admin/sync" class="nav-link {% if '/sync' in request.url.path %}active{% endif %}">Manual Sync</a>
     <a href="/admin/subscribers" class="nav-link {% if '/subscribers' in request.url.path %}active{% endif %}">Subscribers</a>
+    <a href="/admin/usage" class="nav-link {% if '/usage' in request.url.path %}active{% endif %}">API Usage</a>
     <span class="nav-time">{{ now }}</span>
   </nav>
   <main>{% block content %}{% endblock %}</main>

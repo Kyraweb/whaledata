@@ -350,3 +350,69 @@ def delete_subscriber(
     cur.close()
     conn.close()
     return RedirectResponse("/admin/subscribers?msg=Deleted", status_code=303)
+
+
+# ── API Usage ─────────────────────────────────────────────────
+
+@router.get("/usage", response_class=HTMLResponse)
+def usage_page(request: Request, user: str = Depends(require_auth)):
+    try:
+        conn = get_connection()
+        cur  = conn.cursor()
+
+        # Requests in last 24h
+        cur.execute("""
+            SELECT COUNT(*) as n FROM api_requests
+            WHERE created_at > NOW() - INTERVAL '24 hours';
+        """)
+        last_24h = cur.fetchone()["n"]
+
+        # Requests in last 7 days
+        cur.execute("""
+            SELECT COUNT(*) as n FROM api_requests
+            WHERE created_at > NOW() - INTERVAL '7 days';
+        """)
+        last_7d = cur.fetchone()["n"]
+
+        # Top endpoints last 7d
+        cur.execute("""
+            SELECT path, COUNT(*) as n, ROUND(AVG(response_ms)) as avg_ms
+            FROM api_requests
+            WHERE created_at > NOW() - INTERVAL '7 days'
+            GROUP BY path ORDER BY n DESC LIMIT 10;
+        """)
+        top_paths = cur.fetchall()
+
+        # Top IPs last 24h
+        cur.execute("""
+            SELECT ip, COUNT(*) as n
+            FROM api_requests
+            WHERE created_at > NOW() - INTERVAL '24 hours'
+            GROUP BY ip ORDER BY n DESC LIMIT 10;
+        """)
+        top_ips = cur.fetchall()
+
+        # Daily counts last 14 days
+        cur.execute("""
+            SELECT DATE(created_at) as day, COUNT(*) as n
+            FROM api_requests
+            WHERE created_at > NOW() - INTERVAL '14 days'
+            GROUP BY day ORDER BY day DESC;
+        """)
+        daily = cur.fetchall()
+
+        cur.close()
+        conn.close()
+    except Exception as e:
+        last_24h = last_7d = 0
+        top_paths = top_ips = daily = []
+
+    threshold = int(os.getenv("API_THRESHOLD", "500"))
+    flagged   = [ip for ip in top_ips if ip["n"] >= threshold]
+
+    return templates.TemplateResponse("usage.html", {
+        "request": request, "now": now(),
+        "last_24h": last_24h, "last_7d": last_7d,
+        "top_paths": top_paths, "top_ips": top_ips,
+        "daily": daily, "threshold": threshold, "flagged": flagged,
+    })

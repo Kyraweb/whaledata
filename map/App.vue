@@ -160,6 +160,9 @@
       <button class="top-btn btn-alerts" @click="alertsOpen = true">
         🔔 Alerts
       </button>
+      <button class="top-btn btn-contact" @click="contactOpen = true">
+        ✉ Contact
+      </button>
       <button class="top-btn btn-help" @click="helpOpen = true">
         ? Help
       </button>
@@ -219,6 +222,58 @@
                 Weekly digest every Sunday. Unsubscribe anytime from any email.
                 No spam — only new whale data.
               </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- Contact modal -->
+    <Transition name="help-modal">
+      <div v-if="contactOpen" class="help-backdrop" @click.self="contactOpen = false">
+        <div class="help-modal" style="max-width:460px">
+          <div class="help-header">
+            <div class="help-title">✉ Get in touch</div>
+            <button class="help-close" @click="contactOpen = false">✕</button>
+          </div>
+          <div class="help-body" style="padding-bottom:24px">
+            <p class="help-p" style="margin-bottom:20px">
+              Found a bug, have a suggestion, or want to collaborate on whale conservation data?
+              We'd love to hear from you.
+            </p>
+            <div v-if="contactStatus === 'sent'" class="alert-success">
+              ✓ Message sent — we'll get back to you soon.
+            </div>
+            <div v-else-if="contactStatus === 'error'" class="alert-error">
+              Something went wrong. Try emailing <a href="mailto:alerts@whaledata.org" style="color:#ff9f43">alerts@whaledata.org</a> directly.
+            </div>
+            <div v-else>
+              <div class="form-group-alert">
+                <label class="alert-label">Your name</label>
+                <input v-model="contactForm.name" type="text" placeholder="Your name" class="alert-input" />
+              </div>
+              <div class="form-group-alert">
+                <label class="alert-label">Email address *</label>
+                <input v-model="contactForm.email" type="email" placeholder="you@example.com" class="alert-input" />
+              </div>
+              <div class="form-group-alert">
+                <label class="alert-label">Subject</label>
+                <select v-model="contactForm.subject" class="alert-input">
+                  <option value="bug">Bug report</option>
+                  <option value="suggestion">Suggestion or feature request</option>
+                  <option value="data">Data question or issue</option>
+                  <option value="collaboration">Collaboration inquiry</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="form-group-alert">
+                <label class="alert-label">Message *</label>
+                <textarea v-model="contactForm.message" placeholder="Tell us more..." class="alert-input" rows="4" style="resize:vertical;min-height:100px"></textarea>
+              </div>
+              <button class="alert-submit" style="background:rgba(0,229,255,0.1);border-color:rgba(0,229,255,0.3);color:#00e5ff"
+                :disabled="contactSubmitting" @click="submitContact">
+                {{ contactSubmitting ? 'Sending...' : '✉ Send message' }}
+              </button>
             </div>
           </div>
         </div>
@@ -411,6 +466,10 @@ const alertsOpen      = ref(false)
 const alertStatus     = ref('')  // '' | 'sent' | 'error'
 const alertSubmitting = ref(false)
 const alertForm       = ref({ email: '', species: '', layer: '', region: '' })
+const contactOpen     = ref(false)
+const contactStatus   = ref('')
+const contactSubmitting = ref(false)
+const contactForm     = ref({ name: '', email: '', subject: 'bug', message: '' })
 const yearOpen       = ref(false)
 const nearMeLoading  = ref(false)
 const layerData = ref({
@@ -548,6 +607,7 @@ function onSpeciesChange(species) {
   selectedSpecies.value = species
   sheetOpen.value = false
   infoOpen.value = false
+  if (species) trackEvent('species_select', { species })
 }
 
 async function loadData() {
@@ -607,6 +667,31 @@ async function submitAlert() {
   }
 }
 
+// ── Contact ──────────────────────────────────────────────────
+async function submitContact() {
+  if (!contactForm.value.email || !contactForm.value.message) return
+  contactSubmitting.value = true
+  try {
+    const res = await fetch(`${API_URL}/contact`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(contactForm.value)
+    })
+    contactStatus.value = res.ok ? 'sent' : 'error'
+  } catch {
+    contactStatus.value = 'error'
+  } finally {
+    contactSubmitting.value = false
+  }
+}
+
+// ── GA event tracking ─────────────────────────────────────────
+function trackEvent(name, params = {}) {
+  if (typeof window !== 'undefined' && window.gtag) {
+    window.gtag('event', name, params)
+  }
+}
+
 // ── Share ─────────────────────────────────────────────────────
 function shareMap() {
   const params = new URLSearchParams()
@@ -618,6 +703,7 @@ function shareMap() {
     .map(([k]) => k).join(',')
   if (activeLayers_) params.set('layers', activeLayers_)
   const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`
+  trackEvent('share_map', { species: selectedSpecies.value || 'all' })
   navigator.clipboard.writeText(url).then(() => {
     shareCopied.value = true
     setTimeout(() => shareCopied.value = false, 2500)
@@ -1137,6 +1223,17 @@ onUnmounted(() => { window.removeEventListener('resize', checkMobile); window.re
 .alert-submit:disabled { opacity: 0.5; cursor: wait; }
 .alert-success { background: rgba(0,201,122,0.1); border: 1px solid rgba(0,201,122,0.3); border-radius: 10px; padding: 16px; color: #00c97a; font-size: 14px; text-align: center; }
 .alert-error { background: rgba(255,90,90,0.1); border: 1px solid rgba(255,90,90,0.3); border-radius: 10px; padding: 16px; color: #ff5a5a; font-size: 14px; text-align: center; }
+
+/* Contact — cyan muted */
+.btn-contact {
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  color: rgba(0, 229, 255, 0.6);
+}
+.btn-contact:hover {
+  background: rgba(0, 229, 255, 0.08);
+  border-color: rgba(0, 229, 255, 0.4);
+  color: #00e5ff;
+}
 
 /* Help — white/muted */
 .btn-help {
