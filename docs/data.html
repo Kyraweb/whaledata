@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Data Sources — whaledata.org</title>
+  <meta name="description" content="The five open scientific databases powering whaledata.org — GBIF, OBIS, NOAA, iNaturalist, and historical whaling records."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --cyan: #00e5ff; --cyan-dim: #00b8cc; --cyan-deep: #006b7e;
+      --dark: #050810; --surface: #0a1525; --surface2: #0d1e32;
+      --border: rgba(0,229,255,0.1); --border2: rgba(0,229,255,0.2);
+      --text: #e8f4f8; --text2: #7a9bb5; --text3: #3a5a72;
+      --green: #00c97a; --pink: #ff6b9d; --amber: #ffb432;
+      --red: #ff5a5a; --purple: #9664ff;
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--dark); color: var(--text); font-family: 'DM Sans', sans-serif; overflow-x: hidden; cursor: none; }
+    .cursor { position: fixed; width: 8px; height: 8px; background: var(--cyan); border-radius: 50%; pointer-events: none; z-index: 9999; transform: translate(-50%,-50%); mix-blend-mode: screen; }
+    .cursor-ring { position: fixed; width: 32px; height: 32px; border: 1px solid rgba(0,229,255,0.4); border-radius: 50%; pointer-events: none; z-index: 9998; transform: translate(-50%,-50%); transition: all 0.15s ease; }
+    @media (hover: none), (pointer: coarse) { body { cursor: auto; } .cursor, .cursor-ring { display: none !important; } }
+
+    /* SIDEBAR */
+    .sidebar { position: fixed; top: 0; left: 0; width: 240px; height: 100vh; background: rgba(5,8,16,0.95); backdrop-filter: blur(20px); border-right: 1px solid var(--border); z-index: 100; display: flex; flex-direction: column; padding: 32px 0; }
+    .sidebar-logo { padding: 0 24px 32px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+    .sidebar-logo a { text-decoration: none; display: flex; align-items: center; gap: 10px; }
+    .sidebar-logo .name { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: var(--text); }
+    .sidebar-logo .name span { color: var(--cyan); }
+    .sidebar-logo .sub { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text3); letter-spacing: 0.15em; text-transform: uppercase; margin-top: 2px; }
+    .sidebar-nav { flex: 1; padding: 0 16px; overflow-y: auto; }
+    .nav-section { margin-bottom: 24px; }
+    .nav-section-label { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text3); letter-spacing: 0.15em; text-transform: uppercase; padding: 0 8px; margin-bottom: 8px; }
+    .nav-link { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; text-decoration: none; font-size: 13px; color: var(--text2); transition: all 0.15s; margin-bottom: 2px; }
+    .nav-link:hover, .nav-link.active { background: rgba(0,229,255,0.06); color: var(--cyan); }
+    .nav-link .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); flex-shrink: 0; transition: background 0.15s; }
+    .nav-link:hover .dot, .nav-link.active .dot { background: var(--cyan); }
+    .sidebar-footer { padding: 20px 24px 0; border-top: 1px solid var(--border); }
+    .sidebar-footer a { display: block; font-size: 11px; color: var(--text3); text-decoration: none; margin-bottom: 6px; transition: color 0.15s; }
+    .sidebar-footer a:hover { color: var(--cyan); }
+
+    .main { margin-left: 240px; min-height: 100vh; }
+
+    /* PAGE HERO */
+    .page-hero { padding: 100px 80px 80px; border-bottom: 1px solid var(--border); position: relative; overflow: hidden; }
+    .page-hero::before { content: ''; position: absolute; top: -100px; right: -100px; width: 500px; height: 500px; background: radial-gradient(circle, rgba(0,229,255,0.04) 0%, transparent 70%); pointer-events: none; }
+    .breadcrumb { display: flex; align-items: center; gap: 8px; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text3); margin-bottom: 32px; }
+    .breadcrumb a { color: var(--text3); text-decoration: none; transition: color 0.15s; }
+    .breadcrumb a:hover { color: var(--cyan); }
+    .page-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--cyan); margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+    .page-label::before { content: ''; width: 24px; height: 1px; background: var(--cyan); }
+    .page-title { font-family: 'Syne', sans-serif; font-size: clamp(40px, 5vw, 68px); font-weight: 800; line-height: 1; letter-spacing: -0.03em; margin-bottom: 24px; }
+    .page-title em { font-style: normal; color: var(--cyan); }
+    .page-intro { font-size: 18px; color: var(--text2); line-height: 1.7; max-width: 640px; font-weight: 300; }
+
+    /* OVERVIEW TABLE */
+    .overview-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      padding: 48px 80px 0;
+    }
+    .overview-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      transition: all 0.2s;
+      cursor: default;
+    }
+    .overview-card:hover { border-color: var(--border2); transform: translateY(-3px); }
+    .overview-card .dot { width: 10px; height: 10px; border-radius: 50%; margin: 0 auto 12px; }
+    .overview-card .src-name { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .overview-card .src-count { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 500; color: var(--cyan); margin-bottom: 4px; }
+    .overview-card .src-type { font-size: 11px; color: var(--text3); line-height: 1.4; }
+
+    /* CONTENT */
+    .content-layout { display: grid; grid-template-columns: 1fr 200px; gap: 60px; padding: 80px; max-width: 1100px; }
+    .content-body { min-width: 0; }
+
+    /* ON THIS PAGE */
+    .on-this-page { position: sticky; top: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+    .on-this-page h4 { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text3); margin-bottom: 12px; }
+    .on-this-page a { display: block; color: var(--text2); text-decoration: none; padding: 5px 0 5px 12px; border-left: 2px solid transparent; transition: all 0.15s; font-size: 12px; }
+    .on-this-page a:hover, .on-this-page a.active { color: var(--cyan); border-left-color: var(--cyan); }
+
+    /* SOURCE SECTIONS */
+    .source-section { margin-bottom: 80px; scroll-margin-top: 80px; }
+    .source-header {
+      display: flex; align-items: flex-start; gap: 20px;
+      padding: 28px 32px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px 16px 0 0;
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+    .source-badge {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-size: 13px; font-weight: 800;
+      flex-shrink: 0;
+    }
+    .source-header-text h2 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+    .source-header-text .full-name { font-size: 13px; color: var(--text3); margin-bottom: 8px; }
+    .source-meta { display: flex; gap: 12px; flex-wrap: wrap; }
+    .source-tag { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 20px; font-family: 'DM Mono', monospace; font-size: 10px; background: rgba(0,229,255,0.06); border: 1px solid var(--border); color: var(--text2); }
+
+    .source-body {
+      background: rgba(10,21,37,0.5);
+      border: 1px solid var(--border);
+      border-radius: 0 0 16px 16px;
+      padding: 32px;
+    }
+    .source-body p { font-size: 15px; color: var(--text2); line-height: 1.8; font-weight: 300; margin-bottom: 16px; }
+    .source-body p:last-child { margin-bottom: 0; }
+    .source-body p strong { color: var(--text); font-weight: 500; }
+
+    /* DETAIL BOXES */
+    .detail-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 24px 0; }
+    .detail-box { background: var(--dark); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+    .detail-box h4 { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text3); margin-bottom: 8px; }
+    .detail-box p { font-size: 13px; color: var(--text2); line-height: 1.6; font-weight: 300; margin: 0; }
+    .detail-box code { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--cyan); background: rgba(0,229,255,0.08); padding: 2px 6px; border-radius: 4px; }
+
+    /* QUALITY SECTION */
+    .quality-section { margin-bottom: 80px; scroll-margin-top: 80px; }
+    .quality-section h2 { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 20px; }
+    .quality-section p { font-size: 15px; color: var(--text2); line-height: 1.8; font-weight: 300; margin-bottom: 16px; }
+    .quality-section p strong { color: var(--text); font-weight: 500; }
+
+    .warning-box { background: rgba(255,180,50,0.05); border: 1px solid rgba(255,180,50,0.2); border-radius: 12px; padding: 20px 24px; margin: 20px 0; display: flex; gap: 16px; }
+    .warning-box .icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+    .warning-box p { font-size: 14px; color: var(--text2); line-height: 1.7; margin: 0; font-weight: 300; }
+    .warning-box p strong { color: #ffb432; }
+
+    /* PAGE NAV */
+    .page-nav { display: flex; justify-content: space-between; padding: 48px 80px 80px; border-top: 1px solid var(--border); }
+    .page-nav-link { display: flex; flex-direction: column; gap: 4px; text-decoration: none; padding: 20px 24px; border: 1px solid var(--border); border-radius: 12px; transition: all 0.2s; max-width: 220px; }
+    .page-nav-link.next { align-items: flex-end; }
+    .page-nav-link:hover { border-color: var(--border2); background: rgba(0,229,255,0.03); }
+    .page-nav-link.prev:hover { transform: translateX(-4px); }
+    .page-nav-link.next:hover { transform: translateX(4px); }
+    .page-nav-link .label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); }
+    .page-nav-link .title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: var(--cyan); }
+
+    .footer { background: var(--dark); border-top: 1px solid var(--border); padding: 48px 80px; display: flex; align-items: center; justify-content: space-between; }
+    .footer-left { font-size: 13px; color: var(--text3); line-height: 1.7; }
+    .footer-left a { color: var(--cyan-dim); text-decoration: none; }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a { font-size: 13px; color: var(--text3); text-decoration: none; transition: color 0.15s; }
+    .footer-links a:hover { color: var(--cyan); }
+
+    .hamburger { display: none; position: fixed; top: 20px; right: 20px; z-index: 200; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px; cursor: pointer; flex-direction: column; gap: 4px; }
+    .hamburger span { display: block; width: 20px; height: 2px; background: var(--cyan); border-radius: 2px; }
+    .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99; }
+    .overlay.show { display: block; }
+
+    @media (max-width: 1024px) {
+      .sidebar { top: auto; bottom: 0; left: 0; right: 0; width: 100%; height: auto; max-height: 80vh; border-right: none; border-top: 1px solid var(--border); border-radius: 20px 20px 0 0; transform: translateY(100%); padding: 0 0 32px; }
+      .sidebar.open { transform: translateY(0); }
+      .sidebar-logo { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+      .close-btn { display: flex !important; width: 32px; height: 32px; align-items: center; justify-content: center; background: none; border: 1px solid var(--border); border-radius: 8px; color: var(--text2); font-size: 16px; cursor: pointer; }
+      .main { margin-left: 0; }
+      .hamburger { display: flex; }
+      .overview-grid { grid-template-columns: repeat(3,1fr); padding: 32px 24px 0; }
+      .content-layout { grid-template-columns: 1fr; padding: 40px 24px; }
+      .on-this-page { display: none; }
+      .page-hero { padding: 80px 24px 48px; }
+      .page-nav { padding: 48px 24px; }
+      .footer { flex-direction: column; gap: 20px; padding: 40px 24px; }
+      .detail-row { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .overview-grid { grid-template-columns: 1fr 1fr; }
+      .page-title { font-size: clamp(36px, 10vw, 52px); }
+      .source-header { flex-direction: column; gap: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+<button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+<div class="overlay" id="overlay"></div>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <a href="/docs">
+      <span style="font-size:24px;line-height:1">🐋</span>
+      <div>
+        <div class="name">whaledata<span>.org</span></div>
+        <div class="sub">Documentation</div>
+      </div>
+    </a>
+    <button class="close-btn" id="closeBtn" style="display:none">✕</button>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-label">Overview</div>
+      <a href="/docs" class="nav-link"><span class="dot"></span>Home</a>
+      <a href="/docs/why" class="nav-link"><span class="dot"></span>Why this project</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">The Data</div>
+      <a href="/docs/data" class="nav-link active"><span class="dot"></span>Data sources</a>
+      <a href="/docs/conservation" class="nav-link"><span class="dot"></span>Conservation layers</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">How it was built</div>
+      <a href="/docs/technology" class="nav-link"><span class="dot"></span>Technology stack</a>
+      <a href="/docs/build" class="nav-link"><span class="dot"></span>The build journey</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Performance</div>
+      <a href="/docs/benchmarks" class="nav-link"><span class="dot"></span>Benchmarks</a>
+      <a href="/docs/roadmap" class="nav-link"><span class="dot"></span>Roadmap</a>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <a href="https://whaledata.org" target="_blank">↗ whaledata.org</a>
+    <a href="https://github.com/Kyraweb/whaledata" target="_blank">↗ GitHub</a>
+    <a href="https://api.whaledata.org/docs" target="_blank">↗ API docs</a>
+  </div>
+</aside>
+
+<main class="main">
+
+  <div class="page-hero">
+    <div class="breadcrumb">
+      <a href="/docs">Home</a><span>/</span>
+      <a href="/docs/data">The Data</a><span>/</span>
+      <span>Data sources</span>
+    </div>
+    <div class="page-label">The Data</div>
+    <h1 class="page-title">Five sources.<br><em>One</em> unified picture.</h1>
+    <p class="page-intro">Every record in whaledata.org comes from open scientific databases under CC BY 4.0 or equivalent open licenses — updated automatically on rolling schedules with zero manual intervention.</p>
+  </div>
+
+  <!-- OVERVIEW CARDS -->
+  <div class="overview-grid">
+    <div class="overview-card">
+      <div class="dot" style="background:#00e5ff"></div>
+      <div class="src-name">GBIF</div>
+      <div class="src-count">5,590</div>
+      <div class="src-type">Verified scientific sightings · Weekly</div>
+    </div>
+    <div class="overview-card">
+      <div class="dot" style="background:#4d9fff"></div>
+      <div class="src-name">OBIS</div>
+      <div class="src-count">2,000</div>
+      <div class="src-type">Fin whale supplement · Weekly</div>
+    </div>
+    <div class="overview-card">
+      <div class="dot" style="background:#ff5a5a"></div>
+      <div class="src-name">NOAA</div>
+      <div class="src-count">12,750</div>
+      <div class="src-type">Strandings + Acoustics · Monthly</div>
+    </div>
+    <div class="overview-card">
+      <div class="dot" style="background:#64c864"></div>
+      <div class="src-name">iNaturalist</div>
+      <div class="src-count">3,300</div>
+      <div class="src-type">Research-grade citizen science · Weekly</div>
+    </div>
+    <div class="overview-card">
+      <div class="dot" style="background:#ffb432"></div>
+      <div class="src-name">Historical</div>
+      <div class="src-count">1,500</div>
+      <div class="src-type">Pre-1950 whaling records · Yearly</div>
+    </div>
+  </div>
+
+  <div class="content-layout">
+    <div class="content-body">
+
+      <!-- GBIF -->
+      <div class="source-section" id="gbif">
+        <div class="source-header">
+          <div class="source-badge" style="background:rgba(0,229,255,0.1);color:#00e5ff;border:1px solid rgba(0,229,255,0.2)">GBIF</div>
+          <div class="source-header-text">
+            <h2>Global Biodiversity Information Facility</h2>
+            <div class="full-name">gbif.org — established 2001 — Copenhagen, Denmark</div>
+            <div class="source-meta">
+              <span class="source-tag">5,590 records</span>
+              <span class="source-tag">CC BY 4.0</span>
+              <span class="source-tag">Updated weekly</span>
+              <span class="source-tag">Primary sightings source</span>
+            </div>
+          </div>
+        </div>
+        <div class="source-body">
+          <p>GBIF was established in 2001 through an OECD initiative to make global biodiversity data freely available. It aggregates data from over 2,000 publishing institutions globally, covering more than <strong>2 billion individual occurrence records</strong> across all taxa. For whaledata.org, GBIF is the primary source for modern sighting records across all six species.</p>
+          <p>The GBIF API allows queries by species taxon key, date range, geographic bounding box, and quality flags. Each record contains a latitude, longitude, date, and source institution, along with quality metadata indicating whether the record has been flagged for geospatial issues.</p>
+
+          <div class="detail-row">
+            <div class="detail-box">
+              <h4>Quality filtering</h4>
+              <p>All queries use <code>hasGeospatialIssue=false</code> to exclude records with known coordinate problems — land-based coordinates, country centroids, and ambiguous georeferencing. Without this flag, whales appear in the Himalayas.</p>
+            </div>
+            <div class="detail-box">
+              <h4>Taxon keys</h4>
+              <p>GBIF uses internal taxon keys: Humpback <code>2440898</code>, Blue <code>2440718</code>, Orca <code>2440483</code>, Grey <code>2440714</code>, Sperm <code>2440764</code>, Fin <code>2440706</code>. The Orca key was incorrect in early versions — <code>2440522</code> — returning wrong species data.</p>
+            </div>
+          </div>
+
+          <div class="warning-box">
+            <div class="icon">⚠️</div>
+            <p><strong>Known limitation:</strong> Even with geospatial filtering active, a small cluster of records appeared in landlocked South America (Paraguay/Bolivia). These were caught by a secondary coordinate filter applied at the frontend. Colombia and Ecuador Pacific coast records — which appear inland due to globe projection angle — are genuine coastal sightings and are preserved.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- OBIS -->
+      <div class="source-section" id="obis">
+        <div class="source-header">
+          <div class="source-badge" style="background:rgba(77,159,255,0.1);color:#4d9fff;border:1px solid rgba(77,159,255,0.2)">OBIS</div>
+          <div class="source-header-text">
+            <h2>Ocean Biodiversity Information System</h2>
+            <div class="full-name">obis.org — UNESCO IOC — 100M+ marine records</div>
+            <div class="source-meta">
+              <span class="source-tag">2,000 records</span>
+              <span class="source-tag">CC BY 4.0</span>
+              <span class="source-tag">Updated weekly</span>
+              <span class="source-tag">Fin whale supplement</span>
+            </div>
+          </div>
+        </div>
+        <div class="source-body">
+          <p>OBIS emerged from the Census of Marine Life and now operates under the Intergovernmental Oceanographic Commission of UNESCO. It holds over <strong>100 million occurrence records</strong> specifically for marine species — complementary to GBIF rather than competing.</p>
+          <p>For whaledata.org, OBIS serves as the primary source for Fin whale data, supplementing GBIF which has thinner coverage for this species. OBIS also acts as the aggregation layer for NOAA stranding data.</p>
+
+          <div class="detail-row">
+            <div class="detail-box">
+              <h4>AphiaIDs (WoRMS)</h4>
+              <p>OBIS uses World Register of Marine Species identifiers. Fin whale AphiaID: <code>137092</code>. Humpback: <code>137091</code>. These are different from GBIF taxon keys and cannot be used interchangeably.</p>
+            </div>
+            <div class="detail-box">
+              <h4>Date parsing</h4>
+              <p>OBIS date formats are inconsistent across datasets — full ISO date, year-month, year-only, and date ranges all appear. The sync script handles all formats with sequential fallback, storing NULL rather than crashing on unknown formats.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NOAA -->
+      <div class="source-section" id="noaa">
+        <div class="source-header">
+          <div class="source-badge" style="background:rgba(255,90,90,0.1);color:#ff5a5a;border:1px solid rgba(255,90,90,0.2)">NOAA</div>
+          <div class="source-header-text">
+            <h2>National Oceanic and Atmospheric Administration</h2>
+            <div class="full-name">Strandings via OBIS · Acoustics via NOAA PACM</div>
+            <div class="source-meta">
+              <span class="source-tag">~12,000 strandings</span>
+              <span class="source-tag">~750 acoustic detections</span>
+              <span class="source-tag">Public Domain</span>
+              <span class="source-tag">Monthly sync</span>
+            </div>
+          </div>
+        </div>
+        <div class="source-body">
+          <p>NOAA contributes two distinct data types to whaledata.org: <strong>stranding events</strong> from the National Stranding Database, and <strong>acoustic detections</strong> from the Passive Acoustic Cetacean Monitoring (PACM) programme.</p>
+          <p><strong>Strandings:</strong> The NOAA stranding network has recorded every reported cetacean stranding in US waters since 1972. Records include condition (alive/dead/unknown), species, location, and date. The dataset flows into OBIS which makes it accessible via their aggregation API. It currently provides approximately 12,000 records across the six tracked species.</p>
+          <p><strong>Acoustics:</strong> PACM deploys hydrophone networks across US waters, listening continuously for whale vocalisations — humpback songs, sperm whale clicks, blue whale contact calls. Acoustic detection can occur in complete darkness, at any depth, and at ranges of hundreds of kilometres, making it essential for deep-diving species that spend little time at the surface.</p>
+
+          <div class="warning-box">
+            <div class="icon">ℹ️</div>
+            <p><strong>PACM access note:</strong> The NOAA PACM API was unreachable from the hosting network at deployment time. Acoustic data is therefore sourced through OBIS, which aggregates PACM records. This provides ~750 records currently rather than the several thousand that direct PACM access would supply. This limitation is being monitored for resolution.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- iNaturalist -->
+      <div class="source-section" id="inaturalist">
+        <div class="source-header">
+          <div class="source-badge" style="background:rgba(100,200,100,0.1);color:#64c864;border:1px solid rgba(100,200,100,0.2)">iNat</div>
+          <div class="source-header-text">
+            <h2>iNaturalist</h2>
+            <div class="full-name">inaturalist.org — California Academy of Sciences + National Geographic</div>
+            <div class="source-meta">
+              <span class="source-tag">3,300 records</span>
+              <span class="source-tag">CC BY-NC 4.0</span>
+              <span class="source-tag">Updated weekly</span>
+              <span class="source-tag">Research-grade only</span>
+            </div>
+          </div>
+        </div>
+        <div class="source-body">
+          <p>iNaturalist is a citizen science platform where users submit photo observations that are verified by a community of expert identifiers. Records confirmed to species level by multiple community members receive a <strong>research-grade</strong> designation — the only quality tier included in whaledata.org.</p>
+          <p>The research-grade filter is essential. iNaturalist has tens of millions of records, many of which are speculative identifications or insufficiently documented for species confirmation. The research-grade subset represents observations where there is genuine community consensus.</p>
+          <p>Grey whale has the highest iNaturalist count (~1,200) because Grey whale populations are primarily coastal in the Pacific — accessible to observers from boats and shorelines. Orca follows (~797) for similar reasons. Blue whale, a deep-ocean species, has relatively few iNaturalist records despite being critically important for conservation.</p>
+
+          <div class="detail-row">
+            <div class="detail-box">
+              <h4>Taxon IDs</h4>
+              <p>iNaturalist uses its own internal identifiers: Humpback <code>41472</code>, Blue <code>41467</code>, Fin <code>41468</code>, Grey <code>41476</code>, Sperm <code>41490</code>, Orca <code>41446</code>. Early versions had incorrect IDs for Blue whale and Orca — the resulting records showed completely wrong geographic distributions before the errors were caught and the data wiped and re-synced.</p>
+            </div>
+            <div class="detail-box">
+              <h4>Citizen science value</h4>
+              <p>Research-grade iNaturalist records often capture sightings in coastal areas that are under-represented in formal survey programmes. Recreational boaters, whale watching operators, and coastal residents contribute observations that fill geographic gaps in the scientific literature.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HISTORICAL -->
+      <div class="source-section" id="historical">
+        <div class="source-header">
+          <div class="source-badge" style="background:rgba(255,180,50,0.1);color:#ffb432;border:1px solid rgba(255,180,50,0.2)">1785</div>
+          <div class="source-header-text">
+            <h2>Historical Records — Whaling Logs</h2>
+            <div class="full-name">GBIF pre-1950 datasets — digitised 19th and early 20th century records</div>
+            <div class="source-meta">
+              <span class="source-tag">~1,500 records</span>
+              <span class="source-tag">CC BY 4.0</span>
+              <span class="source-tag">Updated yearly</span>
+              <span class="source-tag">Distribution baseline</span>
+            </div>
+          </div>
+        </div>
+        <div class="source-body">
+          <p>The historical layer is the most scientifically compelling dataset in the platform. Pre-1950 records from digitised 19th and early 20th century whaling logs provide a distribution picture that predates industrial hunting by over a century — something no modern dataset alone can offer.</p>
+          <p>These records originate from multiple sources: digitised logs from New England whaling vessels, records from early scientific surveys, sightings recorded in naval logs, and naturalist observations. They are heavily biased toward the North Atlantic, South Atlantic, and Pacific whaling grounds that were accessible to sailing ships — but they tell a story that modern data cannot.</p>
+          <p>Comparing the historical distribution to modern sighting data is one of the most revealing features of the platform. <strong>Blue whale historical records cluster heavily in the Southern Ocean</strong> at high latitudes where the species was once hunted in enormous numbers. Modern sighting records are absent from most of those areas — not because blue whales have disappeared entirely, but because systematic monitoring in remote sub-Antarctic waters is extremely limited today.</p>
+
+          <div class="detail-row">
+            <div class="detail-box">
+              <h4>GBIF year format</h4>
+              <p>Historical records are queried using GBIF's year range parameter formatted as <code>1500,1950</code> — not <code>,1950</code> which caused a 422 error in early versions. The comma-separated range is required even when the lower bound is distant.</p>
+            </div>
+            <div class="detail-box">
+              <h4>What it shows</h4>
+              <p>The year range slider on the globe can be set to 1785–1950 to view only historical records. Set alongside the modern sighting layer, the geographic shift in documented distribution becomes visible — a comparison that no flat-map visualisation has presented at this scale before.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DATA QUALITY -->
+      <div class="quality-section" id="quality">
+        <h2>Data quality and limitations</h2>
+        <p>Every dataset used by whaledata.org comes with significant caveats. Intellectual honesty about these limitations is important — especially for a platform intended to support conservation advocacy.</p>
+        <p><strong>Observation bias</strong> is the most pervasive problem. Whales are more likely to be recorded in places where people are looking for them. The coast of California, the waters around Hawaii, and the North Atlantic near major research centres are heavily surveyed. The South Indian Ocean, the central Pacific, and the waters around Antarctica are not. Areas with sparse data may not be areas with few whales — they may simply be areas with few observers.</p>
+        <p><strong>Temporal bias</strong> compounds this. Most records are from the last 30 years, reflecting the growth of citizen science platforms and systematic survey programmes. The 19th century records are selective survivors — logs that were preserved, translated, and digitised.</p>
+        <p><strong>Species identification</strong> is also variable. Research-grade iNaturalist records require photo documentation and expert confirmation. But some records in all datasets rely on observer identification of animals that may have been partially visible or seen at distance. Blue whale and Fin whale, which are similar in appearance and often seen only from a distance, are more frequently misidentified than Humpback whale with its distinctive fluke pattern.</p>
+
+        <div class="warning-box">
+          <div class="icon">📊</div>
+          <p><strong>When reading the globe:</strong> Absence of records in a region does not mean absence of whales. Density of records reflects survey effort as much as actual whale density. The platform presents the data honestly — it does not interpolate, predict, or extrapolate beyond what the source databases actually contain.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <aside>
+      <div class="on-this-page">
+        <h4>On this page</h4>
+        <a href="#gbif">GBIF</a>
+        <a href="#obis">OBIS</a>
+        <a href="#noaa">NOAA</a>
+        <a href="#inaturalist">iNaturalist</a>
+        <a href="#historical">Historical</a>
+        <a href="#quality">Data quality</a>
+      </div>
+    </aside>
+  </div>
+
+  <!-- PAGE NAV -->
+  <div class="page-nav">
+    <a href="/docs/why" class="page-nav-link prev">
+      <span class="label">← Previous</span>
+      <span class="title">Why this project</span>
+    </a>
+    <a href="/docs/conservation" class="page-nav-link next">
+      <span class="label">Next →</span>
+      <span class="title">Conservation layers</span>
+    </a>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-left">
+      <strong style="color:var(--text);font-family:'Syne',sans-serif">whaledata.org</strong> — Documentation<br>
+      By <a href="https://kyraweb.ca">Monarch / KyraWeb</a> · Built with assistance from <a href="https://claude.ai">Claude by Anthropic</a>
+    </div>
+    <div class="footer-links">
+      <a href="https://whaledata.org">Platform</a>
+      <a href="https://github.com/Kyraweb/whaledata">GitHub</a>
+      <a href="https://api.whaledata.org/docs">API</a>
+    </div>
+  </footer>
+
+</main>
+
+<script>
+gsap.registerPlugin(ScrollTrigger);
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursorRing');
+document.addEventListener('mousemove', e => {
+  gsap.to(cursor, { x: e.clientX, y: e.clientY, duration: 0.05 });
+  gsap.to(ring, { x: e.clientX, y: e.clientY, duration: 0.18 });
+});
+document.querySelectorAll('a, button').forEach(el => {
+  el.addEventListener('mouseenter', () => gsap.to(ring, { scale: 2, duration: 0.2 }));
+  el.addEventListener('mouseleave', () => gsap.to(ring, { scale: 1, duration: 0.2 }));
+});
+
+gsap.from('.page-hero .page-label', { opacity: 0, y: 20, duration: 0.6, delay: 0.2 });
+gsap.from('.page-title', { opacity: 0, y: 30, duration: 0.8, delay: 0.3, ease: 'power3.out' });
+gsap.from('.page-intro', { opacity: 0, y: 20, duration: 0.7, delay: 0.5, ease: 'power3.out' });
+
+gsap.utils.toArray('.overview-card').forEach((el, i) => {
+  gsap.from(el, { opacity: 0, y: 20, duration: 0.5, delay: i * 0.08, ease: 'power3.out',
+    scrollTrigger: { trigger: el, start: 'top 90%', once: true }
+  });
+});
+gsap.utils.toArray('.source-section').forEach(el => {
+  gsap.from(el, { opacity: 0, y: 30, duration: 0.8, ease: 'power3.out',
+    scrollTrigger: { trigger: el, start: 'top 85%', once: true }
+  });
+});
+gsap.utils.toArray('.warning-box').forEach(el => {
+  gsap.from(el, { opacity: 0, x: -16, duration: 0.6, ease: 'power3.out',
+    scrollTrigger: { trigger: el, start: 'top 88%', once: true }
+  });
+});
+
+// Active on-this-page
+const sections = document.querySelectorAll('[id]');
+const links = document.querySelectorAll('.on-this-page a');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => { if (window.scrollY >= s.offsetTop - 120) current = s.id; });
+  links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + current));
+});
+
+// Mobile nav
+const sidebar = document.getElementById('sidebar');
+const hamburger = document.getElementById('hamburger');
+const overlay = document.getElementById('overlay');
+const closeBtn = document.getElementById('closeBtn');
+function openNav() { sidebar.classList.add('open'); overlay.classList.add('show'); if (closeBtn) closeBtn.style.display = 'flex'; }
+function closeNav() { sidebar.classList.remove('open'); overlay.classList.remove('show'); if (closeBtn) closeBtn.style.display = 'none'; }
+hamburger.addEventListener('click', openNav);
+overlay.addEventListener('click', closeNav);
+if (closeBtn) closeBtn.addEventListener('click', closeNav);
+document.querySelectorAll('.nav-link').forEach(l => l.addEventListener('click', () => { if (window.innerWidth <= 1024) closeNav(); }));
+</script>
+</body>
+</html>
