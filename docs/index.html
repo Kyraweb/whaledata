@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>whaledata.org — Documentation</title>
+  <meta name="description" content="The complete technical and conservation documentation for whaledata.org — 25,000+ whale records, open data, interactive globe."/>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+
+  <!-- GSAP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --cyan:      #00e5ff;
+      --cyan-dim:  #00b8cc;
+      --cyan-deep: #006b7e;
+      --dark:      #050810;
+      --surface:   #0a1525;
+      --surface2:  #0d1e32;
+      --border:    rgba(0,229,255,0.1);
+      --border2:   rgba(0,229,255,0.2);
+      --text:      #e8f4f8;
+      --text2:     #7a9bb5;
+      --text3:     #3a5a72;
+      --green:     #00c97a;
+      --pink:      #ff6b9d;
+      --amber:     #ffb432;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--dark);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* ── CUSTOM CURSOR ───────────────────────────────── */
+    .cursor {
+      position: fixed;
+      width: 8px; height: 8px;
+      background: var(--cyan);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: transform 0.1s;
+      mix-blend-mode: screen;
+    }
+    .cursor-ring {
+      position: fixed;
+      width: 32px; height: 32px;
+      border: 1px solid rgba(0,229,255,0.4);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9998;
+      transform: translate(-50%, -50%);
+      transition: all 0.15s ease;
+    }
+
+    /* ── SIDEBAR ─────────────────────────────────────── */
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      width: 240px; height: 100vh;
+      background: rgba(5,8,16,0.95);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid var(--border);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      padding: 32px 0;
+      transform: translateX(0);
+      transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    .sidebar-logo {
+      padding: 0 24px 32px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+    .sidebar-logo a {
+      text-decoration: none;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .sidebar-logo .whale-icon {
+      width: 28px; height: 28px;
+      opacity: 0.9;
+    }
+    .sidebar-logo .name {
+      font-family: 'Syne', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .sidebar-logo .name span { color: var(--cyan); }
+    .sidebar-logo .sub {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      color: var(--text3);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .sidebar-nav { flex: 1; padding: 0 16px; overflow-y: auto; }
+
+    .nav-section {
+      margin-bottom: 24px;
+    }
+    .nav-section-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      color: var(--text3);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 0 8px;
+      margin-bottom: 8px;
+    }
+    .nav-link {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 13px;
+      color: var(--text2);
+      transition: all 0.15s;
+      margin-bottom: 2px;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .nav-link:hover, .nav-link.active {
+      background: rgba(0,229,255,0.06);
+      color: var(--cyan);
+    }
+    .nav-link .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--text3);
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .nav-link:hover .dot, .nav-link.active .dot {
+      background: var(--cyan);
+    }
+    .nav-link.active {
+      font-weight: 500;
+    }
+
+    .sidebar-footer {
+      padding: 20px 24px 0;
+      border-top: 1px solid var(--border);
+    }
+    .sidebar-footer a {
+      display: block;
+      font-size: 11px;
+      color: var(--text3);
+      text-decoration: none;
+      margin-bottom: 6px;
+      transition: color 0.15s;
+    }
+    .sidebar-footer a:hover { color: var(--cyan); }
+
+    /* ── MAIN CONTENT ────────────────────────────────── */
+    .main {
+      margin-left: 240px;
+      min-height: 100vh;
+    }
+
+    /* ── HERO ────────────────────────────────────────── */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Ocean particles canvas */
+    #ocean-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+      z-index: 0;
+    }
+
+    /* Whale container */
+    .whale-container {
+      position: absolute;
+      bottom: 18%;
+      left: -400px;
+      width: 480px;
+      z-index: 1;
+      opacity: 0;
+    }
+    .whale-container svg {
+      width: 100%;
+      height: auto;
+      fill: rgba(0,229,255,0.06);
+      filter: drop-shadow(0 0 30px rgba(0,229,255,0.1));
+    }
+
+    /* Depth lines */
+    .depth-lines {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .depth-line {
+      position: absolute;
+      left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0,229,255,0.04), transparent);
+      opacity: 0;
+    }
+
+    /* Hero content */
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      padding: 0 80px;
+      max-width: 800px;
+    }
+
+    .hero-eyebrow {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: 28px;
+      opacity: 0;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .hero-eyebrow::before {
+      content: '';
+      width: 32px; height: 1px;
+      background: var(--cyan);
+      display: inline-block;
+    }
+
+    .hero-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(52px, 7vw, 88px);
+      font-weight: 800;
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+      margin-bottom: 28px;
+      opacity: 0;
+    }
+    .hero-title .line { display: block; overflow: hidden; }
+    .hero-title .line-inner { display: block; transform: translateY(100%); }
+    .hero-title em {
+      font-style: normal;
+      color: var(--cyan);
+    }
+
+    .hero-sub {
+      font-size: 18px;
+      color: var(--text2);
+      line-height: 1.7;
+      max-width: 520px;
+      margin-bottom: 48px;
+      opacity: 0;
+      font-weight: 300;
+    }
+
+    .hero-cta {
+      display: flex; align-items: center; gap: 20px;
+      opacity: 0;
+    }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 14px 28px;
+      background: var(--cyan);
+      color: var(--dark);
+      font-family: 'Syne', sans-serif;
+      font-size: 14px; font-weight: 700;
+      border-radius: 40px;
+      text-decoration: none;
+      transition: all 0.2s;
+      letter-spacing: 0.02em;
+    }
+    .btn-primary:hover {
+      background: white;
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(0,229,255,0.3);
+    }
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      color: var(--text2);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .btn-ghost:hover { color: var(--cyan); }
+    .btn-ghost svg { transition: transform 0.15s; }
+    .btn-ghost:hover svg { transform: translateX(4px); }
+
+    /* Stats ticker */
+    .hero-stats {
+      position: absolute;
+      bottom: 48px; left: 80px;
+      display: flex; gap: 48px;
+      z-index: 2;
+      opacity: 0;
+    }
+    .stat { display: flex; flex-direction: column; gap: 4px; }
+    .stat-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 28px; font-weight: 800;
+      color: var(--cyan);
+      line-height: 1;
+    }
+    .stat-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+    }
+
+    /* Scroll indicator */
+    .scroll-hint {
+      position: absolute;
+      bottom: 48px; right: 80px;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 8px;
+      z-index: 2;
+      opacity: 0;
+    }
+    .scroll-hint span {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text3);
+      writing-mode: vertical-rl;
+    }
+    .scroll-line {
+      width: 1px; height: 60px;
+      background: linear-gradient(to bottom, var(--cyan), transparent);
+      animation: scrollPulse 2s ease-in-out infinite;
+    }
+    @keyframes scrollPulse {
+      0%, 100% { opacity: 0.3; transform: scaleY(1); }
+      50% { opacity: 1; transform: scaleY(0.7); }
+    }
+
+    /* ── SECTIONS ────────────────────────────────────── */
+    section {
+      padding: 120px 80px;
+      position: relative;
+    }
+
+    .section-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: 16px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .section-label::before {
+      content: '';
+      width: 24px; height: 1px;
+      background: var(--cyan);
+    }
+
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(32px, 4vw, 52px);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      margin-bottom: 20px;
+    }
+
+    .section-lead {
+      font-size: 18px;
+      color: var(--text2);
+      line-height: 1.7;
+      max-width: 600px;
+      font-weight: 300;
+    }
+
+    /* ── PROBLEM SECTION ─────────────────────────────── */
+    .problem-section {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .problem-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      margin-top: 64px;
+    }
+    .problem-card {
+      background: rgba(0,229,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      transition: all 0.3s;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    .problem-card:hover {
+      border-color: var(--border2);
+      background: rgba(0,229,255,0.04);
+      transform: translateY(-4px);
+    }
+    .problem-card-num {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--cyan-deep);
+      letter-spacing: 0.1em;
+      margin-bottom: 16px;
+    }
+    .problem-card h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px; font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .problem-card p {
+      font-size: 14px;
+      color: var(--text2);
+      line-height: 1.7;
+      font-weight: 300;
+    }
+
+    /* ── DATA SOURCES ────────────────────────────────── */
+    .sources-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      margin-top: 64px;
+    }
+    .source-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px 20px;
+      text-align: center;
+      transition: all 0.3s;
+      opacity: 0;
+      transform: translateY(24px);
+      cursor: default;
+    }
+    .source-card:hover {
+      border-color: var(--border2);
+      background: var(--surface2);
+      transform: translateY(-4px);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.3);
+    }
+    .source-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      margin: 0 auto 14px;
+    }
+    .source-name {
+      font-family: 'Syne', sans-serif;
+      font-size: 14px; font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .source-count {
+      font-family: 'DM Mono', monospace;
+      font-size: 20px; font-weight: 500;
+      color: var(--cyan);
+      margin-bottom: 6px;
+    }
+    .source-desc {
+      font-size: 11px;
+      color: var(--text3);
+      line-height: 1.5;
+    }
+
+    /* ── FEATURES ────────────────────────────────────── */
+    .features-section {
+      background: linear-gradient(180deg, var(--dark), var(--surface));
+    }
+    .features-list {
+      margin-top: 64px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+    }
+    .feature-item {
+      padding: 32px;
+      border: 1px solid var(--border);
+      display: flex; gap: 20px;
+      transition: all 0.2s;
+      opacity: 0;
+    }
+    .feature-item:hover { background: rgba(0,229,255,0.02); }
+    .feature-icon {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      background: rgba(0,229,255,0.08);
+      border: 1px solid var(--border2);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      font-size: 18px;
+    }
+    .feature-text h4 {
+      font-family: 'Syne', sans-serif;
+      font-size: 15px; font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .feature-text p {
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.6;
+      font-weight: 300;
+    }
+
+    /* ── CTA SECTION ─────────────────────────────────── */
+    .cta-section {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      text-align: center;
+      padding: 120px 80px;
+    }
+    .cta-section .section-title { margin-bottom: 20px; }
+    .cta-section .section-lead { margin: 0 auto 48px; text-align: center; }
+    .cta-buttons {
+      display: flex; gap: 16px;
+      justify-content: center; flex-wrap: wrap;
+    }
+
+    /* ── FOOTER ──────────────────────────────────────── */
+    .footer {
+      background: var(--dark);
+      border-top: 1px solid var(--border);
+      padding: 48px 80px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .footer-left { font-size: 13px; color: var(--text3); line-height: 1.7; }
+    .footer-left a { color: var(--cyan-dim); text-decoration: none; }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a {
+      font-size: 13px;
+      color: var(--text3);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .footer-links a:hover { color: var(--cyan); }
+
+    /* ── MOBILE HAMBURGER ────────────────────────────── */
+    .hamburger {
+      display: none;
+      position: fixed;
+      top: 20px; left: 20px;
+      z-index: 200;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      cursor: pointer;
+      flex-direction: column; gap: 4px;
+    }
+    .hamburger span {
+      display: block;
+      width: 20px; height: 2px;
+      background: var(--cyan);
+      border-radius: 2px;
+      transition: all 0.2s;
+    }
+
+    /* ── RESPONSIVE ──────────────────────────────────── */
+    @media (max-width: 1024px) {
+      .sidebar { transform: translateX(-240px); }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; }
+      .hamburger { display: flex; }
+      .sources-grid { grid-template-columns: repeat(3, 1fr); }
+      .problem-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      section, .hero-content { padding: 80px 24px; }
+      .hero-stats { left: 24px; flex-wrap: wrap; gap: 24px; }
+      .scroll-hint { display: none; }
+      .sources-grid { grid-template-columns: 1fr 1fr; }
+      .features-list { grid-template-columns: 1fr; }
+      .footer { flex-direction: column; gap: 20px; text-align: center; }
+      .cta-buttons { flex-direction: column; align-items: center; }
+    }
+
+    /* ── OVERLAY ─────────────────────────────────────── */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 99;
+    }
+    .overlay.show { display: block; }
+  </style>
+</head>
+<body>
+
+<!-- Cursor -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- Mobile hamburger -->
+<button class="hamburger" id="hamburger" aria-label="Menu">
+  <span></span><span></span><span></span>
+</button>
+
+<!-- Overlay -->
+<div class="overlay" id="overlay"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <a href="/">
+<span style="font-size:24px;line-height:1">🐋</span>
+      <div>
+        <div class="name">whaledata<span>.org</span></div>
+        <div class="sub">Documentation</div>
+      </div>
+    </a>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-label">Overview</div>
+      <a href="/" class="nav-link active"><span class="dot"></span>Home</a>
+      <a href="/why" class="nav-link"><span class="dot"></span>Why this project</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">The Data</div>
+      <a href="/data" class="nav-link"><span class="dot"></span>Data sources</a>
+      <a href="/conservation" class="nav-link"><span class="dot"></span>Conservation layers</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">How it was built</div>
+      <a href="/technology" class="nav-link"><span class="dot"></span>Technology stack</a>
+      <a href="/build" class="nav-link"><span class="dot"></span>The build journey</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Performance</div>
+      <a href="/benchmarks" class="nav-link"><span class="dot"></span>Benchmarks</a>
+      <a href="/roadmap" class="nav-link"><span class="dot"></span>Roadmap</a>
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <a href="https://whaledata.org" target="_blank">↗ whaledata.org</a>
+    <a href="https://github.com/Kyraweb/whaledata" target="_blank">↗ GitHub</a>
+    <a href="https://api.whaledata.org/docs" target="_blank">↗ API docs</a>
+  </div>
+</aside>
+
+<!-- Main -->
+<main class="main">
+
+  <!-- ══ HERO ══════════════════════════════════════════ -->
+  <section class="hero">
+    <canvas id="ocean-canvas"></canvas>
+
+    <!-- Depth lines -->
+    <div class="depth-lines" id="depthLines"></div>
+
+    <!-- Whale -->
+    <div class="whale-container" id="whaleContainer">
+      <svg viewBox="0 0 4000 4000" xmlns="http://www.w3.org/2000/svg">
+        <path d="M1137.885,3059.088c18.272,17.524,42.934,20.436,65.419,27.911c27.483,9.137,55.416,17.052,83.459,24.316c12.328,3.193,14.534,9.112,10.007,19.681c-0.653,1.524-1.303,3.053-1.866,4.611c-25.051,69.313-11.066,61.79-78.592,41.031c-191.037-58.729-369.556-143.085-525.662-269.559c-167.347-135.581-297.546-299.41-371.242-504.301c-39.891-110.906-58.405-225.709-64.455-343.199c-8.23-159.797,15.075-314.577,75.35-462.402c108.516-266.138,298.142-450.299,568.45-549.924c51.148-18.851,103.01-35.762,154.123-55.062c-27.513-0.883-53.594,6.553-78.076,16.995c-25.246,10.767-37.398,1.601-49.305-19.989c-48.514-87.969-66.491-181.157-52.979-280.755c16.818-123.964,70.909-228.352,162.715-313.193c6.026-5.569,13.077-10.168,20.107-14.473c7.229-4.426,15.333-7.638,23.194-1.661c6.959,5.291,5.92,13.159,4.632,20.625c-14.528,84.246,8.913,159.045,56.753,227.705c22.268,31.959,45.83,63.005,64.616,97.323c23.867,43.602,39.486,89.426,39.242,139.625c-0.065,13.485,1.172,21.8,18.711,20.18c81.128-7.493,158.087,8.975,232.365,41.503c65.197,28.551,132.625,47.043,205.038,41.87c31.697-2.264,61.933-10.879,92.705-17.296c11.618-2.422,23.561-4.869,31.829,6.561c7.543,10.428,2.359,20.807-2.782,30.351c-30.557,56.72-75.76,100.504-126.663,138.226c-176.834,131.041-367.449,154.513-570.082,68.094c-32.098-13.689-61.199-14.715-93.47-3.98c-145.028,48.245-249.833,140.586-300.846,285.386c-51.942,147.437,4.034,292.519,144.349,381.493c92.577,58.704,196.57,87.017,303.378,105.326c121.984,20.91,244.996,27.927,368.796,26.793c225.115-2.063,445.32-37.61,662.849-92.757c173.539-43.995,344.142-98.488,516.854-145.428c158.534-43.087,319.081-76.546,483.08-89.909c113.456-9.245,227.08-8.94,339.214,13.958c79.524,16.239,146.535,52.541,184.185,129.391c7.351,15.005,11.888,30.94,13.216,47.642c1.026,12.897-3.199,19.732-17.192,13.272c-154.106-71.14-306.739-38.709-457.794,9.5c-100.021,31.921-193.293,79.47-276.929,143.759c-82.355,63.305-146.394,143.98-208.149,226.351c-63.934,85.278-131.549,166.918-220.854,227.188c-84.824,57.245-175.137,103.956-271.268,139.757c-25.208,9.388-35.64,2.179-42.981-20.699c-5.427-16.915-12.4-33.492-24.824-47.184c1.748,26.668,10.181,51.603,13.509,77.719c11.808,92.68-5.989,180.979-43.195,264.301c-108.664,243.345-273.001,442.277-493.332,592.241c-148.299,100.938-312.629,155.201-494.619,144.911c-44.102-2.493-87.472-9.325-127.757-28.672c-41.562-19.96-44.513-49.983-5.525-73.589c106.267-64.343,174.452-157.409,215.899-273.231c29.029-81.12,60.596-161.345,101.551-237.632c59.753-111.304,140.092-204.639,239.052-282.608c61.784-48.679,126.587-93.981,178.35-154.199c14.379-16.727,27.278-34.726,38.348-54.299c-32.759,27.361-65.463,54.788-98.291,82.065c-37.711,31.335-79.562,56.893-119.468,85.163c-11.03,7.813-23.612,11.216-37.391,11.692c-101.613,3.512-201.737-6.803-300.78-29.787c-178.553-41.434-341.471-116.183-487.183-227.569c-83.965-64.185-157.621-138.867-221.581-223.018c-6.471-8.515-11.313-18.252-17.194-27.237c-5.657-8.644-11.682-17.047-18.271-26.61c-7.18,10.54-1.057,16.751,2.061,22.759c37.852,72.945,83.464,140.38,138.449,201.823c51.454,57.497,105.848,111.658,166.421,159.378c61.081,48.12,125.219,91.677,195.078,126.407c45.795,22.767,91.013,46.918,139.449,63.662c71.189,24.61,142.853,47.689,218.243,56.332c23.831,2.732,47.491,6.924,71.288,9.983c13.673,1.757,14.953,6.209,6.797,17.34c-18.837,25.71-38.893,37.611-74.81,32.591c-144.696-20.224-279.518-68.267-408.932-133.943c-141.242-71.68-263.763-168.139-372.332-282.728c-43.295-45.695-84.904-92.958-118.073-146.91c-3.322-5.404-7.497-10.282-12.644-17.258c-5.03,13.59,1.592,21.706,6.265,29.754c64.81,111.633,143.178,212.57,237.271,301.206c42.922,40.433,89.227,76.751,137.271,110.531c150.029,105.487,315.861,174.487,496.02,208.311c22.672,4.257,20.658,10.319,10.45,26.146c-28.518,44.217-28.041,44.791-78.607,33.272c-161.1-36.701-308.022-105.052-445.1-196.666c-74.122-49.538-140.735-107.268-204.516-169.157c-28.398-27.556-55.418-55.959-80.626-86.311c-3.33-4.01-7.653-11.302-13.928-6.993c-5.43,3.729-2.558,10.489,0.061,15.905c8.102,16.75,22.179,28.855,34.031,42.499c96.03,110.557,201.766,209.75,330.78,281.796c123.206,68.802,250.095,128.152,389.474,156.512c19.774,4.023,23.421,11.104,12.604,30.197c-21.971,38.781-20.864,40.315-64.758,28.156c-43.087-11.936-85.671-25.69-128.475-38.646c-9.951-3.291-19.902-6.583-29.852-9.875c-5.016-2.808-9.783-6.252-15.085-8.331c-166.81-65.428-315.319-159.383-443.972-284.37c-6.555-6.369-13.547-12.29-22.665-14.592c-4.958-1.252-10.65-1.173-13.661,3.278c-3.8,5.616,1.891,8.941,5.187,12.202c8.816,8.722,18.35,16.746,26.861,25.746c108.774,115.034,242.209,193.431,384.328,258.923c5.919,2.728,16.596,7.43,18.047,5.614c12.076-15.12,21.518-1.516,31.816,1.545c0.797,1.309,1.894,2.262,3.292,2.86c7.047,2.338,14.093,4.677,21.14,7.015c0.486,4.067-3.668,10.117,2.429,11.614c3.795,0.932,2.511-4.076,2.114-6.844c1.682-1.655,3.364-3.309,5.047-4.964C1125.385,3040.555,1131.036,3050.574,1137.885,3059.088z"/>
+      </svg>
+    </div>
+
+    <div class="hero-content">
+      <div class="hero-eyebrow" id="heroEyebrow">Documentation</div>
+
+      <h1 class="hero-title" id="heroTitle">
+        <span class="line"><span class="line-inner">25,000 whale</span></span>
+        <span class="line"><span class="line-inner">records. <em>One</em></span></span>
+        <span class="line"><span class="line-inner">open globe.</span></span>
+      </h1>
+
+      <p class="hero-sub" id="heroSub">
+        The complete account of building whaledata.org — from scattered open science data to an interactive 3D platform used by conservationists, researchers, and anyone who cares about the ocean.
+      </p>
+
+      <div class="hero-cta" id="heroCta">
+        <a href="/why" class="btn-primary">
+          Read the story
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+        <a href="https://whaledata.org" class="btn-ghost" target="_blank">
+          Visit the platform
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+
+    <div class="hero-stats" id="heroStats">
+      <div class="stat">
+        <div class="stat-num" data-target="25000" data-suffix="+">0</div>
+        <div class="stat-label">Total Records</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" data-target="6">0</div>
+        <div class="stat-label">Species Tracked</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" data-target="5">0</div>
+        <div class="stat-label">Data Layers</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" data-target="32">0</div>
+        <div class="stat-label">Ship Corridors</div>
+      </div>
+    </div>
+
+    <div class="scroll-hint" id="scrollHint">
+      <span>Scroll</span>
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- ══ PROBLEM ════════════════════════════════════════ -->
+  <section class="problem-section">
+    <div class="section-label">The Problem</div>
+    <h2 class="section-title">The data exists.<br>The interface doesn't.</h2>
+    <p class="section-lead">GBIF holds 2 billion biodiversity records. OBIS holds 100 million marine species records. NOAA maintains decades of stranding data. The gap is not access — it's presentation.</p>
+
+    <div class="problem-grid">
+      <div class="problem-card">
+        <div class="problem-card-num">01</div>
+        <h3>Fragmented databases</h3>
+        <p>Sighting records from research institutions, stranding reports from coastal networks, acoustic detections from hydrophone buoys — scattered across dozens of systems with no unified view.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-card-num">02</div>
+        <h3>No accessible interface</h3>
+        <p>Exploring open cetacean data requires writing API queries, downloading CSV files, and loading them into GIS software. Conservation advocates can't do this. They need a map.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-card-num">03</div>
+        <h3>Missing conservation context</h3>
+        <p>Raw sighting coordinates are not enough. Conservationists need to see where feeding grounds overlap with shipping lanes, where sonar zones correlate with stranding clusters.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-card-num">04</div>
+        <h3>No historical baseline</h3>
+        <p>19th century whaling logs contain distribution data that predates industrial hunting by a century. Nobody has made this comparable to modern records in a single visual.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ DATA SOURCES ═══════════════════════════════════ -->
+  <section>
+    <div class="section-label">The Data</div>
+    <h2 class="section-title">Five open sources.<br>One unified picture.</h2>
+    <p class="section-lead">Every record is sourced from open scientific databases under CC BY 4.0 or equivalent open licenses. Updated automatically on rolling schedules.</p>
+
+    <div class="sources-grid">
+      <div class="source-card">
+        <div class="source-dot" style="background:#00e5ff"></div>
+        <div class="source-name">GBIF</div>
+        <div class="source-count">5,590</div>
+        <div class="source-desc">Verified scientific sightings</div>
+      </div>
+      <div class="source-card">
+        <div class="source-dot" style="background:#4d9fff"></div>
+        <div class="source-name">OBIS</div>
+        <div class="source-count">2,000</div>
+        <div class="source-desc">Fin whale OBIS supplement</div>
+      </div>
+      <div class="source-card">
+        <div class="source-dot" style="background:#ff5a5a"></div>
+        <div class="source-name">NOAA</div>
+        <div class="source-count">12,000</div>
+        <div class="source-desc">Stranding network records</div>
+      </div>
+      <div class="source-card">
+        <div class="source-dot" style="background:#64c864"></div>
+        <div class="source-name">iNaturalist</div>
+        <div class="source-count">3,300</div>
+        <div class="source-desc">Research-grade citizen science</div>
+      </div>
+      <div class="source-card">
+        <div class="source-dot" style="background:#ffb432"></div>
+        <div class="source-name">Historical</div>
+        <div class="source-count">1,500</div>
+        <div class="source-desc">Pre-1950 whaling records</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ FEATURES ═══════════════════════════════════════ -->
+  <section class="features-section">
+    <div class="section-label">The Platform</div>
+    <h2 class="section-title">Every feature<br>had a reason.</h2>
+    <p class="section-lead">Nothing was added for visual effect. Every feature solves a real problem in how open ocean data gets communicated to non-technical audiences.</p>
+
+    <div class="features-list">
+      <div class="feature-item">
+        <div class="feature-icon">🌍</div>
+        <div class="feature-text">
+          <h4>3D Globe projection</h4>
+          <p>Migration routes on a flat map are lines. On a globe they become arcs curving across the surface of the Earth — the scale of a 5,000km whale journey becomes viscerally real.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">📍</div>
+        <div class="feature-text">
+          <h4>25,000 GPU-rendered dots</h4>
+          <p>All records render as a single GPU layer — not 25,000 DOM elements. Smooth at 60fps on any device. WebGL via @maptiler/sdk on MapLibre GL JS v5.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">🌿</div>
+        <div class="feature-text">
+          <h4>Conservation overlay layers</h4>
+          <p>Toggle feeding grounds, sonar exercise zones, and 32 shipping corridors onto the same globe as the sighting data. The overlaps speak for themselves.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">📅</div>
+        <div class="feature-text">
+          <h4>Historical to present filter</h4>
+          <p>Slide from 1785 to 2026. Watch the distribution of Blue whale records shift as you move from 19th century whaling grounds to modern sighting surveys.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">🔔</div>
+        <div class="feature-text">
+          <h4>Weekly email alerts</h4>
+          <p>Subscribe to new sighting digests filtered by species, region, or data layer. Sent via AWS SES with double opt-in, per-subscriber preferences, one-click unsubscribe.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">⚡</div>
+        <div class="feature-text">
+          <h4>Automated data pipeline</h4>
+          <p>Six sync scripts run on cron schedules: GBIF weekly, OBIS weekly, strandings monthly, acoustics monthly, iNaturalist weekly, historical yearly. Zero manual intervention.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ CTA ════════════════════════════════════════════ -->
+  <section class="cta-section">
+    <div class="section-label" style="justify-content:center">Read the full story</div>
+    <h2 class="section-title">Built over 12 months.<br>Documented completely.</h2>
+    <p class="section-lead">From the first database schema to the last mobile layout fix — every decision, every debugging session, every data quality problem is documented here.</p>
+    <div class="cta-buttons">
+      <a href="/why" class="btn-primary">Start reading</a>
+      <a href="/build" class="btn-primary" style="background:transparent;border:1px solid var(--border2);color:var(--cyan)">The build journey</a>
+      <a href="/benchmarks" class="btn-primary" style="background:transparent;border:1px solid var(--border2);color:var(--cyan)">Performance benchmarks</a>
+    </div>
+  </section>
+
+  <!-- ══ FOOTER ══════════════════════════════════════════ -->
+  <footer class="footer">
+    <div class="footer-left">
+      <strong style="color:var(--text);font-family:'Syne',sans-serif">whaledata.org</strong> — Documentation<br>
+      By <a href="https://kyraweb.ca">Monarch / KyraWeb</a> · Built with assistance from <a href="https://claude.ai">Claude by Anthropic</a>
+    </div>
+    <div class="footer-links">
+      <a href="https://whaledata.org">Platform</a>
+      <a href="https://github.com/Kyraweb/whaledata">GitHub</a>
+      <a href="https://api.whaledata.org/docs">API</a>
+      <a href="/roadmap">Roadmap</a>
+    </div>
+  </footer>
+
+</main>
+
+<script>
+gsap.registerPlugin(ScrollTrigger);
+
+// ── CURSOR ─────────────────────────────────────────────
+const cursor = document.getElementById('cursor');
+const ring   = document.getElementById('cursorRing');
+let mx = 0, my = 0;
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  gsap.to(cursor, { x: mx, y: my, duration: 0.05 });
+  gsap.to(ring,   { x: mx, y: my, duration: 0.18 });
+});
+document.querySelectorAll('a, button').forEach(el => {
+  el.addEventListener('mouseenter', () => gsap.to(ring, { scale: 2, borderColor: 'rgba(0,229,255,0.6)', duration: 0.2 }));
+  el.addEventListener('mouseleave', () => gsap.to(ring, { scale: 1, borderColor: 'rgba(0,229,255,0.4)', duration: 0.2 }));
+});
+
+// ── OCEAN CANVAS PARTICLES ─────────────────────────────
+const canvas = document.getElementById('ocean-canvas');
+const ctx    = canvas.getContext('2d');
+let W, H, particles = [];
+
+function resize() {
+  W = canvas.width  = canvas.offsetWidth;
+  H = canvas.height = canvas.offsetHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+class Particle {
+  constructor() { this.reset(); }
+  reset() {
+    this.x  = Math.random() * W;
+    this.y  = Math.random() * H;
+    this.vx = (Math.random() - 0.5) * 0.2;
+    this.vy = -Math.random() * 0.15;
+    this.r  = Math.random() * 1.5 + 0.3;
+    this.a  = Math.random() * 0.3 + 0.05;
+    this.life = 1;
+    this.decay = Math.random() * 0.002 + 0.001;
+  }
+  update() {
+    this.x += this.vx; this.y += this.vy;
+    this.life -= this.decay;
+    if (this.life <= 0 || this.y < 0) this.reset();
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(0,229,255,${this.a * this.life})`;
+    ctx.fill();
+  }
+}
+
+for (let i = 0; i < 120; i++) particles.push(new Particle());
+
+function drawOcean() {
+  ctx.clearRect(0, 0, W, H);
+  // Subtle gradient overlay
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, 'rgba(5,8,16,0)');
+  g.addColorStop(1, 'rgba(5,8,16,0.6)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  particles.forEach(p => { p.update(); p.draw(); });
+  requestAnimationFrame(drawOcean);
+}
+drawOcean();
+
+// ── DEPTH LINES ────────────────────────────────────────
+const depthLines = document.getElementById('depthLines');
+for (let i = 0; i < 8; i++) {
+  const line = document.createElement('div');
+  line.className = 'depth-line';
+  line.style.top = `${10 + i * 12}%`;
+  depthLines.appendChild(line);
+}
+gsap.to('.depth-line', {
+  opacity: 1, duration: 2, stagger: 0.3, delay: 0.5,
+  ease: 'power2.inOut'
+});
+
+// ── WHALE ANIMATION ────────────────────────────────────
+const whale = document.getElementById('whaleContainer');
+gsap.set(whale, { opacity: 0, x: -400, y: 0 });
+gsap.to(whale, {
+  opacity: 1, x: 0, duration: 2.5, delay: 1.2,
+  ease: 'power3.out'
+});
+// Continuous gentle float
+gsap.to(whale, {
+  y: -18, duration: 4,
+  ease: 'sine.inOut', yoyo: true, repeat: -1, delay: 3.5
+});
+// Slow glide across
+gsap.to(whale, {
+  x: '120vw', duration: 40, delay: 4,
+  ease: 'none', repeat: -1,
+  onRepeat: () => gsap.set(whale, { x: -500 })
+});
+
+// ── HERO TEXT REVEALS ──────────────────────────────────
+const tl = gsap.timeline({ delay: 0.4 });
+tl.to('#heroEyebrow', { opacity: 1, y: 0, duration: 0.6, ease: 'power3.out' })
+  .to('.line-inner', { y: '0%', duration: 0.9, stagger: 0.12, ease: 'power4.out' }, '-=0.2')
+  .to('#heroTitle',  { opacity: 1, duration: 0.01 }, '<')
+  .to('#heroSub',    { opacity: 1, y: 0, duration: 0.7, ease: 'power3.out' }, '-=0.4')
+  .to('#heroCta',    { opacity: 1, y: 0, duration: 0.6, ease: 'power3.out' }, '-=0.3')
+  .to('#heroStats',  { opacity: 1, y: 0, duration: 0.6, ease: 'power3.out' }, '-=0.3')
+  .to('#scrollHint', { opacity: 1, duration: 0.6, ease: 'power3.out' }, '-=0.2');
+
+// ── STATS COUNTER ──────────────────────────────────────
+document.querySelectorAll('[data-target]').forEach(el => {
+  const target = +el.dataset.target;
+  const suffix = el.dataset.suffix || '';
+  ScrollTrigger.create({
+    trigger: el,
+    once: true,
+    onEnter: () => {
+      gsap.fromTo({ val: 0 }, { val: target }, {
+        duration: 1.8,
+        ease: 'power3.out',
+        onUpdate: function() {
+          const v = Math.round(this.targets()[0].val);
+          el.textContent = v >= 1000 ? (v/1000).toFixed(0)+'k' + suffix : v + suffix;
+        }
+      });
+    }
+  });
+});
+
+// ── SCROLL ANIMATIONS ──────────────────────────────────
+gsap.utils.toArray('.problem-card').forEach((el, i) => {
+  gsap.to(el, {
+    opacity: 1, y: 0, duration: 0.7,
+    ease: 'power3.out', delay: i * 0.1,
+    scrollTrigger: { trigger: el, start: 'top 85%', once: true }
+  });
+});
+
+gsap.utils.toArray('.source-card').forEach((el, i) => {
+  gsap.to(el, {
+    opacity: 1, y: 0, duration: 0.6,
+    ease: 'power3.out', delay: i * 0.08,
+    scrollTrigger: { trigger: el, start: 'top 88%', once: true }
+  });
+});
+
+gsap.utils.toArray('.feature-item').forEach((el, i) => {
+  gsap.to(el, {
+    opacity: 1, x: 0, duration: 0.6,
+    ease: 'power3.out', delay: i * 0.07,
+    scrollTrigger: { trigger: el, start: 'top 88%', once: true }
+  });
+});
+
+// Section title reveals
+gsap.utils.toArray('.section-title').forEach(el => {
+  gsap.from(el, {
+    opacity: 0, y: 30, duration: 0.8, ease: 'power3.out',
+    scrollTrigger: { trigger: el, start: 'top 85%', once: true }
+  });
+});
+
+// ── MOBILE SIDEBAR ─────────────────────────────────────
+const sidebar   = document.getElementById('sidebar');
+const hamburger = document.getElementById('hamburger');
+const overlay   = document.getElementById('overlay');
+
+hamburger.addEventListener('click', () => {
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('show');
+});
+overlay.addEventListener('click', () => {
+  sidebar.classList.remove('open');
+  overlay.classList.remove('show');
+});
+
+// ── ACTIVE NAV ON SCROLL ───────────────────────────────
+// (Homepage = home link always active)
+</script>
+</body>
+</html>
