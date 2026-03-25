@@ -198,20 +198,13 @@
       z-index: 0;
     }
 
-    /* Whale container */
-    .whale-container {
+    /* Whale canvas */
+    #whale-canvas {
       position: absolute;
-      bottom: 18%;
-      left: -400px;
-      width: 480px;
+      inset: 0;
+      width: 100%; height: 100%;
       z-index: 1;
-      opacity: 0;
-    }
-    .whale-container svg {
-      width: 100%;
-      height: auto;
-      fill: rgba(0,229,255,0.06);
-      filter: drop-shadow(0 0 30px rgba(0,229,255,0.1));
+      pointer-events: none;
     }
 
     /* Depth lines */
@@ -570,7 +563,7 @@
     .hamburger {
       display: none;
       position: fixed;
-      top: 20px; left: 20px;
+      top: 20px; right: 20px;
       z-index: 200;
       background: var(--surface);
       border: 1px solid var(--border);
@@ -589,8 +582,38 @@
 
     /* ── RESPONSIVE ──────────────────────────────────── */
     @media (max-width: 1024px) {
-      .sidebar { transform: translateX(-240px); }
-      .sidebar.open { transform: translateX(0); }
+      .sidebar {
+        top: auto; bottom: 0; left: 0; right: 0;
+        width: 100%; height: auto;
+        max-height: 80vh;
+        border-right: none;
+        border-top: 1px solid var(--border);
+        border-radius: 20px 20px 0 0;
+        transform: translateY(100%);
+        flex-direction: column;
+        padding: 0 0 32px;
+      }
+      .sidebar.open { transform: translateY(0); }
+      .sidebar-logo {
+        display: flex; align-items: center;
+        justify-content: space-between;
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 8px;
+      }
+      .sidebar-logo .close-btn {
+        display: flex;
+        width: 32px; height: 32px;
+        align-items: center; justify-content: center;
+        background: none;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text2);
+        font-size: 16px;
+        cursor: pointer;
+      }
+      .sidebar-nav { padding: 8px 16px; overflow-y: auto; }
+      .sidebar-footer { padding: 16px 24px 0; }
       .main { margin-left: 0; }
       .hamburger { display: flex; }
       .sources-grid { grid-template-columns: repeat(3, 1fr); }
@@ -598,6 +621,7 @@
     }
     @media (max-width: 640px) {
       section, .hero-content { padding: 80px 24px; }
+      .hero-title { font-size: clamp(36px, 10vw, 52px); letter-spacing: -0.02em; }
       .hero-stats { left: 24px; flex-wrap: wrap; gap: 24px; }
       .scroll-hint { display: none; }
       .sources-grid { grid-template-columns: 1fr 1fr; }
@@ -683,12 +707,8 @@
     <!-- Depth lines -->
     <div class="depth-lines" id="depthLines"></div>
 
-    <!-- Whale -->
-    <div class="whale-container" id="whaleContainer">
-      <svg viewBox="0 0 4000 4000" xmlns="http://www.w3.org/2000/svg">
-        <path d="M1137.885,3059.088c18.272,17.524,42.934,20.436,65.419,27.911c27.483,9.137,55.416,17.052,83.459,24.316c12.328,3.193,14.534,9.112,10.007,19.681c-0.653,1.524-1.303,3.053-1.866,4.611c-25.051,69.313-11.066,61.79-78.592,41.031c-191.037-58.729-369.556-143.085-525.662-269.559c-167.347-135.581-297.546-299.41-371.242-504.301c-39.891-110.906-58.405-225.709-64.455-343.199c-8.23-159.797,15.075-314.577,75.35-462.402c108.516-266.138,298.142-450.299,568.45-549.924c51.148-18.851,103.01-35.762,154.123-55.062c-27.513-0.883-53.594,6.553-78.076,16.995c-25.246,10.767-37.398,1.601-49.305-19.989c-48.514-87.969-66.491-181.157-52.979-280.755c16.818-123.964,70.909-228.352,162.715-313.193c6.026-5.569,13.077-10.168,20.107-14.473c7.229-4.426,15.333-7.638,23.194-1.661c6.959,5.291,5.92,13.159,4.632,20.625c-14.528,84.246,8.913,159.045,56.753,227.705c22.268,31.959,45.83,63.005,64.616,97.323c23.867,43.602,39.486,89.426,39.242,139.625c-0.065,13.485,1.172,21.8,18.711,20.18c81.128-7.493,158.087,8.975,232.365,41.503c65.197,28.551,132.625,47.043,205.038,41.87c31.697-2.264,61.933-10.879,92.705-17.296c11.618-2.422,23.561-4.869,31.829,6.561c7.543,10.428,2.359,20.807-2.782,30.351c-30.557,56.72-75.76,100.504-126.663,138.226c-176.834,131.041-367.449,154.513-570.082,68.094c-32.098-13.689-61.199-14.715-93.47-3.98c-145.028,48.245-249.833,140.586-300.846,285.386c-51.942,147.437,4.034,292.519,144.349,381.493c92.577,58.704,196.57,87.017,303.378,105.326c121.984,20.91,244.996,27.927,368.796,26.793c225.115-2.063,445.32-37.61,662.849-92.757c173.539-43.995,344.142-98.488,516.854-145.428c158.534-43.087,319.081-76.546,483.08-89.909c113.456-9.245,227.08-8.94,339.214,13.958c79.524,16.239,146.535,52.541,184.185,129.391c7.351,15.005,11.888,30.94,13.216,47.642c1.026,12.897-3.199,19.732-17.192,13.272c-154.106-71.14-306.739-38.709-457.794,9.5c-100.021,31.921-193.293,79.47-276.929,143.759c-82.355,63.305-146.394,143.98-208.149,226.351c-63.934,85.278-131.549,166.918-220.854,227.188c-84.824,57.245-175.137,103.956-271.268,139.757c-25.208,9.388-35.64,2.179-42.981-20.699c-5.427-16.915-12.4-33.492-24.824-47.184c1.748,26.668,10.181,51.603,13.509,77.719c11.808,92.68-5.989,180.979-43.195,264.301c-108.664,243.345-273.001,442.277-493.332,592.241c-148.299,100.938-312.629,155.201-494.619,144.911c-44.102-2.493-87.472-9.325-127.757-28.672c-41.562-19.96-44.513-49.983-5.525-73.589c106.267-64.343,174.452-157.409,215.899-273.231c29.029-81.12,60.596-161.345,101.551-237.632c59.753-111.304,140.092-204.639,239.052-282.608c61.784-48.679,126.587-93.981,178.35-154.199c14.379-16.727,27.278-34.726,38.348-54.299c-32.759,27.361-65.463,54.788-98.291,82.065c-37.711,31.335-79.562,56.893-119.468,85.163c-11.03,7.813-23.612,11.216-37.391,11.692c-101.613,3.512-201.737-6.803-300.78-29.787c-178.553-41.434-341.471-116.183-487.183-227.569c-83.965-64.185-157.621-138.867-221.581-223.018c-6.471-8.515-11.313-18.252-17.194-27.237c-5.657-8.644-11.682-17.047-18.271-26.61c-7.18,10.54-1.057,16.751,2.061,22.759c37.852,72.945,83.464,140.38,138.449,201.823c51.454,57.497,105.848,111.658,166.421,159.378c61.081,48.12,125.219,91.677,195.078,126.407c45.795,22.767,91.013,46.918,139.449,63.662c71.189,24.61,142.853,47.689,218.243,56.332c23.831,2.732,47.491,6.924,71.288,9.983c13.673,1.757,14.953,6.209,6.797,17.34c-18.837,25.71-38.893,37.611-74.81,32.591c-144.696-20.224-279.518-68.267-408.932-133.943c-141.242-71.68-263.763-168.139-372.332-282.728c-43.295-45.695-84.904-92.958-118.073-146.91c-3.322-5.404-7.497-10.282-12.644-17.258c-5.03,13.59,1.592,21.706,6.265,29.754c64.81,111.633,143.178,212.57,237.271,301.206c42.922,40.433,89.227,76.751,137.271,110.531c150.029,105.487,315.861,174.487,496.02,208.311c22.672,4.257,20.658,10.319,10.45,26.146c-28.518,44.217-28.041,44.791-78.607,33.272c-161.1-36.701-308.022-105.052-445.1-196.666c-74.122-49.538-140.735-107.268-204.516-169.157c-28.398-27.556-55.418-55.959-80.626-86.311c-3.33-4.01-7.653-11.302-13.928-6.993c-5.43,3.729-2.558,10.489,0.061,15.905c8.102,16.75,22.179,28.855,34.031,42.499c96.03,110.557,201.766,209.75,330.78,281.796c123.206,68.802,250.095,128.152,389.474,156.512c19.774,4.023,23.421,11.104,12.604,30.197c-21.971,38.781-20.864,40.315-64.758,28.156c-43.087-11.936-85.671-25.69-128.475-38.646c-9.951-3.291-19.902-6.583-29.852-9.875c-5.016-2.808-9.783-6.252-15.085-8.331c-166.81-65.428-315.319-159.383-443.972-284.37c-6.555-6.369-13.547-12.29-22.665-14.592c-4.958-1.252-10.65-1.173-13.661,3.278c-3.8,5.616,1.891,8.941,5.187,12.202c8.816,8.722,18.35,16.746,26.861,25.746c108.774,115.034,242.209,193.431,384.328,258.923c5.919,2.728,16.596,7.43,18.047,5.614c12.076-15.12,21.518-1.516,31.816,1.545c0.797,1.309,1.894,2.262,3.292,2.86c7.047,2.338,14.093,4.677,21.14,7.015c0.486,4.067-3.668,10.117,2.429,11.614c3.795,0.932,2.511-4.076,2.114-6.844c1.682-1.655,3.364-3.309,5.047-4.964C1125.385,3040.555,1131.036,3050.574,1137.885,3059.088z"/>
-      </svg>
-    </div>
+    <!-- Whale swimming canvas -->
+    <canvas id="whale-canvas"></canvas>
 
     <div class="hero-content">
       <div class="hero-eyebrow" id="heroEyebrow">Documentation</div>
@@ -975,24 +995,207 @@ gsap.to('.depth-line', {
   ease: 'power2.inOut'
 });
 
-// ── WHALE ANIMATION ────────────────────────────────────
-const whale = document.getElementById('whaleContainer');
-gsap.set(whale, { opacity: 0, x: -400, y: 0 });
-gsap.to(whale, {
-  opacity: 1, x: 0, duration: 2.5, delay: 1.2,
-  ease: 'power3.out'
-});
-// Continuous gentle float
-gsap.to(whale, {
-  y: -18, duration: 4,
-  ease: 'sine.inOut', yoyo: true, repeat: -1, delay: 3.5
-});
-// Slow glide across
-gsap.to(whale, {
-  x: '120vw', duration: 40, delay: 4,
-  ease: 'none', repeat: -1,
-  onRepeat: () => gsap.set(whale, { x: -500 })
-});
+// ── WHALE POD CANVAS ANIMATION ─────────────────────────
+(function() {
+  const canvas = document.getElementById('whale-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H;
+
+  function resize() {
+    W = canvas.width  = canvas.offsetWidth;
+    H = canvas.height = canvas.offsetHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // Draw a single whale body at origin, facing right
+  // size = body length in px
+  function drawWhale(ctx, size, alpha, glowColor) {
+    const s = size;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    // Glow
+    ctx.shadowColor = glowColor;
+    ctx.shadowBlur  = s * 0.4;
+
+    // Body — main teardrop
+    ctx.beginPath();
+    ctx.moveTo(s * 0.5, 0);
+    ctx.bezierCurveTo( s * 0.55,  -s * 0.14,   s * 0.1,  -s * 0.2,   -s * 0.3,  -s * 0.13);
+    ctx.bezierCurveTo(-s * 0.52, -s * 0.07,   -s * 0.52,  s * 0.07,  -s * 0.3,   s * 0.13);
+    ctx.bezierCurveTo( s * 0.1,   s * 0.2,     s * 0.55,  s * 0.14,   s * 0.5,   0);
+    ctx.closePath();
+    ctx.fillStyle = glowColor;
+    ctx.fill();
+
+    // Flukes (tail) — behind the body
+    ctx.beginPath();
+    // Upper fluke
+    ctx.moveTo(-s * 0.3, -s * 0.02);
+    ctx.bezierCurveTo(-s * 0.5, -s * 0.02, -s * 0.65, -s * 0.18, -s * 0.62, -s * 0.28);
+    ctx.bezierCurveTo(-s * 0.59, -s * 0.35, -s * 0.44, -s * 0.3,  -s * 0.38, -s * 0.2);
+    ctx.bezierCurveTo(-s * 0.34, -s * 0.13, -s * 0.32, -s * 0.06, -s * 0.3, 0);
+    // Lower fluke
+    ctx.moveTo(-s * 0.3,  s * 0.02);
+    ctx.bezierCurveTo(-s * 0.5,  s * 0.02, -s * 0.65,  s * 0.18, -s * 0.62,  s * 0.28);
+    ctx.bezierCurveTo(-s * 0.59,  s * 0.35, -s * 0.44,  s * 0.3,  -s * 0.38,  s * 0.2);
+    ctx.bezierCurveTo(-s * 0.34,  s * 0.13, -s * 0.32,  s * 0.06, -s * 0.3,   0);
+    ctx.fillStyle = glowColor;
+    ctx.fill();
+
+    // Dorsal fin
+    ctx.beginPath();
+    ctx.moveTo(s * 0.05, -s * 0.13);
+    ctx.bezierCurveTo(s * 0.08, -s * 0.32, s * 0.18, -s * 0.35, s * 0.22, -s * 0.25);
+    ctx.bezierCurveTo(s * 0.24, -s * 0.18, s * 0.18, -s * 0.13, s * 0.1,  -s * 0.13);
+    ctx.closePath();
+    ctx.fillStyle = glowColor;
+    ctx.fill();
+
+    // Pectoral fin
+    ctx.beginPath();
+    ctx.moveTo(s * 0.18, s * 0.1);
+    ctx.bezierCurveTo(s * 0.22, s * 0.22, s * 0.1,  s * 0.32,  s * 0.0,  s * 0.28);
+    ctx.bezierCurveTo(-s * 0.04, s * 0.24, -s * 0.02, s * 0.14, s * 0.08, s * 0.1);
+    ctx.closePath();
+    ctx.fillStyle = glowColor;
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  }
+
+  // Bubble particle
+  function Bubble(x, y) {
+    this.x = x; this.y = y;
+    this.r = Math.random() * 2 + 0.5;
+    this.vy = -(Math.random() * 0.4 + 0.2);
+    this.vx = (Math.random() - 0.5) * 0.3;
+    this.life = 1;
+    this.decay = Math.random() * 0.008 + 0.004;
+  }
+  Bubble.prototype.update = function() {
+    this.x += this.vx; this.y += this.vy;
+    this.life -= this.decay;
+  };
+  Bubble.prototype.draw = function(ctx, color) {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    ctx.strokeStyle = color;
+    ctx.globalAlpha = this.life * 0.4;
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  };
+
+  // Three whales: foreground (large, slow), mid (medium), background (small, fast)
+  const whales = [
+    {
+      // Background — small, fast, high in frame
+      size: 70, speed: 0.28, depth: 0.22,
+      amp: 28, freq: 0.018, phase: 0,
+      tailAmp: 0.22, tailFreq: 0.06, tailPhase: 0,
+      color: 'rgba(0,229,255,0.055)', glow: 'rgba(0,229,255,0.055)',
+      x: -150, bubbles: [], bubbleRate: 0.04, delay: 180
+    },
+    {
+      // Mid — medium
+      size: 110, speed: 0.18, depth: 0.52,
+      amp: 40, freq: 0.014, phase: Math.PI * 0.7,
+      tailAmp: 0.18, tailFreq: 0.05, tailPhase: 1.2,
+      color: 'rgba(0,229,255,0.07)', glow: 'rgba(0,229,255,0.07)',
+      x: -350, bubbles: [], bubbleRate: 0.06, delay: 60
+    },
+    {
+      // Foreground — large, slowest, low in frame
+      size: 160, speed: 0.12, depth: 0.72,
+      amp: 52, freq: 0.011, phase: Math.PI * 1.4,
+      tailAmp: 0.15, tailFreq: 0.04, tailPhase: 2.4,
+      color: 'rgba(0,229,255,0.09)', glow: 'rgba(0,229,255,0.09)',
+      x: -600, bubbles: [], bubbleRate: 0.08, delay: 0
+    }
+  ];
+
+  let t = 0;
+
+  function loop() {
+    ctx.clearRect(0, 0, W, H);
+    t++;
+
+    whales.forEach(w => {
+      if (t < w.delay) return;
+
+      // Advance x
+      w.x += w.speed;
+      if (w.x > W + w.size * 0.8) w.x = -w.size * 0.8;
+
+      // Sine wave y position
+      const baseY = H * w.depth;
+      const sineY = Math.sin(t * w.freq + w.phase) * w.amp;
+      const y = baseY + sineY;
+
+      // Body tilt — derivative of sine = cos
+      const tilt = Math.cos(t * w.freq + w.phase) * w.freq * w.amp * 0.6;
+
+      // Tail fluke rotation (oscillates independent of body)
+      const tailRot = Math.sin(t * w.tailFreq + w.tailPhase) * w.tailAmp;
+
+      // Spawn bubbles behind the tail
+      if (Math.random() < w.bubbleRate) {
+        const tailX = w.x - Math.cos(tilt) * w.size * 0.62;
+        const tailY = y   - Math.sin(tilt) * w.size * 0.62;
+        w.bubbles.push(new Bubble(tailX, tailY));
+      }
+
+      // Update + draw bubbles
+      w.bubbles = w.bubbles.filter(b => b.life > 0);
+      w.bubbles.forEach(b => { b.update(); b.draw(ctx, w.color); });
+
+      // Draw whale
+      ctx.save();
+      ctx.translate(w.x, y);
+      ctx.rotate(tilt);
+
+      // Draw main body
+      drawWhale(ctx, w.size, 1, w.glow);
+
+      // Tail fluke overlay — extra rotation on top of body tilt
+      ctx.save();
+      ctx.translate(-w.size * 0.3, 0);
+      ctx.rotate(tailRot);
+      ctx.translate(w.size * 0.3, 0);
+      // Redraw tail with rotation
+      const s = w.size;
+      ctx.beginPath();
+      ctx.moveTo(-s * 0.3, -s * 0.02);
+      ctx.bezierCurveTo(-s * 0.5, -s * 0.02, -s * 0.65, -s * 0.18, -s * 0.62, -s * 0.28);
+      ctx.bezierCurveTo(-s * 0.59, -s * 0.35, -s * 0.44, -s * 0.3,  -s * 0.38, -s * 0.2);
+      ctx.bezierCurveTo(-s * 0.34, -s * 0.13, -s * 0.32, -s * 0.06, -s * 0.3, 0);
+      ctx.moveTo(-s * 0.3,  s * 0.02);
+      ctx.bezierCurveTo(-s * 0.5,  s * 0.02, -s * 0.65,  s * 0.18, -s * 0.62,  s * 0.28);
+      ctx.bezierCurveTo(-s * 0.59,  s * 0.35, -s * 0.44,  s * 0.3,  -s * 0.38,  s * 0.2);
+      ctx.bezierCurveTo(-s * 0.34,  s * 0.13, -s * 0.32,  s * 0.06, -s * 0.3,   0);
+      ctx.globalAlpha = 1;
+      ctx.shadowColor = w.glow;
+      ctx.shadowBlur  = s * 0.3;
+      ctx.fillStyle = w.color;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.restore();
+
+      ctx.restore();
+    });
+
+    requestAnimationFrame(loop);
+  }
+
+  // Staggered fade-in — whales materialise gradually
+  setTimeout(() => {
+    whales[0].delay = 0;
+    loop();
+  }, 1200);
+})();
 
 // ── HERO TEXT REVEALS ──────────────────────────────────
 const tl = gsap.timeline({ delay: 0.4 });
@@ -1062,13 +1265,28 @@ const sidebar   = document.getElementById('sidebar');
 const hamburger = document.getElementById('hamburger');
 const overlay   = document.getElementById('overlay');
 
-hamburger.addEventListener('click', () => {
-  sidebar.classList.toggle('open');
-  overlay.classList.toggle('show');
-});
-overlay.addEventListener('click', () => {
+const closeBtn = document.getElementById('closeBtn');
+
+function isMobile() { return window.innerWidth <= 1024; }
+
+function openNav() {
+  sidebar.classList.add('open');
+  overlay.classList.add('show');
+  if (closeBtn) closeBtn.style.display = 'flex';
+}
+function closeNav() {
   sidebar.classList.remove('open');
   overlay.classList.remove('show');
+  if (closeBtn) closeBtn.style.display = 'none';
+}
+
+hamburger.addEventListener('click', openNav);
+overlay.addEventListener('click', closeNav);
+if (closeBtn) closeBtn.addEventListener('click', closeNav);
+
+// Close nav on link click on mobile
+document.querySelectorAll('.nav-link').forEach(link => {
+  link.addEventListener('click', () => { if (isMobile()) closeNav(); });
 });
 
 // ── ACTIVE NAV ON SCROLL ───────────────────────────────

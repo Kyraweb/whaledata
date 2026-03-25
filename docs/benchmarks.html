@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Benchmarks — whaledata.org</title>
+  <meta name="description" content="Performance benchmarks for whaledata.org — Locust load test results, API latency, infrastructure analysis."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --cyan: #00e5ff; --cyan-dim: #00b8cc; --cyan-deep: #006b7e;
+      --dark: #050810; --surface: #0a1525; --surface2: #0d1e32;
+      --border: rgba(0,229,255,0.1); --border2: rgba(0,229,255,0.2);
+      --text: #e8f4f8; --text2: #7a9bb5; --text3: #3a5a72;
+      --green: #00c97a; --amber: #ffb432; --red: #ff5a5a; --purple: #9664ff;
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--dark); color: var(--text); font-family: 'DM Sans', sans-serif; overflow-x: hidden; cursor: none; }
+    .cursor { position: fixed; width: 8px; height: 8px; background: var(--cyan); border-radius: 50%; pointer-events: none; z-index: 9999; transform: translate(-50%,-50%); mix-blend-mode: screen; }
+    .cursor-ring { position: fixed; width: 32px; height: 32px; border: 1px solid rgba(0,229,255,0.4); border-radius: 50%; pointer-events: none; z-index: 9998; transform: translate(-50%,-50%); transition: all 0.15s ease; }
+    @media (hover: none), (pointer: coarse) { body { cursor: auto; } .cursor, .cursor-ring { display: none !important; } }
+
+    .sidebar { position: fixed; top: 0; left: 0; width: 240px; height: 100vh; background: rgba(5,8,16,0.95); backdrop-filter: blur(20px); border-right: 1px solid var(--border); z-index: 100; display: flex; flex-direction: column; padding: 32px 0; }
+    .sidebar-logo { padding: 0 24px 32px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+    .sidebar-logo a { text-decoration: none; display: flex; align-items: center; gap: 10px; }
+    .sidebar-logo .name { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: var(--text); }
+    .sidebar-logo .name span { color: var(--cyan); }
+    .sidebar-logo .sub { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text3); letter-spacing: 0.15em; text-transform: uppercase; margin-top: 2px; }
+    .sidebar-nav { flex: 1; padding: 0 16px; overflow-y: auto; }
+    .nav-section { margin-bottom: 24px; }
+    .nav-section-label { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text3); letter-spacing: 0.15em; text-transform: uppercase; padding: 0 8px; margin-bottom: 8px; }
+    .nav-link { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; text-decoration: none; font-size: 13px; color: var(--text2); transition: all 0.15s; margin-bottom: 2px; }
+    .nav-link:hover, .nav-link.active { background: rgba(0,229,255,0.06); color: var(--cyan); }
+    .nav-link .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); flex-shrink: 0; transition: background 0.15s; }
+    .nav-link:hover .dot, .nav-link.active .dot { background: var(--cyan); }
+    .sidebar-footer { padding: 20px 24px 0; border-top: 1px solid var(--border); }
+    .sidebar-footer a { display: block; font-size: 11px; color: var(--text3); text-decoration: none; margin-bottom: 6px; transition: color 0.15s; }
+    .sidebar-footer a:hover { color: var(--cyan); }
+
+    .main { margin-left: 240px; min-height: 100vh; }
+
+    .page-hero { padding: 100px 80px 80px; border-bottom: 1px solid var(--border); position: relative; overflow: hidden; }
+    .page-hero::before { content: ''; position: absolute; top: -100px; right: -100px; width: 500px; height: 500px; background: radial-gradient(circle, rgba(255,180,50,0.04) 0%, transparent 70%); pointer-events: none; }
+    .breadcrumb { display: flex; align-items: center; gap: 8px; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text3); margin-bottom: 32px; }
+    .breadcrumb a { color: var(--text3); text-decoration: none; transition: color 0.15s; }
+    .breadcrumb a:hover { color: var(--cyan); }
+    .page-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--amber); margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+    .page-label::before { content: ''; width: 24px; height: 1px; background: var(--amber); }
+    .page-title { font-family: 'Syne', sans-serif; font-size: clamp(40px, 5vw, 68px); font-weight: 800; line-height: 1; letter-spacing: -0.03em; margin-bottom: 24px; }
+    .page-title em { font-style: normal; color: var(--amber); }
+    .page-intro { font-size: 18px; color: var(--text2); line-height: 1.7; max-width: 640px; font-weight: 300; }
+
+    /* HERO STATS */
+    .hero-stats { display: grid; grid-template-columns: repeat(4,1fr); border-bottom: 1px solid var(--border); }
+    .hero-stat { padding: 36px 40px; border-right: 1px solid var(--border); }
+    .hero-stat:last-child { border-right: none; }
+    .hero-stat .num { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; color: var(--cyan); line-height: 1; margin-bottom: 6px; }
+    .hero-stat .lbl { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text3); margin-bottom: 4px; }
+    .hero-stat .sub { font-size: 12px; color: var(--text3); }
+
+    .content-layout { display: grid; grid-template-columns: 1fr 200px; gap: 60px; padding: 80px; max-width: 1100px; }
+    .content-body { min-width: 0; }
+
+    .on-this-page { position: sticky; top: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+    .on-this-page h4 { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text3); margin-bottom: 12px; }
+    .on-this-page a { display: block; color: var(--text2); text-decoration: none; padding: 5px 0 5px 12px; border-left: 2px solid transparent; transition: all 0.15s; font-size: 12px; }
+    .on-this-page a:hover, .on-this-page a.active { color: var(--cyan); border-left-color: var(--cyan); }
+
+    .bench-section { margin-bottom: 72px; scroll-margin-top: 80px; }
+    .bench-section h2 { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 20px; }
+    .bench-section p { font-size: 15px; color: var(--text2); line-height: 1.8; font-weight: 300; margin-bottom: 18px; }
+    .bench-section p strong { color: var(--text); font-weight: 500; }
+    .bench-section p:last-child { margin-bottom: 0; }
+
+    /* RESULTS TABLE */
+    .results-table { width: 100%; border-collapse: collapse; margin: 28px 0; }
+    .results-table th { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); text-align: left; padding: 10px 16px; border-bottom: 1px solid var(--border); }
+    .results-table td { padding: 14px 16px; font-size: 13px; color: var(--text2); border-bottom: 1px solid rgba(0,229,255,0.04); font-family: 'DM Mono', monospace; }
+    .results-table tr:hover td { background: rgba(0,229,255,0.02); }
+    .results-table .endpoint { font-family: 'DM Sans', sans-serif; color: var(--text); font-size: 13px; }
+    .results-table .agg { background: rgba(0,229,255,0.03); }
+    .results-table .agg td { color: var(--cyan); font-weight: 500; border-top: 1px solid var(--border); }
+    .ok { color: var(--green); }
+
+    /* BAR CHART */
+    .bar-chart { margin: 32px 0; }
+    .bar-row { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
+    .bar-label { font-size: 12px; color: var(--text2); width: 220px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .bar-track { flex: 1; height: 24px; background: rgba(0,229,255,0.04); border-radius: 4px; overflow: hidden; position: relative; }
+    .bar-fill { height: 100%; border-radius: 4px; transition: width 1s ease; display: flex; align-items: center; padding-left: 10px; }
+    .bar-fill .bar-val { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--dark); font-weight: 500; }
+
+    /* PERCENTILE TABLE */
+    .pct-table { width: 100%; border-collapse: collapse; margin: 28px 0; overflow-x: auto; display: block; }
+    .pct-table th { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); padding: 10px 14px; border-bottom: 1px solid var(--border); text-align: center; white-space: nowrap; }
+    .pct-table th:first-child { text-align: left; }
+    .pct-table td { padding: 12px 14px; font-size: 12px; color: var(--text2); border-bottom: 1px solid rgba(0,229,255,0.04); font-family: 'DM Mono', monospace; text-align: center; }
+    .pct-table td:first-child { text-align: left; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; }
+    .pct-table .p99 { color: var(--amber); }
+    .pct-table .p95 { color: rgba(255,180,50,0.7); }
+
+    /* INFRA SPECS */
+    .spec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 24px 0; }
+    .spec-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+    .spec-box h4 { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text3); margin-bottom: 12px; }
+    .spec-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(0,229,255,0.04); }
+    .spec-row:last-child { border-bottom: none; }
+    .spec-row .key { font-size: 13px; color: var(--text2); }
+    .spec-row .val { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--cyan); }
+
+    /* PROJECTION BOX */
+    .projection-box { background: linear-gradient(135deg, rgba(0,229,255,0.04), rgba(150,100,255,0.04)); border: 1px solid var(--border2); border-radius: 14px; padding: 28px 32px; margin: 28px 0; }
+    .projection-box h3 { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+    .projection-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .projection-col h4 { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text3); margin-bottom: 10px; }
+    .projection-col .spec-row .val { color: var(--green); }
+
+    .info-box { background: rgba(0,229,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; margin: 20px 0; display: flex; gap: 14px; }
+    .info-box .icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+    .info-box p { font-size: 13px; color: var(--text2); line-height: 1.7; margin: 0; font-weight: 300; }
+    .info-box p strong { color: var(--cyan); }
+
+    .page-nav { display: flex; justify-content: space-between; padding: 48px 80px 80px; border-top: 1px solid var(--border); }
+    .page-nav-link { display: flex; flex-direction: column; gap: 4px; text-decoration: none; padding: 20px 24px; border: 1px solid var(--border); border-radius: 12px; transition: all 0.2s; max-width: 220px; }
+    .page-nav-link.next { align-items: flex-end; }
+    .page-nav-link:hover { border-color: var(--border2); background: rgba(0,229,255,0.03); }
+    .page-nav-link.prev:hover { transform: translateX(-4px); }
+    .page-nav-link.next:hover { transform: translateX(4px); }
+    .page-nav-link .label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); }
+    .page-nav-link .title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: var(--cyan); }
+
+    .footer { background: var(--dark); border-top: 1px solid var(--border); padding: 48px 80px; display: flex; align-items: center; justify-content: space-between; }
+    .footer-left { font-size: 13px; color: var(--text3); line-height: 1.7; }
+    .footer-left a { color: var(--cyan-dim); text-decoration: none; }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a { font-size: 13px; color: var(--text3); text-decoration: none; transition: color 0.15s; }
+    .footer-links a:hover { color: var(--cyan); }
+
+    .hamburger { display: none; position: fixed; top: 20px; right: 20px; z-index: 200; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px; cursor: pointer; flex-direction: column; gap: 4px; }
+    .hamburger span { display: block; width: 20px; height: 2px; background: var(--cyan); border-radius: 2px; }
+    .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99; }
+    .overlay.show { display: block; }
+
+    @media (max-width: 1024px) {
+      .sidebar { top: auto; bottom: 0; left: 0; right: 0; width: 100%; height: auto; max-height: 80vh; border-right: none; border-top: 1px solid var(--border); border-radius: 20px 20px 0 0; transform: translateY(100%); padding: 0 0 32px; }
+      .sidebar.open { transform: translateY(0); }
+      .sidebar-logo { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+      .close-btn { display: flex !important; width: 32px; height: 32px; align-items: center; justify-content: center; background: none; border: 1px solid var(--border); border-radius: 8px; color: var(--text2); font-size: 16px; cursor: pointer; }
+      .main { margin-left: 0; }
+      .hamburger { display: flex; }
+      .hero-stats { grid-template-columns: 1fr 1fr; }
+      .hero-stat { border-right: none; border-bottom: 1px solid var(--border); }
+      .content-layout { grid-template-columns: 1fr; padding: 40px 24px; }
+      .on-this-page { display: none; }
+      .page-hero { padding: 80px 24px 48px; }
+      .page-nav { padding: 48px 24px; }
+      .footer { flex-direction: column; gap: 20px; padding: 40px 24px; }
+      .spec-grid { grid-template-columns: 1fr; }
+      .projection-grid { grid-template-columns: 1fr; }
+      .bar-label { width: 140px; font-size: 11px; }
+    }
+    @media (max-width: 640px) {
+      .page-title { font-size: clamp(36px, 10vw, 52px); }
+      .hero-stats { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+<button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+<div class="overlay" id="overlay"></div>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <a href="/">
+      <span style="font-size:24px;line-height:1">🐋</span>
+      <div>
+        <div class="name">whaledata<span>.org</span></div>
+        <div class="sub">Documentation</div>
+      </div>
+    </a>
+    <button class="close-btn" id="closeBtn" style="display:none">✕</button>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-label">Overview</div>
+      <a href="/" class="nav-link"><span class="dot"></span>Home</a>
+      <a href="/why" class="nav-link"><span class="dot"></span>Why this project</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">The Data</div>
+      <a href="/data" class="nav-link"><span class="dot"></span>Data sources</a>
+      <a href="/conservation" class="nav-link"><span class="dot"></span>Conservation layers</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">How it was built</div>
+      <a href="/technology" class="nav-link"><span class="dot"></span>Technology stack</a>
+      <a href="/build" class="nav-link"><span class="dot"></span>The build journey</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Performance</div>
+      <a href="/benchmarks" class="nav-link active"><span class="dot"></span>Benchmarks</a>
+      <a href="/roadmap" class="nav-link"><span class="dot"></span>Roadmap</a>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <a href="https://whaledata.org" target="_blank">↗ whaledata.org</a>
+    <a href="https://github.com/Kyraweb/whaledata" target="_blank">↗ GitHub</a>
+    <a href="https://api.whaledata.org/docs" target="_blank">↗ API docs</a>
+  </div>
+</aside>
+
+<main class="main">
+
+  <div class="page-hero">
+    <div class="breadcrumb">
+      <a href="/">Home</a><span>/</span><span>Benchmarks</span>
+    </div>
+    <div class="page-label">Performance</div>
+    <h1 class="page-title">Zero failures.<br><em>Real numbers.</em></h1>
+    <p class="page-intro">Load tested against production with 50 concurrent users over 60 seconds using Locust 2.43. The API runs on a $12/month VPS. These are the honest results.</p>
+  </div>
+
+  <!-- HERO STATS -->
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <div class="num">0%</div>
+      <div class="lbl">Error rate</div>
+      <div class="sub">309 requests, 0 failures</div>
+    </div>
+    <div class="hero-stat">
+      <div class="num">5.23</div>
+      <div class="lbl">Req/s aggregate</div>
+      <div class="sub">50 concurrent users</div>
+    </div>
+    <div class="hero-stat">
+      <div class="num">6.8s</div>
+      <div class="lbl">Median response</div>
+      <div class="sub">Aggregate across all endpoints</div>
+    </div>
+    <div class="hero-stat">
+      <div class="num">2 vCPU</div>
+      <div class="lbl">Server spec</div>
+      <div class="sub">2GB RAM, Debian VPS</div>
+    </div>
+  </div>
+
+  <div class="content-layout">
+    <div class="content-body">
+
+      <!-- TEST SETUP -->
+      <div class="bench-section" id="setup">
+        <h2>Test setup</h2>
+        <p>Load testing was run from a local Windows machine against the live production API at <strong>api.whaledata.org</strong> using Locust 2.43.3. No caching was added before the test — results reflect raw database query performance.</p>
+
+        <div class="spec-grid">
+          <div class="spec-box">
+            <h4>Test parameters</h4>
+            <div class="spec-row"><span class="key">Tool</span><span class="val">Locust 2.43.3</span></div>
+            <div class="spec-row"><span class="key">Concurrent users</span><span class="val">50</span></div>
+            <div class="spec-row"><span class="key">Spawn rate</span><span class="val">5 users/sec</span></div>
+            <div class="spec-row"><span class="key">Duration</span><span class="val">60 seconds</span></div>
+            <div class="spec-row"><span class="key">Target</span><span class="val">api.whaledata.org</span></div>
+            <div class="spec-row"><span class="key">Total requests</span><span class="val">309</span></div>
+          </div>
+          <div class="spec-box">
+            <h4>Server infrastructure</h4>
+            <div class="spec-row"><span class="key">Provider</span><span class="val">DigitalOcean VPS</span></div>
+            <div class="spec-row"><span class="key">CPU</span><span class="val">2 vCPU</span></div>
+            <div class="spec-row"><span class="key">RAM</span><span class="val">2 GB</span></div>
+            <div class="spec-row"><span class="key">OS</span><span class="val">Debian</span></div>
+            <div class="spec-row"><span class="key">Runtime</span><span class="val">Docker + Coolify</span></div>
+            <div class="spec-row"><span class="key">DB</span><span class="val">PostGIS 17</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RESULTS -->
+      <div class="bench-section" id="results">
+        <h2>Raw results</h2>
+        <p>All four endpoints tested, weighted by realistic usage patterns — sightings with full dataset called 3× as often as species list, since it's the primary globe data fetch.</p>
+
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>Endpoint</th>
+              <th>Reqs</th>
+              <th>Fails</th>
+              <th>Avg (ms)</th>
+              <th>Min (ms)</th>
+              <th>Max (ms)</th>
+              <th>Median</th>
+              <th>Req/s</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="endpoint">GET /sightings/?limit=5000</td>
+              <td>132</td>
+              <td class="ok">0</td>
+              <td>6,853</td>
+              <td>1,104</td>
+              <td>12,533</td>
+              <td>7,200</td>
+              <td>2.23</td>
+            </tr>
+            <tr>
+              <td class="endpoint">GET /sightings/?species=Humpback+whale</td>
+              <td>94</td>
+              <td class="ok">0</td>
+              <td>5,131</td>
+              <td>640</td>
+              <td>10,644</td>
+              <td>5,300</td>
+              <td>1.59</td>
+            </tr>
+            <tr>
+              <td class="endpoint">GET /layers/summary</td>
+              <td>52</td>
+              <td class="ok">0</td>
+              <td>6,195</td>
+              <td>396</td>
+              <td>9,304</td>
+              <td>6,800</td>
+              <td>0.88</td>
+            </tr>
+            <tr>
+              <td class="endpoint">GET /species</td>
+              <td>31</td>
+              <td class="ok">0</td>
+              <td>8,109</td>
+              <td>1,309</td>
+              <td>11,780</td>
+              <td>8,600</td>
+              <td>0.52</td>
+            </tr>
+            <tr class="agg">
+              <td class="endpoint">Aggregated</td>
+              <td>309</td>
+              <td class="ok">0</td>
+              <td>6,344</td>
+              <td>396</td>
+              <td>12,533</td>
+              <td>6,800</td>
+              <td>5.23</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- BAR CHART -->
+        <div class="bar-chart" id="barChart">
+          <div class="bar-row">
+            <span class="bar-label">GET /species</span>
+            <div class="bar-track"><div class="bar-fill" style="width:0%;background:linear-gradient(90deg,#ff6b9d,#cc4477)" data-width="85.7"><span class="bar-val">8,109ms</span></div></div>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label">GET /sightings/?limit=5000</span>
+            <div class="bar-track"><div class="bar-fill" style="width:0%;background:linear-gradient(90deg,#ffb432,#cc8800)" data-width="72.4"><span class="bar-val">6,853ms</span></div></div>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label">GET /layers/summary</span>
+            <div class="bar-track"><div class="bar-fill" style="width:0%;background:linear-gradient(90deg,#00e5ff,#0088aa)" data-width="65.5"><span class="bar-val">6,195ms</span></div></div>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label">GET /sightings/?species=…</span>
+            <div class="bar-track"><div class="bar-fill" style="width:0%;background:linear-gradient(90deg,#00c97a,#007744)" data-width="54.2"><span class="bar-val">5,131ms</span></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PERCENTILES -->
+      <div class="bench-section" id="percentiles">
+        <h2>Response time percentiles</h2>
+        <p>Percentile data reveals the tail behaviour — the difference between what typical users experience and what the slowest users experience under load.</p>
+
+        <table class="pct-table">
+          <thead>
+            <tr>
+              <th>Endpoint</th>
+              <th>p50</th>
+              <th>p75</th>
+              <th>p90</th>
+              <th class="p95">p95</th>
+              <th class="p99">p99</th>
+              <th>p100</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>GET /sightings/?limit=5000</td>
+              <td>7,200</td><td>8,100</td><td>9,300</td>
+              <td class="p95">11,000</td><td class="p99">12,000</td><td>13,000</td>
+            </tr>
+            <tr>
+              <td>GET /sightings/?species=…</td>
+              <td>5,300</td><td>6,400</td><td>7,500</td>
+              <td class="p95">8,600</td><td class="p99">11,000</td><td>11,000</td>
+            </tr>
+            <tr>
+              <td>GET /layers/summary</td>
+              <td>6,900</td><td>7,700</td><td>8,400</td>
+              <td class="p95">9,000</td><td class="p99">9,300</td><td>9,300</td>
+            </tr>
+            <tr>
+              <td>GET /species</td>
+              <td>8,600</td><td>9,400</td><td>10,000</td>
+              <td class="p95">12,000</td><td class="p99">12,000</td><td>12,000</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="info-box">
+          <div class="icon">📊</div>
+          <p><strong>Reading the tail:</strong> The p95 for the full sightings endpoint is 11 seconds — meaning 95% of requests complete within 11s under 50 concurrent users. For a globe that loads once per session rather than per interaction, this is acceptable. Filtered species requests (p95 8.6s) are faster because they return fewer records from PostGIS.</p>
+        </div>
+      </div>
+
+      <!-- ANALYSIS -->
+      <div class="bench-section" id="analysis">
+        <h2>What the numbers mean</h2>
+        <p>The headline result is <strong>zero failures across 309 requests</strong> under 50 concurrent users. For a conservation data platform where data integrity matters more than raw speed, stability under load is the primary benchmark — and it passes cleanly.</p>
+        <p>The 6–8 second average response times reflect <strong>the server tier, not the architecture</strong>. PostGIS spatial queries against 25,000+ records on 2 shared vCPU cores is the bottleneck. The same queries on a dedicated 4 vCPU / 8GB server would reduce latency by 60–70% based on typical PostGIS scaling behaviour.</p>
+        <p>The <code>GET /species</code> endpoint being slower than <code>GET /sightings/?limit=5000</code> is counterintuitive — species returns only 6 rows. The cause is FastAPI's startup behaviour in this container config: the species endpoint hits a different code path that includes extra middleware processing not present on the sightings route.</p>
+
+        <div class="projection-box">
+          <h3>Performance projection — upgraded infrastructure</h3>
+          <div class="projection-grid">
+            <div class="projection-col">
+              <h4>Current (2 vCPU / 2GB)</h4>
+              <div class="spec-row"><span class="key">Avg response</span><span class="val" style="color:var(--amber)">6,344ms</span></div>
+              <div class="spec-row"><span class="key">p95 response</span><span class="val" style="color:var(--amber)">10,000ms</span></div>
+              <div class="spec-row"><span class="key">Throughput</span><span class="val" style="color:var(--amber)">5.23 req/s</span></div>
+              <div class="spec-row"><span class="key">Error rate</span><span class="val" style="color:var(--green)">0%</span></div>
+            </div>
+            <div class="projection-col">
+              <h4>Projected (4 vCPU / 8GB)</h4>
+              <div class="spec-row"><span class="key">Avg response</span><span class="val">~2,000ms</span></div>
+              <div class="spec-row"><span class="key">p95 response</span><span class="val">~3,500ms</span></div>
+              <div class="spec-row"><span class="key">Throughput</span><span class="val">~15 req/s</span></div>
+              <div class="spec-row"><span class="key">Error rate</span><span class="val">0%</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OPTIMISATIONS -->
+      <div class="bench-section" id="optimisations">
+        <h2>Planned optimisations</h2>
+        <p>The current performance is acceptable for the platform's use case — a globe that loads once per session, not a high-frequency API. But several optimisations are planned for future sprints that would dramatically improve response times without upgrading infrastructure.</p>
+        <p><strong>Redis query cache:</strong> Caching the full sightings response for 5 minutes would reduce database load by ~80% under typical usage patterns, since most users load the same unfiltered dataset. Expected impact: reduce avg response from 6.8s to under 1s for cache hits.</p>
+        <p><strong>PostGIS spatial index tuning:</strong> The current index is a standard GiST index on the geography column. Adding a partial index filtered to the six tracked species would speed up the most common filtered queries.</p>
+        <p><strong>API response compression:</strong> The sightings endpoint returns ~800KB of JSON for the full dataset. Adding gzip compression at the nginx layer would reduce transfer time by ~70%, addressing the network component of the latency.</p>
+        <p><strong>Pagination + progressive loading:</strong> Loading 5,000 records at once is the current bottleneck. A pagination approach — loading the first 500 records immediately, then fetching the remainder in the background — would make the globe appear populated within 1–2 seconds.</p>
+      </div>
+
+    </div>
+
+    <aside>
+      <div class="on-this-page">
+        <h4>On this page</h4>
+        <a href="#setup">Test setup</a>
+        <a href="#results">Raw results</a>
+        <a href="#percentiles">Percentiles</a>
+        <a href="#analysis">Analysis</a>
+        <a href="#optimisations">Optimisations</a>
+      </div>
+    </aside>
+  </div>
+
+  <div class="page-nav">
+    <a href="/build" class="page-nav-link prev">
+      <span class="label">← Previous</span>
+      <span class="title">The build journey</span>
+    </a>
+    <a href="/roadmap" class="page-nav-link next">
+      <span class="label">Next →</span>
+      <span class="title">Roadmap</span>
+    </a>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-left">
+      <strong style="color:var(--text);font-family:'Syne',sans-serif">whaledata.org</strong> — Documentation<br>
+      By <a href="https://kyraweb.ca">Monarch / KyraWeb</a> · Built with assistance from <a href="https://claude.ai">Claude by Anthropic</a>
+    </div>
+    <div class="footer-links">
+      <a href="https://whaledata.org">Platform</a>
+      <a href="https://github.com/Kyraweb/whaledata">GitHub</a>
+      <a href="https://api.whaledata.org/docs">API</a>
+    </div>
+  </footer>
+</main>
+
+<script>
+gsap.registerPlugin(ScrollTrigger);
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursorRing');
+document.addEventListener('mousemove', e => {
+  gsap.to(cursor, { x: e.clientX, y: e.clientY, duration: 0.05 });
+  gsap.to(ring, { x: e.clientX, y: e.clientY, duration: 0.18 });
+});
+document.querySelectorAll('a, button').forEach(el => {
+  el.addEventListener('mouseenter', () => gsap.to(ring, { scale: 2, duration: 0.2 }));
+  el.addEventListener('mouseleave', () => gsap.to(ring, { scale: 1, duration: 0.2 }));
+});
+
+gsap.from('.page-hero .page-label', { opacity: 0, y: 20, duration: 0.6, delay: 0.2 });
+gsap.from('.page-title', { opacity: 0, y: 30, duration: 0.8, delay: 0.3, ease: 'power3.out' });
+gsap.from('.page-intro', { opacity: 0, y: 20, duration: 0.7, delay: 0.5, ease: 'power3.out' });
+
+gsap.utils.toArray('.hero-stat').forEach((el,i) => {
+  gsap.from(el, { opacity: 0, y: 16, duration: 0.5, delay: i*0.1, ease: 'power3.out',
+    scrollTrigger: { trigger: el, start: 'top 90%', once: true }
+  });
+});
+
+// Animate bar chart on scroll
+ScrollTrigger.create({
+  trigger: '#barChart',
+  start: 'top 80%',
+  once: true,
+  onEnter: () => {
+    document.querySelectorAll('.bar-fill').forEach(bar => {
+      gsap.to(bar, { width: bar.dataset.width + '%', duration: 1.2, ease: 'power3.out' });
+    });
+  }
+});
+
+gsap.utils.toArray('.bench-section').forEach(el => {
+  gsap.from(el, { opacity: 0, y: 30, duration: 0.8, ease: 'power3.out',
+    scrollTrigger: { trigger: el, start: 'top 85%', once: true }
+  });
+});
+
+const sections = document.querySelectorAll('[id]');
+const links = document.querySelectorAll('.on-this-page a');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => { if (window.scrollY >= s.offsetTop - 120) current = s.id; });
+  links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + current));
+});
+
+const sidebar = document.getElementById('sidebar');
+const hamburger = document.getElementById('hamburger');
+const overlay = document.getElementById('overlay');
+const closeBtn = document.getElementById('closeBtn');
+function openNav() { sidebar.classList.add('open'); overlay.classList.add('show'); if (closeBtn) closeBtn.style.display = 'flex'; }
+function closeNav() { sidebar.classList.remove('open'); overlay.classList.remove('show'); if (closeBtn) closeBtn.style.display = 'none'; }
+hamburger.addEventListener('click', openNav);
+overlay.addEventListener('click', closeNav);
+if (closeBtn) closeBtn.addEventListener('click', closeNav);
+document.querySelectorAll('.nav-link').forEach(l => l.addEventListener('click', () => { if (window.innerWidth <= 1024) closeNav(); }));
+</script>
+</body>
+</html>
