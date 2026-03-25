@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>The Build Journey — whaledata.org</title>
+  <meta name="description" content="The complete iterative build history of whaledata.org — every phase, every failure, every fix across 12 months of development."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --cyan: #00e5ff; --cyan-dim: #00b8cc; --cyan-deep: #006b7e;
+      --dark: #050810; --surface: #0a1525; --surface2: #0d1e32;
+      --border: rgba(0,229,255,0.1); --border2: rgba(0,229,255,0.2);
+      --text: #e8f4f8; --text2: #7a9bb5; --text3: #3a5a72;
+      --green: #00c97a; --pink: #ff6b9d; --amber: #ffb432;
+      --purple: #9664ff; --red: #ff5a5a; --orange: #ff9f43;
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--dark); color: var(--text); font-family: 'DM Sans', sans-serif; overflow-x: hidden; cursor: none; }
+    .cursor { position: fixed; width: 8px; height: 8px; background: var(--cyan); border-radius: 50%; pointer-events: none; z-index: 9999; transform: translate(-50%,-50%); mix-blend-mode: screen; }
+    .cursor-ring { position: fixed; width: 32px; height: 32px; border: 1px solid rgba(0,229,255,0.4); border-radius: 50%; pointer-events: none; z-index: 9998; transform: translate(-50%,-50%); transition: all 0.15s ease; }
+    @media (hover: none), (pointer: coarse) { body { cursor: auto; } .cursor, .cursor-ring { display: none !important; } }
+
+    .sidebar { position: fixed; top: 0; left: 0; width: 240px; height: 100vh; background: rgba(5,8,16,0.95); backdrop-filter: blur(20px); border-right: 1px solid var(--border); z-index: 100; display: flex; flex-direction: column; padding: 32px 0; }
+    .sidebar-logo { padding: 0 24px 32px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+    .sidebar-logo a { text-decoration: none; display: flex; align-items: center; gap: 10px; }
+    .sidebar-logo .name { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: var(--text); }
+    .sidebar-logo .name span { color: var(--cyan); }
+    .sidebar-logo .sub { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text3); letter-spacing: 0.15em; text-transform: uppercase; margin-top: 2px; }
+    .sidebar-nav { flex: 1; padding: 0 16px; overflow-y: auto; }
+    .nav-section { margin-bottom: 24px; }
+    .nav-section-label { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text3); letter-spacing: 0.15em; text-transform: uppercase; padding: 0 8px; margin-bottom: 8px; }
+    .nav-link { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; text-decoration: none; font-size: 13px; color: var(--text2); transition: all 0.15s; margin-bottom: 2px; }
+    .nav-link:hover, .nav-link.active { background: rgba(0,229,255,0.06); color: var(--cyan); }
+    .nav-link .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); flex-shrink: 0; transition: background 0.15s; }
+    .nav-link:hover .dot, .nav-link.active .dot { background: var(--cyan); }
+    .sidebar-footer { padding: 20px 24px 0; border-top: 1px solid var(--border); }
+    .sidebar-footer a { display: block; font-size: 11px; color: var(--text3); text-decoration: none; margin-bottom: 6px; transition: color 0.15s; }
+    .sidebar-footer a:hover { color: var(--cyan); }
+
+    .main { margin-left: 240px; min-height: 100vh; }
+
+    .page-hero { padding: 100px 80px 80px; border-bottom: 1px solid var(--border); position: relative; overflow: hidden; }
+    .page-hero::before { content: ''; position: absolute; top: -100px; right: -100px; width: 500px; height: 500px; background: radial-gradient(circle, rgba(255,107,157,0.04) 0%, transparent 70%); pointer-events: none; }
+    .breadcrumb { display: flex; align-items: center; gap: 8px; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text3); margin-bottom: 32px; }
+    .breadcrumb a { color: var(--text3); text-decoration: none; transition: color 0.15s; }
+    .breadcrumb a:hover { color: var(--cyan); }
+    .page-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--pink); margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+    .page-label::before { content: ''; width: 24px; height: 1px; background: var(--pink); }
+    .page-title { font-family: 'Syne', sans-serif; font-size: clamp(40px, 5vw, 68px); font-weight: 800; line-height: 1; letter-spacing: -0.03em; margin-bottom: 24px; }
+    .page-title em { font-style: normal; color: var(--pink); }
+    .page-intro { font-size: 18px; color: var(--text2); line-height: 1.7; max-width: 640px; font-weight: 300; }
+
+    /* TIMELINE STRIP */
+    .timeline-strip {
+      display: flex;
+      overflow-x: auto;
+      border-bottom: 1px solid var(--border);
+      scrollbar-width: none;
+    }
+    .timeline-strip::-webkit-scrollbar { display: none; }
+    .timeline-point {
+      flex-shrink: 0;
+      padding: 28px 32px;
+      border-right: 1px solid var(--border);
+      min-width: 160px;
+      cursor: default;
+      transition: background 0.15s;
+    }
+    .timeline-point:hover { background: rgba(0,229,255,0.02); }
+    .timeline-point:last-child { border-right: none; }
+    .timeline-date { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--cyan); letter-spacing: 0.1em; margin-bottom: 8px; }
+    .timeline-event { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--text); line-height: 1.3; }
+
+    .content-layout { display: grid; grid-template-columns: 1fr 200px; gap: 60px; padding: 80px; max-width: 1100px; }
+    .content-body { min-width: 0; }
+
+    .on-this-page { position: sticky; top: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+    .on-this-page h4 { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text3); margin-bottom: 12px; }
+    .on-this-page a { display: block; color: var(--text2); text-decoration: none; padding: 5px 0 5px 12px; border-left: 2px solid transparent; transition: all 0.15s; font-size: 12px; }
+    .on-this-page a:hover, .on-this-page a.active { color: var(--cyan); border-left-color: var(--cyan); }
+
+    /* PHASE SECTIONS */
+    .phase { margin-bottom: 80px; scroll-margin-top: 80px; }
+    .phase-header {
+      display: flex; align-items: center; gap: 16px;
+      padding: 24px 28px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin-bottom: 28px;
+    }
+    .phase-num {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px; font-weight: 500;
+      color: var(--dark);
+      background: var(--cyan);
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .phase-header-text h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; margin-bottom: 2px; }
+    .phase-header-text .date { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text3); letter-spacing: 0.1em; }
+
+    .phase p { font-size: 15px; color: var(--text2); line-height: 1.8; font-weight: 300; margin-bottom: 18px; }
+    .phase p strong { color: var(--text); font-weight: 500; }
+
+    /* COMMIT LOG */
+    .commit-log { margin: 24px 0; }
+    .commit { display: flex; gap: 14px; padding: 10px 0; border-bottom: 1px solid rgba(0,229,255,0.05); align-items: flex-start; }
+    .commit:last-child { border-bottom: none; }
+    .commit-type { font-family: 'DM Mono', monospace; font-size: 10px; padding: 2px 8px; border-radius: 4px; flex-shrink: 0; margin-top: 2px; }
+    .commit-type.feat { background: rgba(0,201,122,0.12); color: var(--green); }
+    .commit-type.fix  { background: rgba(255,90,90,0.12); color: var(--red); }
+    .commit-type.docs { background: rgba(0,229,255,0.1); color: var(--cyan); }
+    .commit-msg { font-size: 13px; color: var(--text2); line-height: 1.5; }
+    .commit-msg strong { color: var(--text); font-weight: 500; }
+
+    /* PROBLEM/SOLUTION CARDS */
+    .ps-pair { margin: 28px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .ps-card { border-radius: 12px; padding: 20px 22px; }
+    .ps-card.problem { background: rgba(255,90,90,0.04); border: 1px solid rgba(255,90,90,0.15); }
+    .ps-card.solution { background: rgba(0,201,122,0.04); border: 1px solid rgba(0,201,122,0.15); }
+    .ps-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; }
+    .ps-card.problem .ps-label { color: var(--red); }
+    .ps-card.solution .ps-label { color: var(--green); }
+    .ps-card p { font-size: 13px; color: var(--text2); line-height: 1.7; font-weight: 300; margin: 0; }
+    .ps-card p code { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--cyan); background: rgba(0,229,255,0.08); padding: 1px 5px; border-radius: 3px; }
+
+    .pullquote { margin: 28px 0; padding: 22px 28px; border-left: 3px solid var(--pink); background: rgba(255,107,157,0.03); border-radius: 0 12px 12px 0; }
+    .pullquote p { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 600; color: var(--text); line-height: 1.5; font-style: italic; margin: 0; }
+
+    .info-box { background: rgba(0,229,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; margin: 20px 0; display: flex; gap: 14px; }
+    .info-box .icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+    .info-box p { font-size: 13px; color: var(--text2); line-height: 1.7; margin: 0; font-weight: 300; }
+    .info-box p strong { color: var(--cyan); }
+
+    /* AI CREDIT SECTION */
+    .ai-section { margin-bottom: 80px; scroll-margin-top: 80px; }
+    .ai-section h2 { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 20px; }
+    .ai-section p { font-size: 15px; color: var(--text2); line-height: 1.8; font-weight: 300; margin-bottom: 18px; }
+    .ai-section p strong { color: var(--text); font-weight: 500; }
+    .ai-card { background: linear-gradient(135deg, rgba(0,229,255,0.04), rgba(150,100,255,0.04)); border: 1px solid var(--border2); border-radius: 16px; padding: 32px; margin-top: 24px; }
+    .ai-card h3 { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+    .ai-card p { font-size: 14px; color: var(--text2); line-height: 1.7; margin-bottom: 16px; font-weight: 300; }
+    .ai-card p:last-child { margin: 0; }
+    .ai-card a { color: var(--cyan); text-decoration: none; }
+
+    .page-nav { display: flex; justify-content: space-between; padding: 48px 80px 80px; border-top: 1px solid var(--border); }
+    .page-nav-link { display: flex; flex-direction: column; gap: 4px; text-decoration: none; padding: 20px 24px; border: 1px solid var(--border); border-radius: 12px; transition: all 0.2s; max-width: 220px; }
+    .page-nav-link.next { align-items: flex-end; }
+    .page-nav-link:hover { border-color: var(--border2); background: rgba(0,229,255,0.03); }
+    .page-nav-link.prev:hover { transform: translateX(-4px); }
+    .page-nav-link.next:hover { transform: translateX(4px); }
+    .page-nav-link .label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); }
+    .page-nav-link .title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: var(--cyan); }
+
+    .footer { background: var(--dark); border-top: 1px solid var(--border); padding: 48px 80px; display: flex; align-items: center; justify-content: space-between; }
+    .footer-left { font-size: 13px; color: var(--text3); line-height: 1.7; }
+    .footer-left a { color: var(--cyan-dim); text-decoration: none; }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a { font-size: 13px; color: var(--text3); text-decoration: none; transition: color 0.15s; }
+    .footer-links a:hover { color: var(--cyan); }
+
+    .hamburger { display: none; position: fixed; top: 20px; right: 20px; z-index: 200; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px; cursor: pointer; flex-direction: column; gap: 4px; }
+    .hamburger span { display: block; width: 20px; height: 2px; background: var(--cyan); border-radius: 2px; }
+    .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99; }
+    .overlay.show { display: block; }
+
+    @media (max-width: 1024px) {
+      .sidebar { top: auto; bottom: 0; left: 0; right: 0; width: 100%; height: auto; max-height: 80vh; border-right: none; border-top: 1px solid var(--border); border-radius: 20px 20px 0 0; transform: translateY(100%); padding: 0 0 32px; }
+      .sidebar.open { transform: translateY(0); }
+      .sidebar-logo { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+      .close-btn { display: flex !important; width: 32px; height: 32px; align-items: center; justify-content: center; background: none; border: 1px solid var(--border); border-radius: 8px; color: var(--text2); font-size: 16px; cursor: pointer; }
+      .main { margin-left: 0; }
+      .hamburger { display: flex; }
+      .content-layout { grid-template-columns: 1fr; padding: 40px 24px; }
+      .on-this-page { display: none; }
+      .page-hero { padding: 80px 24px 48px; }
+      .page-nav { padding: 48px 24px; }
+      .footer { flex-direction: column; gap: 20px; padding: 40px 24px; }
+      .ps-pair { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .page-title { font-size: clamp(36px, 10vw, 52px); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+<button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+<div class="overlay" id="overlay"></div>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <a href="/docs">
+      <span style="font-size:24px;line-height:1">🐋</span>
+      <div>
+        <div class="name">whaledata<span>.org</span></div>
+        <div class="sub">Documentation</div>
+      </div>
+    </a>
+    <button class="close-btn" id="closeBtn" style="display:none">✕</button>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-label">Overview</div>
+      <a href="/docs" class="nav-link"><span class="dot"></span>Home</a>
+      <a href="/docs/why" class="nav-link"><span class="dot"></span>Why this project</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">The Data</div>
+      <a href="/docs/data" class="nav-link"><span class="dot"></span>Data sources</a>
+      <a href="/docs/conservation" class="nav-link"><span class="dot"></span>Conservation layers</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">How it was built</div>
+      <a href="/docs/technology" class="nav-link"><span class="dot"></span>Technology stack</a>
+      <a href="/docs/build" class="nav-link active"><span class="dot"></span>The build journey</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Performance</div>
+      <a href="/docs/benchmarks" class="nav-link"><span class="dot"></span>Benchmarks</a>
+      <a href="/docs/roadmap" class="nav-link"><span class="dot"></span>Roadmap</a>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <a href="https://whaledata.org" target="_blank">↗ whaledata.org</a>
+    <a href="https://github.com/Kyraweb/whaledata" target="_blank">↗ GitHub</a>
+    <a href="https://api.whaledata.org/docs" target="_blank">↗ API docs</a>
+  </div>
+</aside>
+
+<main class="main">
+
+  <div class="page-hero">
+    <div class="breadcrumb">
+      <a href="/docs">Home</a><span>/</span>
+      <a href="/docs/technology">How it was built</a><span>/</span>
+      <span>The build journey</span>
+    </div>
+    <div class="page-label">How it was built</div>
+    <h1 class="page-title">12 months.<br>Every <em>iteration</em>.</h1>
+    <p class="page-intro">Nothing about this build went in a straight line. The globe took six months of debugging. The data had whales in the Himalayas. The admin panel broke in three different ways. This is the honest account of how it actually happened.</p>
+  </div>
+
+  <!-- TIMELINE -->
+  <div class="timeline-strip">
+    <div class="timeline-point"><div class="timeline-date">Nov 2024</div><div class="timeline-event">Project started</div></div>
+    <div class="timeline-point"><div class="timeline-date">Dec 2024</div><div class="timeline-event">First API endpoint live</div></div>
+    <div class="timeline-point"><div class="timeline-date">Jan 2025</div><div class="timeline-event">4,288 GBIF records loaded</div></div>
+    <div class="timeline-point"><div class="timeline-date">Mar 2025</div><div class="timeline-event">Globe projection achieved</div></div>
+    <div class="timeline-point"><div class="timeline-date">Apr 2025</div><div class="timeline-event">Migration routes animated</div></div>
+    <div class="timeline-point"><div class="timeline-date">Jun 2025</div><div class="timeline-event">Ship lanes overlay</div></div>
+    <div class="timeline-point"><div class="timeline-date">Jul 2025</div><div class="timeline-event">Mobile responsive</div></div>
+    <div class="timeline-point"><div class="timeline-date">Nov 2025</div><div class="timeline-event">Phase 2 — 25,000 records</div></div>
+    <div class="timeline-point"><div class="timeline-date">Jan 2026</div><div class="timeline-event">Share, Near me, Shortcuts</div></div>
+    <div class="timeline-point"><div class="timeline-date">Feb 2026</div><div class="timeline-event">Email alerts via SES</div></div>
+    <div class="timeline-point"><div class="timeline-date">Mar 2026</div><div class="timeline-event">Docs site launched</div></div>
+  </div>
+
+  <div class="content-layout">
+    <div class="content-body">
+
+      <!-- PHASE 1 -->
+      <div class="phase" id="phase1">
+        <div class="phase-header">
+          <div class="phase-num">1</div>
+          <div class="phase-header-text">
+            <h2>Foundation — Database and API</h2>
+            <div class="date">November – December 2024</div>
+          </div>
+        </div>
+        <p>The project started with a blank GitHub repository and a decision about the data model. The choice of PostgreSQL with PostGIS was immediate — there was no real alternative for a geospatial application that needed to store and query geographic points efficiently. Every whale sighting needed to be a real geographic coordinate, not just two numbers.</p>
+        <p>The initial schema was deliberately minimal: a <strong>species</strong> table, a <strong>sightings</strong> table with a PostGIS geography column, and a <strong>sync_log</strong> table. FastAPI was chosen for the backend because of its automatic OpenAPI documentation and clean dependency injection.</p>
+        <div class="commit-log">
+          <div class="commit"><span class="commit-type feat">feat</span><span class="commit-msg">FastAPI skeleton with health check and species endpoints</span></div>
+          <div class="commit"><span class="commit-type feat">feat</span><span class="commit-msg">Sightings API endpoint with species, date, and limit filtering</span></div>
+          <div class="commit"><span class="commit-type feat">feat</span><span class="commit-msg">GBIF sync job for 6 key whale species</span></div>
+          <div class="commit"><span class="commit-type fix">fix</span><span class="commit-msg">Remove wipe on startup — rely on upsert to skip duplicates</span></div>
+        </div>
+        <p>The first major mistake was the sync script wiping the database on every startup. The jobs container in Coolify kept restarting after the script finished (exit code 0 was interpreted as a crash), which meant it was hammering the GBIF API thousands of times. The fix was moving from a wipe-and-reload pattern to <code>ON CONFLICT DO NOTHING</code> upserts — insert new records, silently skip duplicates. The jobs service was then converted to a scheduled task rather than an always-on service.</p>
+      </div>
+
+      <!-- PHASE 2 -->
+      <div class="phase" id="phase2">
+        <div class="phase-header">
+          <div class="phase-num">2</div>
+          <div class="phase-header-text">
+            <h2>The Globe Problem</h2>
+            <div class="date">January – March 2025</div>
+          </div>
+        </div>
+        <p>The initial map was a flat Mercator projection. It worked, but it lacked the visual impact the project needed. Migration routes on a flat map are just lines. On a globe they become arcs curving across the surface of the Earth — the scale of a 5,000km whale journey becomes physically real. The decision to switch to a globe projection seemed straightforward. It was not.</p>
+
+        <div class="pullquote">
+          <p>"The globe took six months of debugging across MapLibre v4, v5, three different projection approaches, a style loading race condition, and ultimately a complete SDK migration."</p>
+        </div>
+
+        <div class="ps-pair">
+          <div class="ps-card problem">
+            <div class="ps-label">Problem 1</div>
+            <p>Added <code>projection: 'globe'</code> to MapLibre v4 constructor. Silently ignored — v4 doesn't support globe. No error message.</p>
+          </div>
+          <div class="ps-card solution">
+            <div class="ps-label">Resolution</div>
+            <p>Upgraded to MapLibre v5 which added native globe support. But this exposed the next problem.</p>
+          </div>
+        </div>
+        <div class="ps-pair">
+          <div class="ps-card problem">
+            <div class="ps-label">Problem 2</div>
+            <p><code>setFog()</code> called inside the <code>style.load</code> event was silently crashing MapLibre's internal event system — caught by try/catch but leaving the map in a broken state with no data dots.</p>
+          </div>
+          <div class="ps-card solution">
+            <div class="ps-label">Resolution</div>
+            <p>Removed setFog entirely. Revealed the next layer of the problem.</p>
+          </div>
+        </div>
+        <div class="ps-pair">
+          <div class="ps-card problem">
+            <div class="ps-label">Problem 3</div>
+            <p>Calling <code>setProjection('globe')</code> inside <code>style.load</code> triggered a <em>second</em> <code>style.load</code> event — wiping all data sources before the API response had arrived.</p>
+          </div>
+          <div class="ps-card solution">
+            <div class="ps-label">Resolution</div>
+            <p>Fetch the MapTiler style JSON at startup, inject <code>projection: { type: 'globe' }</code> directly into it, pass modified style to constructor. The <code>load</code> event fires exactly once.</p>
+          </div>
+        </div>
+        <div class="ps-pair">
+          <div class="ps-card problem">
+            <div class="ps-label">Problem 4 — Final</div>
+            <p>Even with the style injection fix, subtle shader errors remained when using MapTiler-hosted styles with the MapLibre globe renderer directly.</p>
+          </div>
+          <div class="ps-card solution">
+            <div class="ps-label">Final resolution</div>
+            <p>Migrated from <code>maplibre-gl</code> to <code>@maptiler/sdk</code> — which wraps MapLibre v5 but handles globe projection and MapTiler style integration natively. All issues resolved in a single commit.</p>
+          </div>
+        </div>
+
+        <div class="commit-log" style="margin-top:24px">
+          <div class="commit"><span class="commit-type feat">feat</span><span class="commit-msg">Switch to @maptiler/sdk for native globe projection support</span></div>
+          <div class="commit"><span class="commit-type fix">fix</span><span class="commit-msg">Remove setFog which crashes MapLibre v5 and blocks layer init</span></div>
+          <div class="commit"><span class="commit-type fix">fix</span><span class="commit-msg">Fetch style JSON and inject globe projection to avoid style.load loop</span></div>
+          <div class="commit"><span class="commit-type fix">fix</span><span class="commit-msg">Declare build args in Dockerfile so Vite sees env vars at build time</span></div>
+        </div>
+      </div>
+
+      <!-- PHASE 3 -->
+      <div class="phase" id="phase3">
+        <div class="phase-header">
+          <div class="phase-num">3</div>
+          <div class="phase-header-text">
+            <h2>Data Quality — The Inland Whale Problem</h2>
+            <div class="date">March – May 2025</div>
+          </div>
+        </div>
+        <p>When the first GBIF sync ran successfully and 4,288 records appeared on the globe, the initial reaction was excitement. The second reaction was confusion: there were whale sightings in the middle of South America.</p>
+        <p>GBIF records include entries with known geospatial issues — land-based coordinates submitted for marine species, country centroids instead of observation locations, and georeferencing based on ambiguous text descriptions. The <code>hasGeospatialIssue=false</code> flag filters these out. Early versions of the sync script didn't use it.</p>
+
+        <div class="info-box">
+          <div class="icon">🗺️</div>
+          <p><strong>The tricky part:</strong> After adding the flag, a cluster remained in what appeared to be inland Colombia and Ecuador. Investigation revealed these were valid Pacific coast sightings — humpbacks on that coastline are well-documented. The globe projection angle was making them appear inland. The initial land filter was too aggressive and was blocking real data. The final filter only targets clearly landlocked coordinates — the Himalayas, Central Asia, the Amazon interior.</p>
+        </div>
+
+        <div class="commit-log">
+          <div class="commit"><span class="commit-type fix">fix</span><span class="commit-msg">Exclude GBIF records with hasGeospatialIssue=true</span></div>
+          <div class="commit"><span class="commit-type fix">fix</span><span class="commit-msg">Correct Orca GBIF taxon key 2440522 → 2440483</span></div>
+          <div class="commit"><span class="commit-type fix">fix</span><span class="commit-msg">Tighten land filter to preserve Arabian Sea and Indian Ocean sightings</span></div>
+          <div class="commit"><span class="commit-type fix">fix</span><span class="commit-msg">Add Paraguay/Bolivia inland filter, keep Ecuador/Colombia Pacific coast</span></div>
+          <div class="commit"><span class="commit-type feat">feat</span><span class="commit-msg">OBIS sync script for Fin whale data (AphiaID 137092)</span></div>
+        </div>
+      </div>
+
+      <!-- PHASE 4 -->
+      <div class="phase" id="phase4">
+        <div class="phase-header">
+          <div class="phase-num">4</div>
+          <div class="phase-header-text">
+            <h2>Routes, Ship Lanes & Species Panel</h2>
+            <div class="date">April – July 2025</div>
+          </div>
+        </div>
+        <p>With the globe stable and the data clean, development accelerated through the features that made the platform compelling: animated migration routes, the species detail panel, and the shipping lane overlay.</p>
+        <p>The animated route lines use a frame-stepping technique — cycling through 14 pre-computed dash array configurations at 80ms intervals. This creates the appearance of motion without animating individual points along a path, which would have been far too expensive at this scale. The routes also required splitting at the antimeridian (180° longitude) — without the split, MapLibre draws trans-Pacific lines the short way around, cutting a spike through the poles over Alaska.</p>
+        <p>Mobile layout required a complete architectural decision: rather than responsively adapting the desktop sidebar, a fully separate mobile UI was built. On screens under 768px the sidebar disappears entirely, replaced by a bottom sheet that slides up from the stats bar. The two layouts share no CSS — desktop and mobile are independent codebases within the same files.</p>
+
+        <div class="commit-log">
+          <div class="commit"><span class="commit-type feat">feat</span><span class="commit-msg">Animated migration route lines with hover detail panel</span></div>
+          <div class="commit"><span class="commit-type feat">feat</span><span class="commit-msg">Route endpoint ringed dots at origin and destination</span></div>
+          <div class="commit"><span class="commit-type feat">feat</span><span class="commit-msg">Ship lanes overlay with toggle button — 15 corridors</span></div>
+          <div class="commit"><span class="commit-type fix">fix</span><span class="commit-msg">Split Pacific routes at antimeridian to fix globe rendering spike</span></div>
+          <div class="commit"><span class="commit-type feat">feat</span><span class="commit-msg">Species detail panel — photo, IUCN status, facts, whale call audio</span></div>
+          <div class="commit"><span class="commit-type feat">feat</span><span class="commit-msg">Mobile responsive layout with bottom sheet sidebar</span></div>
+        </div>
+      </div>
+
+      <!-- PHASE 5 -->
+      <div class="phase" id="phase5">
+        <div class="phase-header">
+          <div class="phase-num">5</div>
+          <div class="phase-header-text">
+            <h2>Phase 2 — Four New Data Layers</h2>
+            <div class="date">September – November 2025</div>
+          </div>
+        </div>
+        <p>The second major development phase added four entirely new data sources, each representing a different kind of whale evidence. This expanded the platform from a sightings visualiser to a genuine multi-source conservation data platform.</p>
+        <p>Each sync script had its own data quality problem. The strandings script had to handle NOAA/OBIS date formats that ranged from full ISO dates to year-only values to date ranges. iNaturalist taxon IDs were incorrect for two species — Blue whale and Orca — resulting in wrong-species records that had to be wiped and re-synced after the IDs were corrected. The acoustics sync hit a network block on the NOAA PACM API from the hosting environment and had to fall back to OBIS aggregation.</p>
+
+        <div class="ps-pair">
+          <div class="ps-card problem">
+            <div class="ps-label">iNaturalist taxon IDs</div>
+            <p>Initial IDs were wrong for Blue whale and Orca. Records appeared in completely wrong geographic distributions — Orca in the Mediterranean, Blue whale in freshwater lakes.</p>
+          </div>
+          <div class="ps-card solution">
+            <div class="ps-label">Resolution</div>
+            <p>Queried the iNaturalist API directly for each species name to extract correct IDs: Humpback <code>41472</code>, Blue <code>41467</code>, Fin <code>41468</code>, Grey <code>41476</code>, Sperm <code>41490</code>, Orca <code>41446</code>.</p>
+          </div>
+        </div>
+
+        <div class="commit-log">
+          <div class="commit"><span class="commit-type feat">feat</span><span class="commit-msg">schema_phase2.sql — strandings, acoustics, inaturalist, historical tables</span></div>
+          <div class="commit"><span class="commit-type feat">feat</span><span class="commit-msg">sync_strandings.py — NOAA stranding events via OBIS</span></div>
+          <div class="commit"><span class="commit-type feat">feat</span><span class="commit-msg">sync_inaturalist.py — research-grade citizen science</span></div>
+          <div class="commit"><span class="commit-type feat">feat</span><span class="commit-msg">sync_historical.py — GBIF pre-1950 whaling records</span></div>
+          <div class="commit"><span class="commit-type fix">fix</span><span class="commit-msg">Acoustics rewrote to use OBIS (PACM API blocked by hosting network)</span></div>
+          <div class="commit"><span class="commit-type fix">fix</span><span class="commit-msg">Correct iNaturalist taxon IDs for Blue whale, Fin whale, Orca</span></div>
+          <div class="commit"><span class="commit-type fix">fix</span><span class="commit-msg">parse_date handles year-only, year-month, date ranges from OBIS</span></div>
+        </div>
+      </div>
+
+      <!-- PHASE 6 -->
+      <div class="phase" id="phase6">
+        <div class="phase-header">
+          <div class="phase-num">6</div>
+          <div class="phase-header-text">
+            <h2>Admin Panel, Alerts & Production Polish</h2>
+            <div class="date">November 2025 – March 2026</div>
+          </div>
+        </div>
+        <p>The final phase addressed operational needs — an admin panel for database management, weekly email alerts for subscribers, conservation layers, and the UI features that made the platform feel complete: share button with URL state encoding, near me geolocation, keyboard shortcuts, and the year range filter.</p>
+        <p>The admin panel went through two architectural versions. The first was a standalone Flask service on a separate port. The second — and final — version moved the admin entirely into the FastAPI app at <code>/admin/</code> using Jinja2 templates and HTTP Basic Auth, eliminating the need for a separate deployment.</p>
+        <p>The admin panel also surfaced a particularly difficult bug: a <code>TypeError: unhashable type: 'dict'</code> deep inside Jinja2's template cache, caused by an incompatibility between Starlette's <code>BaseHTTPMiddleware</code> and synchronous route handlers running in thread pools. The fix required switching from the middleware class pattern to a function-based <code>@app.middleware</code> decorator — a different Starlette code path that doesn't share the same incompatibility.</p>
+
+        <div class="commit-log">
+          <div class="commit"><span class="commit-type feat">feat</span><span class="commit-msg">Admin panel inside API at /admin/ — Jinja2 + HTTP Basic Auth</span></div>
+          <div class="commit"><span class="commit-type feat">feat</span><span class="commit-msg">Weekly email alerts via AWS SES — subscribe, confirm, unsubscribe</span></div>
+          <div class="commit"><span class="commit-type feat">feat</span><span class="commit-msg">Conservation layers — feeding grounds + sonar exercise zones</span></div>
+          <div class="commit"><span class="commit-type feat">feat</span><span class="commit-msg">Share button — encodes full view state into URL</span></div>
+          <div class="commit"><span class="commit-type feat">feat</span><span class="commit-msg">Keyboard shortcuts — 1-6 species, 0 all, Space rotation, Esc close</span></div>
+          <div class="commit"><span class="commit-type feat">feat</span><span class="commit-msg">Help/how-to modal with full platform documentation</span></div>
+          <div class="commit"><span class="commit-type fix">fix</span><span class="commit-msg">Jinja2 unhashable dict error — switch from BaseHTTPMiddleware to @app.middleware</span></div>
+          <div class="commit"><span class="commit-type fix">fix</span><span class="commit-msg">TemplateResponse API changed — request object now first argument</span></div>
+          <div class="commit"><span class="commit-type docs">docs</span><span class="commit-msg">Full README, DEPLOYMENT.md, API.md, DATABASE.md, CHANGELOG.md</span></div>
+        </div>
+      </div>
+
+      <!-- AI SECTION -->
+      <div class="ai-section" id="ai">
+        <h2>Built with Claude</h2>
+        <p>This project was built with assistance from <strong>Claude by Anthropic</strong> throughout the entire development process — not as a code generator that was handed a spec and returned a finished product, but as a collaborative development partner that worked through architecture decisions, debugging sessions, data quality problems, and documentation iteratively.</p>
+        <p>The six-month globe debugging process is a good example of how that collaboration worked in practice. Each fix attempt revealed a new layer of the problem. Claude helped diagnose the style.load race condition, identified the Starlette middleware incompatibility, caught the incorrect iNaturalist taxon IDs, and worked through the date parsing edge cases in the NOAA stranding data. None of these were problems with obvious solutions — they required iterative investigation.</p>
+
+        <div class="ai-card">
+          <h3>What AI-assisted development actually means</h3>
+          <p>It does not mean the code wrote itself. Every architecture decision, every data source choice, every design direction came from domain knowledge and judgment that no AI system has independently. What it means is that the gap between knowing what to build and having it built was dramatically compressed.</p>
+          <p>The result is a platform that would have taken significantly longer to build without AI assistance — and documentation that covers every decision in a level of detail that would have been impractical to write manually alongside active development.</p>
+          <p>The platform is built on <a href="https://claude.ai">Claude by Anthropic</a>. The conservation mission, the data choices, the design aesthetic, and the 12-month commitment to iterating until it was right — those were entirely human.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <aside>
+      <div class="on-this-page">
+        <h4>On this page</h4>
+        <a href="#phase1">Foundation</a>
+        <a href="#phase2">The Globe Problem</a>
+        <a href="#phase3">Data Quality</a>
+        <a href="#phase4">Routes & Ship Lanes</a>
+        <a href="#phase5">Phase 2 — 4 New Layers</a>
+        <a href="#phase6">Admin & Polish</a>
+        <a href="#ai">Built with Claude</a>
+      </div>
+    </aside>
+  </div>
+
+  <div class="page-nav">
+    <a href="/docs/technology" class="page-nav-link prev">
+      <span class="label">← Previous</span>
+      <span class="title">Technology stack</span>
+    </a>
+    <a href="/docs/benchmarks" class="page-nav-link next">
+      <span class="label">Next →</span>
+      <span class="title">Benchmarks</span>
+    </a>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-left">
+      <strong style="color:var(--text);font-family:'Syne',sans-serif">whaledata.org</strong> — Documentation<br>
+      By <a href="https://kyraweb.ca">Monarch / KyraWeb</a> · Built with assistance from <a href="https://claude.ai">Claude by Anthropic</a>
+    </div>
+    <div class="footer-links">
+      <a href="https://whaledata.org">Platform</a>
+      <a href="https://github.com/Kyraweb/whaledata">GitHub</a>
+      <a href="https://api.whaledata.org/docs">API</a>
+    </div>
+  </footer>
+
+</main>
+
+<script>
+gsap.registerPlugin(ScrollTrigger);
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursorRing');
+document.addEventListener('mousemove', e => {
+  gsap.to(cursor, { x: e.clientX, y: e.clientY, duration: 0.05 });
+  gsap.to(ring, { x: e.clientX, y: e.clientY, duration: 0.18 });
+});
+document.querySelectorAll('a, button').forEach(el => {
+  el.addEventListener('mouseenter', () => gsap.to(ring, { scale: 2, duration: 0.2 }));
+  el.addEventListener('mouseleave', () => gsap.to(ring, { scale: 1, duration: 0.2 }));
+});
+
+gsap.from('.page-hero .page-label', { opacity: 0, y: 20, duration: 0.6, delay: 0.2 });
+gsap.from('.page-title', { opacity: 0, y: 30, duration: 0.8, delay: 0.3, ease: 'power3.out' });
+gsap.from('.page-intro', { opacity: 0, y: 20, duration: 0.7, delay: 0.5, ease: 'power3.out' });
+
+gsap.utils.toArray('.phase').forEach(el => {
+  gsap.from(el, { opacity: 0, y: 30, duration: 0.8, ease: 'power3.out',
+    scrollTrigger: { trigger: el, start: 'top 85%', once: true }
+  });
+});
+gsap.utils.toArray('.ps-pair').forEach(el => {
+  gsap.from(el, { opacity: 0, y: 16, duration: 0.6, ease: 'power3.out',
+    scrollTrigger: { trigger: el, start: 'top 88%', once: true }
+  });
+});
+gsap.from('.ai-card', { opacity: 0, y: 20, duration: 0.8, ease: 'power3.out',
+  scrollTrigger: { trigger: '.ai-card', start: 'top 85%', once: true }
+});
+
+const sections = document.querySelectorAll('[id]');
+const links = document.querySelectorAll('.on-this-page a');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => { if (window.scrollY >= s.offsetTop - 120) current = s.id; });
+  links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + current));
+});
+
+const sidebar = document.getElementById('sidebar');
+const hamburger = document.getElementById('hamburger');
+const overlay = document.getElementById('overlay');
+const closeBtn = document.getElementById('closeBtn');
+function openNav() { sidebar.classList.add('open'); overlay.classList.add('show'); if (closeBtn) closeBtn.style.display = 'flex'; }
+function closeNav() { sidebar.classList.remove('open'); overlay.classList.remove('show'); if (closeBtn) closeBtn.style.display = 'none'; }
+hamburger.addEventListener('click', openNav);
+overlay.addEventListener('click', closeNav);
+if (closeBtn) closeBtn.addEventListener('click', closeNav);
+document.querySelectorAll('.nav-link').forEach(l => l.addEventListener('click', () => { if (window.innerWidth <= 1024) closeNav(); }));
+</script>
+</body>
+</html>
