@@ -4,7 +4,7 @@
 
 **An interactive 3D globe visualising global whale sightings, migration routes, conservation zones, and shipping lane conflicts.**
 
-Live: [whaledata.org](https://whaledata.org) · API: [api.whaledata.org](https://api.whaledata.org)
+Live: [whaledata.org](https://whaledata.org) · API: [api.whaledata.org](https://api.whaledata.org) · 📖 Full documentation at [docs.whaledata.org](https://docs.whaledata.org)
 
 ---
 
