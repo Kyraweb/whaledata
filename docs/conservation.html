@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Conservation Layers — whaledata.org</title>
+  <meta name="description" content="Feeding grounds, naval sonar zones, and shipping lanes — the conservation context layers that make whale data actionable."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --cyan: #00e5ff; --cyan-dim: #00b8cc; --cyan-deep: #006b7e;
+      --dark: #050810; --surface: #0a1525; --surface2: #0d1e32;
+      --border: rgba(0,229,255,0.1); --border2: rgba(0,229,255,0.2);
+      --text: #e8f4f8; --text2: #7a9bb5; --text3: #3a5a72;
+      --green: #00c97a; --pink: #ff6b9d; --amber: #ffb432;
+      --red: #ff5a5a; --orange: #ff9f43;
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--dark); color: var(--text); font-family: 'DM Sans', sans-serif; overflow-x: hidden; cursor: none; }
+    .cursor { position: fixed; width: 8px; height: 8px; background: var(--cyan); border-radius: 50%; pointer-events: none; z-index: 9999; transform: translate(-50%,-50%); mix-blend-mode: screen; }
+    .cursor-ring { position: fixed; width: 32px; height: 32px; border: 1px solid rgba(0,229,255,0.4); border-radius: 50%; pointer-events: none; z-index: 9998; transform: translate(-50%,-50%); transition: all 0.15s ease; }
+    @media (hover: none), (pointer: coarse) { body { cursor: auto; } .cursor, .cursor-ring { display: none !important; } }
+
+    .sidebar { position: fixed; top: 0; left: 0; width: 240px; height: 100vh; background: rgba(5,8,16,0.95); backdrop-filter: blur(20px); border-right: 1px solid var(--border); z-index: 100; display: flex; flex-direction: column; padding: 32px 0; }
+    .sidebar-logo { padding: 0 24px 32px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+    .sidebar-logo a { text-decoration: none; display: flex; align-items: center; gap: 10px; }
+    .sidebar-logo .name { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: var(--text); }
+    .sidebar-logo .name span { color: var(--cyan); }
+    .sidebar-logo .sub { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text3); letter-spacing: 0.15em; text-transform: uppercase; margin-top: 2px; }
+    .sidebar-nav { flex: 1; padding: 0 16px; overflow-y: auto; }
+    .nav-section { margin-bottom: 24px; }
+    .nav-section-label { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text3); letter-spacing: 0.15em; text-transform: uppercase; padding: 0 8px; margin-bottom: 8px; }
+    .nav-link { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; text-decoration: none; font-size: 13px; color: var(--text2); transition: all 0.15s; margin-bottom: 2px; }
+    .nav-link:hover, .nav-link.active { background: rgba(0,229,255,0.06); color: var(--cyan); }
+    .nav-link .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); flex-shrink: 0; transition: background 0.15s; }
+    .nav-link:hover .dot, .nav-link.active .dot { background: var(--cyan); }
+    .sidebar-footer { padding: 20px 24px 0; border-top: 1px solid var(--border); }
+    .sidebar-footer a { display: block; font-size: 11px; color: var(--text3); text-decoration: none; margin-bottom: 6px; transition: color 0.15s; }
+    .sidebar-footer a:hover { color: var(--cyan); }
+
+    .main { margin-left: 240px; min-height: 100vh; }
+
+    .page-hero { padding: 100px 80px 80px; border-bottom: 1px solid var(--border); position: relative; overflow: hidden; }
+    .page-hero::before { content: ''; position: absolute; top: -100px; right: -100px; width: 500px; height: 500px; background: radial-gradient(circle, rgba(0,201,122,0.04) 0%, transparent 70%); pointer-events: none; }
+    .breadcrumb { display: flex; align-items: center; gap: 8px; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text3); margin-bottom: 32px; }
+    .breadcrumb a { color: var(--text3); text-decoration: none; transition: color 0.15s; }
+    .breadcrumb a:hover { color: var(--cyan); }
+    .page-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--green); margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+    .page-label::before { content: ''; width: 24px; height: 1px; background: var(--green); }
+    .page-title { font-family: 'Syne', sans-serif; font-size: clamp(40px, 5vw, 68px); font-weight: 800; line-height: 1; letter-spacing: -0.03em; margin-bottom: 24px; }
+    .page-title em { font-style: normal; color: var(--green); }
+    .page-intro { font-size: 18px; color: var(--text2); line-height: 1.7; max-width: 640px; font-weight: 300; }
+
+    /* LAYER OVERVIEW */
+    .layer-overview {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .layer-overview-item {
+      padding: 40px 48px;
+      border-right: 1px solid var(--border);
+      transition: background 0.2s;
+    }
+    .layer-overview-item:last-child { border-right: none; }
+    .layer-overview-item:hover { background: rgba(0,229,255,0.02); }
+    .layer-icon { font-size: 28px; margin-bottom: 16px; }
+    .layer-overview-item h3 { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .layer-overview-item p { font-size: 13px; color: var(--text2); line-height: 1.6; font-weight: 300; }
+
+    .content-layout { display: grid; grid-template-columns: 1fr 200px; gap: 60px; padding: 80px; max-width: 1100px; }
+    .content-body { min-width: 0; }
+
+    .on-this-page { position: sticky; top: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+    .on-this-page h4 { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text3); margin-bottom: 12px; }
+    .on-this-page a { display: block; color: var(--text2); text-decoration: none; padding: 5px 0 5px 12px; border-left: 2px solid transparent; transition: all 0.15s; font-size: 12px; }
+    .on-this-page a:hover, .on-this-page a.active { color: var(--cyan); border-left-color: var(--cyan); }
+
+    /* CONSERVATION SECTIONS */
+    .con-section { margin-bottom: 80px; scroll-margin-top: 80px; }
+    .con-header {
+      display: flex; align-items: center; gap: 16px;
+      margin-bottom: 28px; padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .con-dot { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+    .con-header h2 { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; letter-spacing: -0.02em; }
+
+    .con-section p { font-size: 15px; color: var(--text2); line-height: 1.8; font-weight: 300; margin-bottom: 18px; }
+    .con-section p strong { color: var(--text); font-weight: 500; }
+    .con-section p:last-child { margin-bottom: 0; }
+
+    /* FEEDING GROUNDS TABLE */
+    .feeding-table { width: 100%; border-collapse: collapse; margin: 28px 0; font-size: 13px; }
+    .feeding-table th { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); text-align: left; padding: 10px 16px; border-bottom: 1px solid var(--border); }
+    .feeding-table td { padding: 12px 16px; color: var(--text2); border-bottom: 1px solid rgba(0,229,255,0.04); vertical-align: top; }
+    .feeding-table tr:hover td { background: rgba(0,229,255,0.02); }
+    .feeding-table .species { font-family: 'Syne', sans-serif; font-weight: 600; color: var(--text); }
+    .species-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; vertical-align: middle; }
+
+    /* SONAR ZONES TABLE */
+    .sonar-table { width: 100%; border-collapse: collapse; margin: 28px 0; font-size: 13px; }
+    .sonar-table th { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); text-align: left; padding: 10px 16px; border-bottom: 1px solid var(--border); }
+    .sonar-table td { padding: 12px 16px; color: var(--text2); border-bottom: 1px solid rgba(0,229,255,0.04); }
+    .sonar-table tr:hover td { background: rgba(0,229,255,0.02); }
+    .risk { display: inline-block; padding: 2px 8px; border-radius: 4px; font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 500; }
+    .risk-high { background: rgba(255,90,90,0.15); color: #ff5a5a; }
+    .risk-med  { background: rgba(255,159,67,0.15); color: #ff9f43; }
+    .risk-low  { background: rgba(255,180,50,0.12); color: #ffb432; }
+
+    /* SHIP LANE TABLE */
+    .lane-table { width: 100%; border-collapse: collapse; margin: 28px 0; font-size: 13px; }
+    .lane-table th { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); text-align: left; padding: 10px 16px; border-bottom: 1px solid var(--border); }
+    .lane-table td { padding: 12px 16px; color: var(--text2); border-bottom: 1px solid rgba(0,229,255,0.04); }
+    .traffic { display: inline-block; padding: 2px 8px; border-radius: 4px; font-family: 'DM Mono', monospace; font-size: 10px; }
+    .traffic-high { background: rgba(255,159,67,0.15); color: #ff9f43; }
+    .traffic-med  { background: rgba(255,180,50,0.1); color: #ffb432; }
+    .traffic-low  { background: rgba(122,155,181,0.12); color: #7a9bb5; }
+
+    /* CALLOUTS */
+    .pullquote { margin: 32px 0; padding: 24px 28px; border-left: 3px solid var(--green); background: rgba(0,201,122,0.03); border-radius: 0 12px 12px 0; }
+    .pullquote p { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 600; color: var(--text) !important; line-height: 1.5; font-style: italic; margin: 0 !important; }
+
+    .warning-box { background: rgba(255,90,90,0.04); border: 1px solid rgba(255,90,90,0.2); border-radius: 12px; padding: 20px 24px; margin: 20px 0; display: flex; gap: 16px; }
+    .warning-box .icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+    .warning-box p { font-size: 14px; color: var(--text2); line-height: 1.7; margin: 0; font-weight: 300; }
+    .warning-box p strong { color: var(--red); }
+
+    .info-box { background: rgba(0,229,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; margin: 20px 0; display: flex; gap: 16px; }
+    .info-box .icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+    .info-box p { font-size: 14px; color: var(--text2); line-height: 1.7; margin: 0; font-weight: 300; }
+    .info-box p strong { color: var(--cyan); }
+
+    /* PAGE NAV */
+    .page-nav { display: flex; justify-content: space-between; padding: 48px 80px 80px; border-top: 1px solid var(--border); }
+    .page-nav-link { display: flex; flex-direction: column; gap: 4px; text-decoration: none; padding: 20px 24px; border: 1px solid var(--border); border-radius: 12px; transition: all 0.2s; max-width: 220px; }
+    .page-nav-link.next { align-items: flex-end; }
+    .page-nav-link:hover { border-color: var(--border2); background: rgba(0,229,255,0.03); }
+    .page-nav-link.prev:hover { transform: translateX(-4px); }
+    .page-nav-link.next:hover { transform: translateX(4px); }
+    .page-nav-link .label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); }
+    .page-nav-link .title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: var(--cyan); }
+
+    .footer { background: var(--dark); border-top: 1px solid var(--border); padding: 48px 80px; display: flex; align-items: center; justify-content: space-between; }
+    .footer-left { font-size: 13px; color: var(--text3); line-height: 1.7; }
+    .footer-left a { color: var(--cyan-dim); text-decoration: none; }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a { font-size: 13px; color: var(--text3); text-decoration: none; transition: color 0.15s; }
+    .footer-links a:hover { color: var(--cyan); }
+
+    .hamburger { display: none; position: fixed; top: 20px; right: 20px; z-index: 200; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px; cursor: pointer; flex-direction: column; gap: 4px; }
+    .hamburger span { display: block; width: 20px; height: 2px; background: var(--cyan); border-radius: 2px; }
+    .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99; }
+    .overlay.show { display: block; }
+
+    @media (max-width: 1024px) {
+      .sidebar { top: auto; bottom: 0; left: 0; right: 0; width: 100%; height: auto; max-height: 80vh; border-right: none; border-top: 1px solid var(--border); border-radius: 20px 20px 0 0; transform: translateY(100%); padding: 0 0 32px; }
+      .sidebar.open { transform: translateY(0); }
+      .sidebar-logo { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+      .close-btn { display: flex !important; width: 32px; height: 32px; align-items: center; justify-content: center; background: none; border: 1px solid var(--border); border-radius: 8px; color: var(--text2); font-size: 16px; cursor: pointer; }
+      .main { margin-left: 0; }
+      .hamburger { display: flex; }
+      .layer-overview { grid-template-columns: 1fr; }
+      .layer-overview-item { border-right: none; border-bottom: 1px solid var(--border); }
+      .layer-overview-item:last-child { border-bottom: none; }
+      .content-layout { grid-template-columns: 1fr; padding: 40px 24px; }
+      .on-this-page { display: none; }
+      .page-hero { padding: 80px 24px 48px; }
+      .page-nav { padding: 48px 24px; }
+      .footer { flex-direction: column; gap: 20px; padding: 40px 24px; }
+    }
+    @media (max-width: 640px) {
+      .page-title { font-size: clamp(36px, 10vw, 52px); }
+      .feeding-table, .sonar-table, .lane-table { font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+<button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+<div class="overlay" id="overlay"></div>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <a href="/docs">
+      <span style="font-size:24px;line-height:1">🐋</span>
+      <div>
+        <div class="name">whaledata<span>.org</span></div>
+        <div class="sub">Documentation</div>
+      </div>
+    </a>
+    <button class="close-btn" id="closeBtn" style="display:none">✕</button>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-label">Overview</div>
+      <a href="/docs" class="nav-link"><span class="dot"></span>Home</a>
+      <a href="/docs/why" class="nav-link"><span class="dot"></span>Why this project</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">The Data</div>
+      <a href="/docs/data" class="nav-link"><span class="dot"></span>Data sources</a>
+      <a href="/docs/conservation" class="nav-link active"><span class="dot"></span>Conservation layers</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">How it was built</div>
+      <a href="/docs/technology" class="nav-link"><span class="dot"></span>Technology stack</a>
+      <a href="/docs/build" class="nav-link"><span class="dot"></span>The build journey</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Performance</div>
+      <a href="/docs/benchmarks" class="nav-link"><span class="dot"></span>Benchmarks</a>
+      <a href="/docs/roadmap" class="nav-link"><span class="dot"></span>Roadmap</a>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <a href="https://whaledata.org" target="_blank">↗ whaledata.org</a>
+    <a href="https://github.com/Kyraweb/whaledata" target="_blank">↗ GitHub</a>
+    <a href="https://api.whaledata.org/docs" target="_blank">↗ API docs</a>
+  </div>
+</aside>
+
+<main class="main">
+
+  <div class="page-hero">
+    <div class="breadcrumb">
+      <a href="/docs">Home</a><span>/</span>
+      <a href="/docs/data">The Data</a><span>/</span>
+      <span>Conservation layers</span>
+    </div>
+    <div class="page-label">The Data</div>
+    <h1 class="page-title">Where whales live.<br>Where <em>humans</em> intrude.</h1>
+    <p class="page-intro">Raw sighting coordinates tell you where whales have been seen. Conservation layers tell you why that matters — by showing the feeding grounds, sonar zones, and shipping corridors that overlap with whale habitat.</p>
+  </div>
+
+  <!-- LAYER OVERVIEW -->
+  <div class="layer-overview">
+    <div class="layer-overview-item">
+      <div class="layer-icon">🌿</div>
+      <h3>Feeding Grounds</h3>
+      <p>Known concentration areas where oceanographic conditions produce dense prey aggregations. Protecting these zones is critical — disruption during feeding season can affect an animal's survival through winter.</p>
+    </div>
+    <div class="layer-overview-item">
+      <div class="layer-icon">⚠️</div>
+      <h3>Sonar Exercise Zones</h3>
+      <p>Naval training areas where active sonar is used. High-intensity sonar has been linked to acoustic trauma, disorientation, and mass strandings in cetaceans — particularly beaked whales.</p>
+    </div>
+    <div class="layer-overview-item">
+      <div class="layer-icon">🚢</div>
+      <h3>Shipping Lanes</h3>
+      <p>32 major commercial corridors at three traffic levels. Ship strikes are a leading cause of death for large whales globally — Blue, Fin, and Humpback are most affected.</p>
+    </div>
+  </div>
+
+  <div class="content-layout">
+    <div class="content-body">
+
+      <!-- FEEDING GROUNDS -->
+      <div class="con-section" id="feeding">
+        <div class="con-header">
+          <div class="con-dot" style="background:#00c97a"></div>
+          <h2>Feeding Grounds</h2>
+        </div>
+
+        <p>Whale feeding grounds are areas where oceanographic conditions — upwelling currents, nutrient concentrations, temperature gradients — produce dense concentrations of the prey species that whales depend on. For baleen whales (Humpback, Blue, Grey, Fin), prey means krill and small schooling fish. For toothed whales (Sperm whale, Orca), prey means squid, fish, and other marine mammals.</p>
+
+        <p>The feeding ground polygons in whaledata.org are rendered as <strong>dashed green outlines</strong> — deliberately transparent so as not to obscure the sighting data beneath. When overlaid with the shipping lane or sonar layer, the spatial conflicts become immediately visible without requiring any additional analysis.</p>
+
+        <div class="pullquote">
+          <p>"A whale that cannot feed adequately during summer cannot survive the winter migration. Feeding ground protection is species-level protection."</p>
+        </div>
+
+        <table class="feeding-table">
+          <thead>
+            <tr><th>Species</th><th>Primary Feeding Ground</th><th>Season</th><th>Key Threat</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="species"><span class="species-dot" style="background:#00e5ff"></span>Humpback whale</span></td>
+              <td>Gulf of Alaska, Stellwagen Bank, Gulf of St. Lawrence</td>
+              <td>Summer</td>
+              <td>Ship strikes, entanglement</td>
+            </tr>
+            <tr>
+              <td><span class="species"><span class="species-dot" style="background:#4d9fff"></span>Blue whale</span></td>
+              <td>California Current, Azores, Crozet Plateau</td>
+              <td>Summer</td>
+              <td>Ship strikes, climate change</td>
+            </tr>
+            <tr>
+              <td><span class="species"><span class="species-dot" style="background:#a8c5da"></span>Grey whale</span></td>
+              <td>Bering Sea, Chukchi Sea, Arctic shelf</td>
+              <td>Summer</td>
+              <td>Sea ice loss, prey depletion</td>
+            </tr>
+            <tr>
+              <td><span class="species"><span class="species-dot" style="background:#7eb8d4"></span>Sperm whale</span></td>
+              <td>Crozet Plateau, Kaikoura Canyon, Azores</td>
+              <td>Year-round</td>
+              <td>Plastic ingestion, entanglement</td>
+            </tr>
+            <tr>
+              <td><span class="species"><span class="species-dot" style="background:#5dd4b8"></span>Fin whale</span></td>
+              <td>Gulf of St. Lawrence, Ligurian Sea, Iceland shelf</td>
+              <td>Summer</td>
+              <td>Ship strikes, noise pollution</td>
+            </tr>
+            <tr>
+              <td><span class="species"><span class="species-dot" style="background:#ff6b9d"></span>Orca</span></td>
+              <td>Salish Sea, Norwegian fjords, Antarctic Peninsula</td>
+              <td>Variable by ecotype</td>
+              <td>Prey depletion, contaminants</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>The feeding ground polygons are approximate boundaries drawn from published research and do not reflect the full complexity of whale habitat use, which varies seasonally, interannually, and in response to oceanographic conditions. A future version of the platform will incorporate dynamic habitat predictions based on sea surface temperature and prey distribution data.</p>
+      </div>
+
+      <!-- SONAR ZONES -->
+      <div class="con-section" id="sonar">
+        <div class="con-header">
+          <div class="con-dot" style="background:#ff5a5a;border-radius:50%"></div>
+          <h2>Naval Sonar Exercise Zones</h2>
+        </div>
+
+        <p>The relationship between military sonar and cetacean strandings has been one of the most contentious issues in marine conservation for the past three decades. The evidence linking high-intensity active sonar exercises to mass cetacean strandings is now substantial enough to have resulted in regulatory restrictions in several jurisdictions.</p>
+
+        <p>The leading mechanism is acoustic trauma. Mid-frequency active sonar (MFAS) operates at intensities that can exceed <strong>235 decibels at the source</strong>. Beaked whales appear particularly vulnerable — their anatomy makes them susceptible to gas bubble disease (analogous to decompression sickness) when they ascend rapidly from depth in response to sonar exposure.</p>
+
+        <div class="warning-box">
+          <div class="icon">⚠️</div>
+          <p><strong>Documented events:</strong> The Canary Islands have experienced multiple mass beaked whale strandings correlated with NATO naval exercises. The Bahamas strandings of 2000 — which killed 17 cetaceans — were attributed by NOAA to Navy sonar exercises, prompting the first significant US regulatory response.</p>
+        </div>
+
+        <table class="sonar-table">
+          <thead>
+            <tr><th>Zone</th><th>Authority</th><th>Risk Level</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Canary Islands</td><td>NATO</td><td><span class="risk risk-high">High</span></td><td>Multiple documented mass strandings</td></tr>
+            <tr><td>AUTEC — Bahamas</td><td>US Navy</td><td><span class="risk risk-high">High</span></td><td>2000 stranding event triggered regulatory review</td></tr>
+            <tr><td>Southern California SOCAL</td><td>US Navy</td><td><span class="risk risk-high">High</span></td><td>Overlaps Blue whale California Current habitat</td></tr>
+            <tr><td>Hawaii PMRF</td><td>US Navy</td><td><span class="risk risk-med">Medium</span></td><td>Humpback winter breeding ground overlap</td></tr>
+            <tr><td>AUTEC — Tongue of the Ocean</td><td>US Navy</td><td><span class="risk risk-med">Medium</span></td><td>Beaked whale habitat</td></tr>
+            <tr><td>Scottish coast — RNAD</td><td>Royal Navy</td><td><span class="risk risk-med">Medium</span></td><td>North Sea stranding proximity</td></tr>
+            <tr><td>Mediterranean — NATO exercises</td><td>NATO</td><td><span class="risk risk-med">Medium</span></td><td>Fin whale and Sperm whale habitat</td></tr>
+            <tr><td>North Sea — FOST</td><td>Royal Navy</td><td><span class="risk risk-low">Low</span></td><td>Exercise area, documented but lower frequency</td></tr>
+            <tr><td>Japan — JMSDF exercise areas</td><td>JMSDF</td><td><span class="risk risk-low">Low</span></td><td>Limited public documentation</td></tr>
+          </tbody>
+        </table>
+
+        <div class="info-box">
+          <div class="icon">ℹ️</div>
+          <p><strong>Reading the correlation:</strong> When the stranding layer is activated alongside the sonar zones, spatial correlation is visible in several areas. This visualisation invites investigation — it does not resolve it. Some strandings in sonar areas may have other causes. Conversely, some sonar-caused mortality never appears in stranding records at all — animals that die at depth never wash ashore.</p>
+        </div>
+      </div>
+
+      <!-- SHIPPING LANES -->
+      <div class="con-section" id="shipping">
+        <div class="con-header">
+          <div class="con-dot" style="background:#ff9f43;border-radius:2px"></div>
+          <h2>Shipping Lanes</h2>
+        </div>
+
+        <p>Ship strikes are a leading cause of death for large whales globally. The problem is structural: whales are often at or near the surface to breathe, and large commercial vessels cannot stop quickly or manoeuvre around objects at short notice. A container ship travelling at 20 knots requires several kilometres to stop — far more than any surface interval a whale would occupy.</p>
+
+        <p>The 32 shipping corridors in whaledata.org are rendered in <strong>orange with a glow effect</strong> at three traffic intensities. They represent the major commercial routes connecting every ocean basin — the Suez Canal corridor, the Strait of Malacca, the North Pacific great circle routes, trans-Atlantic lanes, the Panama Canal connections, and more.</p>
+
+        <div class="pullquote">
+          <p>"The Gulf of St. Lawrence, where northbound whale migration and heavy commercial shipping converge every spring, is one of the most acutely documented collision zones in the world."</p>
+        </div>
+
+        <table class="lane-table">
+          <thead>
+            <tr><th>Corridor</th><th>Region</th><th>Traffic</th><th>Species at Risk</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Asia → US West Coast (great circle)</td><td>North Pacific</td><td><span class="traffic traffic-high">High</span></td><td>Blue whale, Humpback</td></tr>
+            <tr><td>Europe → US East Coast (North Atlantic)</td><td>North Atlantic</td><td><span class="traffic traffic-high">High</span></td><td>Fin whale, Humpback, Right whale</td></tr>
+            <tr><td>Suez Canal corridor</td><td>Red Sea / Indian Ocean</td><td><span class="traffic traffic-high">High</span></td><td>Humpback, Blue whale (Sri Lanka)</td></tr>
+            <tr><td>Strait of Malacca</td><td>Southeast Asia</td><td><span class="traffic traffic-high">High</span></td><td>Bryde's whale, Sperm whale</td></tr>
+            <tr><td>Gulf of St. Lawrence</td><td>Canada</td><td><span class="traffic traffic-med">Medium</span></td><td>Fin whale, Humpback, Blue whale</td></tr>
+            <tr><td>California coast</td><td>US West Coast</td><td><span class="traffic traffic-med">Medium</span></td><td>Blue whale, Humpback</td></tr>
+            <tr><td>Cape of Good Hope</td><td>South Africa</td><td><span class="traffic traffic-med">Medium</span></td><td>Humpback, Blue whale</td></tr>
+            <tr><td>Hawaii → US West Coast</td><td>Central Pacific</td><td><span class="traffic traffic-med">Medium</span></td><td>Humpback (breeding season)</td></tr>
+            <tr><td>Australia → Asia</td><td>Western Pacific</td><td><span class="traffic traffic-low">Low</span></td><td>Humpback (east coast migration)</td></tr>
+          </tbody>
+        </table>
+
+        <p>When the shipping layer is active alongside sighting data, the overlap tells a story that is difficult to communicate in text alone. Blue whale sightings in the California Current sit directly beneath the Asia-to-US West Coast lanes. Humpback sightings in Hawaiian waters are adjacent to trans-Pacific routes. The aggregated sperm whale records in the North Atlantic overlap with the busy corridor between Europe and North America.</p>
+
+        <div class="info-box">
+          <div class="icon">🗺️</div>
+          <p><strong>Technical note:</strong> Pacific routes that cross the 180° antimeridian are split into two segments in the GeoJSON. Without this split, MapLibre GL draws the line the short way around — cutting through the poles and creating a visual spike across Alaska. The split was one of the more obscure bugs in the ship lane implementation.</p>
+        </div>
+      </div>
+
+      <!-- READING THE OVERLAPS -->
+      <div class="con-section" id="overlaps">
+        <div class="con-header">
+          <div class="con-dot" style="background:var(--cyan)"></div>
+          <h2>Reading the overlaps</h2>
+        </div>
+
+        <p>The real value of the conservation layers is not in any single layer — it is in the combinations. The platform is designed so that any layer can be activated alongside any other, allowing users to explore spatial relationships without needing GIS software or programming knowledge.</p>
+
+        <p><strong>Feeding grounds + shipping lanes</strong> shows where commercial traffic crosses critical foraging habitat. The California Current — one of the most productive marine ecosystems in the world and the primary summer feeding ground for Blue whales — is also one of the busiest shipping corridors in the Pacific.</p>
+
+        <p><strong>Sonar zones + strandings</strong> shows whether documented stranding clusters coincide spatially with known exercise areas. The correlation is visible in the Canary Islands, the Bahamas, and the US East Coast — though causation requires further analysis beyond what a visualisation can establish.</p>
+
+        <p><strong>Historical records + feeding grounds</strong> is perhaps the most sobering combination. Overlaying 19th century Blue whale distribution from whaling logs against their current documented feeding grounds reveals how dramatically the species' range has contracted — or, more accurately, how dramatically our ability to observe them in remote areas has declined.</p>
+
+        <div class="warning-box">
+          <div class="icon">📌</div>
+          <p><strong>Important caveat:</strong> Spatial correlation visible on the globe is not proof of causation. The platform presents data — it does not draw conclusions. Conservation decisions require scientific analysis beyond what any single visualisation can provide. The overlaps are starting points for investigation, not endpoints.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <aside>
+      <div class="on-this-page">
+        <h4>On this page</h4>
+        <a href="#feeding">Feeding Grounds</a>
+        <a href="#sonar">Sonar Zones</a>
+        <a href="#shipping">Shipping Lanes</a>
+        <a href="#overlaps">Reading the overlaps</a>
+      </div>
+    </aside>
+  </div>
+
+  <div class="page-nav">
+    <a href="/docs/data" class="page-nav-link prev">
+      <span class="label">← Previous</span>
+      <span class="title">Data sources</span>
+    </a>
+    <a href="/docs/technology" class="page-nav-link next">
+      <span class="label">Next →</span>
+      <span class="title">Technology stack</span>
+    </a>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-left">
+      <strong style="color:var(--text);font-family:'Syne',sans-serif">whaledata.org</strong> — Documentation<br>
+      By <a href="https://kyraweb.ca">Monarch / KyraWeb</a> · Built with assistance from <a href="https://claude.ai">Claude by Anthropic</a>
+    </div>
+    <div class="footer-links">
+      <a href="https://whaledata.org">Platform</a>
+      <a href="https://github.com/Kyraweb/whaledata">GitHub</a>
+      <a href="https://api.whaledata.org/docs">API</a>
+    </div>
+  </footer>
+
+</main>
+
+<script>
+gsap.registerPlugin(ScrollTrigger);
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursorRing');
+document.addEventListener('mousemove', e => {
+  gsap.to(cursor, { x: e.clientX, y: e.clientY, duration: 0.05 });
+  gsap.to(ring, { x: e.clientX, y: e.clientY, duration: 0.18 });
+});
+document.querySelectorAll('a, button').forEach(el => {
+  el.addEventListener('mouseenter', () => gsap.to(ring, { scale: 2, duration: 0.2 }));
+  el.addEventListener('mouseleave', () => gsap.to(ring, { scale: 1, duration: 0.2 }));
+});
+
+gsap.from('.page-hero .page-label', { opacity: 0, y: 20, duration: 0.6, delay: 0.2 });
+gsap.from('.page-title', { opacity: 0, y: 30, duration: 0.8, delay: 0.3, ease: 'power3.out' });
+gsap.from('.page-intro', { opacity: 0, y: 20, duration: 0.7, delay: 0.5, ease: 'power3.out' });
+
+gsap.utils.toArray('.layer-overview-item').forEach((el, i) => {
+  gsap.from(el, { opacity: 0, y: 20, duration: 0.6, delay: i * 0.12, ease: 'power3.out',
+    scrollTrigger: { trigger: el, start: 'top 88%', once: true }
+  });
+});
+gsap.utils.toArray('.con-section').forEach(el => {
+  gsap.from(el, { opacity: 0, y: 30, duration: 0.8, ease: 'power3.out',
+    scrollTrigger: { trigger: el, start: 'top 85%', once: true }
+  });
+});
+
+const sections = document.querySelectorAll('[id]');
+const links = document.querySelectorAll('.on-this-page a');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => { if (window.scrollY >= s.offsetTop - 120) current = s.id; });
+  links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + current));
+});
+
+const sidebar = document.getElementById('sidebar');
+const hamburger = document.getElementById('hamburger');
+const overlay = document.getElementById('overlay');
+const closeBtn = document.getElementById('closeBtn');
+function openNav() { sidebar.classList.add('open'); overlay.classList.add('show'); if (closeBtn) closeBtn.style.display = 'flex'; }
+function closeNav() { sidebar.classList.remove('open'); overlay.classList.remove('show'); if (closeBtn) closeBtn.style.display = 'none'; }
+hamburger.addEventListener('click', openNav);
+overlay.addEventListener('click', closeNav);
+if (closeBtn) closeBtn.addEventListener('click', closeNav);
+document.querySelectorAll('.nav-link').forEach(l => l.addEventListener('click', () => { if (window.innerWidth <= 1024) closeNav(); }));
+</script>
+</body>
+</html>
