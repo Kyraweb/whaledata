@@ -1102,16 +1102,15 @@ gsap.to('.depth-line', {
     ox.fillStyle = tintColor;
     ox.fillRect(0, 0, w, h);
     // Restore natural render
-    ox.globalCompositeOperation = 'destination-over';
-    ox.globalAlpha = 1;
-    // Top-edge light catch
+    // Subtle top-edge highlight — source-atop so it only hits whale pixels
+    ox.globalCompositeOperation = 'source-atop';
     const grad = ox.createLinearGradient(0, 0, 0, h);
-    grad.addColorStop(0, 'rgba(0,229,255,0.18)');
-    grad.addColorStop(0.35, 'rgba(0,0,0,0)');
-    ox.globalCompositeOperation = 'source-over';
-    ox.globalAlpha = 1;
+    grad.addColorStop(0, 'rgba(0,229,255,0.12)');
+    grad.addColorStop(0.3, 'rgba(0,0,0,0)');
     ox.fillStyle = grad;
+    ox.globalAlpha = 1;
     ox.fillRect(0, 0, w, h);
+    ox.globalCompositeOperation = 'source-over';
     return off;
   }
 
@@ -1161,9 +1160,9 @@ gsap.to('.depth-line', {
   // Three whales — already mid-screen at load
   // Natural SVG aspect ratio 4000:2500 = 1.6:1
   const WHALES = [
-    { wFrac:.18, hFrac:.18, speed:.52, depthFrac:.22, amp:18, freq:.023, phase:.9,  alpha:.30, xFrac:.72, tint:'#005a68', tintA:.52, bubbles:[], wakes:[], bRate:.022, wRate:.035 },
-    { wFrac:.26, hFrac:.26, speed:.32, depthFrac:.52, amp:30, freq:.016, phase:2.2, alpha:.44, xFrac:.42, tint:'#006878', tintA:.48, bubbles:[], wakes:[], bRate:.038, wRate:.055 },
-    { wFrac:.36, hFrac:.36, speed:.20, depthFrac:.72, amp:42, freq:.012, phase:4.6, alpha:.58, xFrac:.62, tint:'#007a8a', tintA:.44, bubbles:[], wakes:[], bRate:.055, wRate:.072 },
+    { wFrac:.10, hFrac:.10, speed:.48, depthFrac:.25, amp:14, freq:.024, phase:.9,  alpha:.18, xFrac:.78, tint:'#004a58', tintA:.50, bubbles:[], wakes:[], bRate:.015, wRate:.025 },
+    { wFrac:.16, hFrac:.16, speed:.30, depthFrac:.50, amp:26, freq:.017, phase:2.2, alpha:.26, xFrac:.62, tint:'#005868', tintA:.46, bubbles:[], wakes:[], bRate:.028, wRate:.040 },
+    { wFrac:.22, hFrac:.22, speed:.18, depthFrac:.70, amp:36, freq:.013, phase:4.6, alpha:.36, xFrac:.72, tint:'#006878', tintA:.42, bubbles:[], wakes:[], bRate:.040, wRate:.055 },
   ];
 
   let tinted = null;
@@ -1209,7 +1208,7 @@ gsap.to('.depth-line', {
       ctx.rotate(tilt);
       ctx.globalAlpha = w.alpha;
       ctx.shadowColor = 'rgba(0,229,255,.4)';
-      ctx.shadowBlur  = w.pw * .08;
+      ctx.shadowBlur  = w.pw * .04;
       ctx.drawImage(w.img, -w.pw/2, -w.ph/2, w.pw, w.ph);
       ctx.shadowBlur = 0;
       ctx.globalAlpha = 1;
