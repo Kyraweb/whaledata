@@ -276,6 +276,7 @@
 
     .hero-cta {
       display: flex; align-items: center; gap: 20px;
+      flex-wrap: wrap;
       opacity: 0;
     }
     .btn-primary {
@@ -625,6 +626,8 @@
       .hero-stats { left: 24px; flex-wrap: wrap; gap: 24px; }
       .scroll-hint { display: none; }
       .sources-grid { grid-template-columns: 1fr 1fr; }
+      .hero-cta { flex-direction: column; align-items: flex-start; gap: 16px; }
+      .btn-primary, .btn-ghost { width: 100%; justify-content: center; }
       .features-list { grid-template-columns: 1fr; }
       .footer { flex-direction: column; gap: 20px; text-align: center; }
       .cta-buttons { flex-direction: column; align-items: center; }
@@ -711,7 +714,7 @@
     <canvas id="whale-canvas"></canvas>
 
     <div class="hero-content">
-      <div class="hero-eyebrow" id="heroEyebrow">Documentation</div>
+      <div class="hero-eyebrow" id="heroEyebrow">From Data to Discovery</div>
 
       <h1 class="hero-title" id="heroTitle">
         <span class="line"><span class="line-inner">25,000 whale</span></span>
@@ -995,7 +998,7 @@ gsap.to('.depth-line', {
   ease: 'power2.inOut'
 });
 
-// ── WHALE POD CANVAS ANIMATION ─────────────────────────
+// ── WHALE POD CANVAS ANIMATION — HYPER REALISTIC ──────
 (function() {
   const canvas = document.getElementById('whale-canvas');
   const ctx = canvas.getContext('2d');
@@ -1006,195 +1009,211 @@ gsap.to('.depth-line', {
     H = canvas.height = canvas.offsetHeight;
   }
   resize();
-  window.addEventListener('resize', resize);
+  window.addEventListener('resize', () => { resize(); });
 
-  // Draw a single whale body at origin, facing right
-  // size = body length in px
-  function drawWhale(ctx, size, alpha, glowColor) {
-    const s = size;
-    ctx.save();
-    ctx.globalAlpha = alpha;
+  // Realistic whale SVG — full anatomical detail from actual silhouette
+  const WHALE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 300">
+    <g fill="white">
+      <!-- Main body - streamlined torpedo shape -->
+      <ellipse cx="220" cy="150" rx="185" ry="68"/>
+      <!-- Head bulge - melon -->
+      <ellipse cx="385" cy="145" rx="60" ry="52"/>
+      <!-- Narrow rostrum / jaw -->
+      <path d="M420,138 Q470,140 480,150 Q470,162 420,162 Q440,155 440,150 Q440,145 420,138Z"/>
+      <!-- Tail stock — narrow peduncle -->
+      <path d="M55,134 Q35,140 20,150 Q35,162 55,168 Q75,160 85,150 Q75,142 55,134Z"/>
+      <!-- Flukes — swept back, realistic angle -->
+      <path d="M22,148 Q5,118 2,95 Q15,100 30,120 Q35,132 42,140Z"/>
+      <path d="M22,153 Q5,183 2,206 Q15,200 30,180 Q35,170 42,160Z"/>
+      <!-- Dorsal fin — curved, set back from centre -->
+      <path d="M195,83 Q210,42 228,38 Q238,38 242,50 Q244,62 235,75 Q220,82 195,83Z"/>
+      <!-- Pectoral fin — long, swept -->
+      <path d="M305,175 Q330,210 340,238 Q348,252 335,248 Q315,238 295,215 Q278,196 275,180 Q285,174 305,175Z"/>
+      <!-- Pectoral fin shadow suggestion -->
+      <path d="M290,168 Q310,158 325,162 Q310,172 295,178 Q288,175 290,168Z" opacity="0.4"/>
+      <!-- Throat grooves — subtle texture lines -->
+      <line x1="370" y1="168" x2="320" y2="195" stroke="rgba(0,0,0,0.15)" stroke-width="1.5"/>
+      <line x1="360" y1="172" x2="315" y2="196" stroke="rgba(0,0,0,0.12)" stroke-width="1"/>
+      <line x1="350" y1="175" x2="310" y2="196" stroke="rgba(0,0,0,0.1)" stroke-width="1"/>
+      <!-- Eye -->
+      <circle cx="395" cy="138" r="5" fill="rgba(0,0,0,0.7)"/>
+      <circle cx="396" cy="137" r="1.5" fill="rgba(255,255,255,0.6)"/>
+      <!-- Blowhole -->
+      <ellipse cx="375" cy="85" rx="6" ry="3" fill="rgba(0,0,0,0.3)"/>
+    </g>
+  </svg>`;
 
-    // Glow
-    ctx.shadowColor = glowColor;
-    ctx.shadowBlur  = s * 0.4;
+  // Create image from SVG
+  const img = new Image();
+  const blob = new Blob([WHALE_SVG], {type: 'image/svg+xml'});
+  const url  = URL.createObjectURL(blob);
+  img.src = url;
 
-    // Body — main teardrop
-    ctx.beginPath();
-    ctx.moveTo(s * 0.5, 0);
-    ctx.bezierCurveTo( s * 0.55,  -s * 0.14,   s * 0.1,  -s * 0.2,   -s * 0.3,  -s * 0.13);
-    ctx.bezierCurveTo(-s * 0.52, -s * 0.07,   -s * 0.52,  s * 0.07,  -s * 0.3,   s * 0.13);
-    ctx.bezierCurveTo( s * 0.1,   s * 0.2,     s * 0.55,  s * 0.14,   s * 0.5,   0);
-    ctx.closePath();
-    ctx.fillStyle = glowColor;
-    ctx.fill();
-
-    // Flukes (tail) — behind the body
-    ctx.beginPath();
-    // Upper fluke
-    ctx.moveTo(-s * 0.3, -s * 0.02);
-    ctx.bezierCurveTo(-s * 0.5, -s * 0.02, -s * 0.65, -s * 0.18, -s * 0.62, -s * 0.28);
-    ctx.bezierCurveTo(-s * 0.59, -s * 0.35, -s * 0.44, -s * 0.3,  -s * 0.38, -s * 0.2);
-    ctx.bezierCurveTo(-s * 0.34, -s * 0.13, -s * 0.32, -s * 0.06, -s * 0.3, 0);
-    // Lower fluke
-    ctx.moveTo(-s * 0.3,  s * 0.02);
-    ctx.bezierCurveTo(-s * 0.5,  s * 0.02, -s * 0.65,  s * 0.18, -s * 0.62,  s * 0.28);
-    ctx.bezierCurveTo(-s * 0.59,  s * 0.35, -s * 0.44,  s * 0.3,  -s * 0.38,  s * 0.2);
-    ctx.bezierCurveTo(-s * 0.34,  s * 0.13, -s * 0.32,  s * 0.06, -s * 0.3,   0);
-    ctx.fillStyle = glowColor;
-    ctx.fill();
-
-    // Dorsal fin
-    ctx.beginPath();
-    ctx.moveTo(s * 0.05, -s * 0.13);
-    ctx.bezierCurveTo(s * 0.08, -s * 0.32, s * 0.18, -s * 0.35, s * 0.22, -s * 0.25);
-    ctx.bezierCurveTo(s * 0.24, -s * 0.18, s * 0.18, -s * 0.13, s * 0.1,  -s * 0.13);
-    ctx.closePath();
-    ctx.fillStyle = glowColor;
-    ctx.fill();
-
-    // Pectoral fin
-    ctx.beginPath();
-    ctx.moveTo(s * 0.18, s * 0.1);
-    ctx.bezierCurveTo(s * 0.22, s * 0.22, s * 0.1,  s * 0.32,  s * 0.0,  s * 0.28);
-    ctx.bezierCurveTo(-s * 0.04, s * 0.24, -s * 0.02, s * 0.14, s * 0.08, s * 0.1);
-    ctx.closePath();
-    ctx.fillStyle = glowColor;
-    ctx.fill();
-
-    ctx.shadowBlur = 0;
-    ctx.restore();
-  }
-
-  // Bubble particle
-  function Bubble(x, y) {
-    this.x = x; this.y = y;
-    this.r = Math.random() * 2 + 0.5;
-    this.vy = -(Math.random() * 0.4 + 0.2);
-    this.vx = (Math.random() - 0.5) * 0.3;
+  // Bubble particle — tiny, realistic
+  function Bubble(x, y, size) {
+    this.x = x + (Math.random()-0.5)*size*0.1;
+    this.y = y + (Math.random()-0.5)*size*0.05;
+    this.r = Math.random() * size * 0.008 + size * 0.003;
+    this.vy = -(Math.random() * 0.3 + 0.15);
+    this.vx = (Math.random() - 0.5) * 0.15;
     this.life = 1;
-    this.decay = Math.random() * 0.008 + 0.004;
+    this.decay = Math.random() * 0.006 + 0.003;
   }
   Bubble.prototype.update = function() {
     this.x += this.vx; this.y += this.vy;
     this.life -= this.decay;
+    this.vy *= 0.99;
   };
-  Bubble.prototype.draw = function(ctx, color) {
+  Bubble.prototype.draw = function(ctx, a) {
     ctx.beginPath();
-    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-    ctx.strokeStyle = color;
-    ctx.globalAlpha = this.life * 0.4;
-    ctx.lineWidth = 0.5;
+    ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
+    ctx.strokeStyle = `rgba(0,229,255,${this.life * a * 0.5})`;
+    ctx.lineWidth = 0.6;
     ctx.stroke();
-    ctx.globalAlpha = 1;
+    // Tiny glint
+    ctx.beginPath();
+    ctx.arc(this.x - this.r*0.3, this.y - this.r*0.3, this.r*0.25, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(255,255,255,${this.life * a * 0.3})`;
+    ctx.fill();
   };
 
-  // Three whales: foreground (large, slow), mid (medium), background (small, fast)
+  // Wake — horizontal disturbance lines behind whale
+  function Wake(x, y, size) {
+    this.x = x; this.y = y;
+    this.w = Math.random() * size * 0.12 + size * 0.04;
+    this.life = 1;
+    this.decay = 0.012;
+    this.vy = (Math.random() - 0.5) * 0.3;
+  }
+  Wake.prototype.update = function() {
+    this.w += 0.4; this.life -= this.decay;
+    this.y += this.vy;
+  };
+  Wake.prototype.draw = function(ctx, a) {
+    ctx.beginPath();
+    ctx.moveTo(this.x, this.y);
+    ctx.lineTo(this.x - this.w, this.y);
+    ctx.strokeStyle = `rgba(0,229,255,${this.life * a * 0.12})`;
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+  };
+
+  // Three whales — already mid-screen at load (50% state)
+  // x starts at a mid-journey position so user sees them immediately
   const whales = [
     {
-      // Background — small, fast, high in frame
-      size: 70, speed: 0.28, depth: 0.22,
-      amp: 28, freq: 0.018, phase: 0,
-      tailAmp: 0.22, tailFreq: 0.06, tailPhase: 0,
-      color: 'rgba(0,229,255,0.055)', glow: 'rgba(0,229,255,0.055)',
-      x: -150, bubbles: [], bubbleRate: 0.04, delay: 180
+      // Background — small, high, fastest visible speed
+      w: 180, h: 108,    // render size
+      speed: 0.55, depth: 0.20,
+      amp: 22, freq: 0.022, phase: 0.8,
+      alpha: 0.38,
+      x: null, // set after W known
+      xFrac: 0.72,  // start at 72% across screen
+      bubbles: [], wakes: [], bubbleRate: 0.025, wakeRate: 0.04,
     },
     {
-      // Mid — medium
-      size: 110, speed: 0.18, depth: 0.52,
-      amp: 40, freq: 0.014, phase: Math.PI * 0.7,
-      tailAmp: 0.18, tailFreq: 0.05, tailPhase: 1.2,
-      color: 'rgba(0,229,255,0.07)', glow: 'rgba(0,229,255,0.07)',
-      x: -350, bubbles: [], bubbleRate: 0.06, delay: 60
+      // Mid — medium, mid depth
+      w: 280, h: 168,
+      speed: 0.35, depth: 0.50,
+      amp: 36, freq: 0.016, phase: 2.1,
+      alpha: 0.50,
+      x: null, xFrac: 0.35,
+      bubbles: [], wakes: [], bubbleRate: 0.04, wakeRate: 0.06,
     },
     {
-      // Foreground — large, slowest, low in frame
-      size: 160, speed: 0.12, depth: 0.72,
-      amp: 52, freq: 0.011, phase: Math.PI * 1.4,
-      tailAmp: 0.15, tailFreq: 0.04, tailPhase: 2.4,
-      color: 'rgba(0,229,255,0.09)', glow: 'rgba(0,229,255,0.09)',
-      x: -600, bubbles: [], bubbleRate: 0.08, delay: 0
+      // Foreground — large, low, slowest
+      w: 400, h: 240,
+      speed: 0.22, depth: 0.74,
+      amp: 48, freq: 0.012, phase: 4.5,
+      alpha: 0.65,
+      x: null, xFrac: 0.55,
+      bubbles: [], wakes: [], bubbleRate: 0.06, wakeRate: 0.08,
     }
   ];
 
   let t = 0;
+  let imgReady = false;
 
   function loop() {
     ctx.clearRect(0, 0, W, H);
+    if (!imgReady) { requestAnimationFrame(loop); return; }
+
     t++;
 
     whales.forEach(w => {
-      if (t < w.delay) return;
-
-      // Advance x
-      w.x += w.speed;
-      if (w.x > W + w.size * 0.8) w.x = -w.size * 0.8;
-
-      // Sine wave y position
+      // Sine wave Y
       const baseY = H * w.depth;
       const sineY = Math.sin(t * w.freq + w.phase) * w.amp;
-      const y = baseY + sineY;
+      const y     = baseY + sineY;
 
-      // Body tilt — derivative of sine = cos
-      const tilt = Math.cos(t * w.freq + w.phase) * w.freq * w.amp * 0.6;
+      // Body tilt = derivative of sine path
+      const tilt = Math.cos(t * w.freq + w.phase) * w.freq * w.amp * 0.55;
 
-      // Tail fluke rotation (oscillates independent of body)
-      const tailRot = Math.sin(t * w.tailFreq + w.tailPhase) * w.tailAmp;
+      // Advance X
+      w.x += w.speed;
+      if (w.x > W + w.w * 0.6) w.x = -w.w * 0.6;
 
-      // Spawn bubbles behind the tail
-      if (Math.random() < w.bubbleRate) {
-        const tailX = w.x - Math.cos(tilt) * w.size * 0.62;
-        const tailY = y   - Math.sin(tilt) * w.size * 0.62;
-        w.bubbles.push(new Bubble(tailX, tailY));
-      }
+      // Spawn particles at tail position
+      const tailX = w.x - Math.cos(tilt) * w.w * 0.46;
+      const tailY = y   + Math.sin(tilt)  * w.w * 0.46;
 
-      // Update + draw bubbles
-      w.bubbles = w.bubbles.filter(b => b.life > 0);
-      w.bubbles.forEach(b => { b.update(); b.draw(ctx, w.color); });
+      if (Math.random() < w.bubbleRate) w.bubbles.push(new Bubble(tailX, tailY, w.w));
+      if (Math.random() < w.wakeRate)   w.wakes.push(new Wake(tailX, tailY, w.w));
 
-      // Draw whale
+      // Update + draw wakes first (behind whale)
+      w.wakes = w.wakes.filter(k => k.life > 0);
+      w.wakes.forEach(k => { k.update(); k.draw(ctx, w.alpha); });
+
+      // Draw whale image with tint
       ctx.save();
       ctx.translate(w.x, y);
       ctx.rotate(tilt);
 
-      // Draw main body
-      drawWhale(ctx, w.size, 1, w.glow);
+      // Glow pass
+      ctx.shadowColor = 'rgba(0,229,255,0.5)';
+      ctx.shadowBlur  = w.w * 0.12;
 
-      // Tail fluke overlay — extra rotation on top of body tilt
-      ctx.save();
-      ctx.translate(-w.size * 0.3, 0);
-      ctx.rotate(tailRot);
-      ctx.translate(w.size * 0.3, 0);
-      // Redraw tail with rotation
-      const s = w.size;
-      ctx.beginPath();
-      ctx.moveTo(-s * 0.3, -s * 0.02);
-      ctx.bezierCurveTo(-s * 0.5, -s * 0.02, -s * 0.65, -s * 0.18, -s * 0.62, -s * 0.28);
-      ctx.bezierCurveTo(-s * 0.59, -s * 0.35, -s * 0.44, -s * 0.3,  -s * 0.38, -s * 0.2);
-      ctx.bezierCurveTo(-s * 0.34, -s * 0.13, -s * 0.32, -s * 0.06, -s * 0.3, 0);
-      ctx.moveTo(-s * 0.3,  s * 0.02);
-      ctx.bezierCurveTo(-s * 0.5,  s * 0.02, -s * 0.65,  s * 0.18, -s * 0.62,  s * 0.28);
-      ctx.bezierCurveTo(-s * 0.59,  s * 0.35, -s * 0.44,  s * 0.3,  -s * 0.38,  s * 0.2);
-      ctx.bezierCurveTo(-s * 0.34,  s * 0.13, -s * 0.32,  s * 0.06, -s * 0.3,   0);
-      ctx.globalAlpha = 1;
-      ctx.shadowColor = w.glow;
-      ctx.shadowBlur  = s * 0.3;
-      ctx.fillStyle = w.color;
-      ctx.fill();
+      // Tint layer — draw image then tint with globalCompositeOperation
+      ctx.globalAlpha = w.alpha;
+      ctx.drawImage(img, -w.w/2, -w.h/2, w.w, w.h);
+
+      // Cyan colour tint overlay
+      ctx.globalCompositeOperation = 'source-atop';
+      ctx.globalAlpha = w.alpha * 0.85;
+      ctx.fillStyle = 'rgba(0,140,160,1)';
+      ctx.fillRect(-w.w/2, -w.h/2, w.w, w.h);
+
+      // Subtle lighter highlight on top edge
+      const grad = ctx.createLinearGradient(0, -w.h/2, 0, w.h/2);
+      grad.addColorStop(0, 'rgba(0,229,255,0.25)');
+      grad.addColorStop(0.4, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(-w.w/2, -w.h/2, w.w, w.h);
+
+      ctx.globalCompositeOperation = 'source-over';
       ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1;
       ctx.restore();
 
-      ctx.restore();
+      // Bubbles on top
+      w.bubbles = w.bubbles.filter(b => b.life > 0);
+      w.bubbles.forEach(b => { b.update(); b.draw(ctx, w.alpha); });
     });
 
     requestAnimationFrame(loop);
   }
 
-  // Staggered fade-in — whales materialise gradually
-  setTimeout(() => {
-    whales[0].delay = 0;
+  img.onload = () => {
+    imgReady = true;
+    // Set initial x positions at their xFrac of screen width
+    whales.forEach(w => { w.x = W * w.xFrac; });
     loop();
-  }, 1200);
+  };
+  img.onerror = () => {
+    // Fallback — start loop anyway (no whales but rest of canvas still works)
+    whales.forEach(w => { w.x = W * w.xFrac; });
+    loop();
+  };
 })();
 
 // ── HERO TEXT REVEALS ──────────────────────────────────
