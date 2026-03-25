@@ -44,6 +44,10 @@
       overflow-x: hidden;
       cursor: none;
     }
+    @media (hover: none), (pointer: coarse) {
+      body { cursor: auto; }
+      .cursor, .cursor-ring { display: none !important; }
+    }
 
     /* ── CUSTOM CURSOR ───────────────────────────────── */
     .cursor {
