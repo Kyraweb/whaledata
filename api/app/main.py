@@ -15,6 +15,7 @@ app.add_middleware(
     allow_origins=[
         "https://whaledata.org",
         "http://localhost:5173",
+        "https://docs.whaledata.org",
     ],
     allow_credentials=True,
     allow_methods=["*"],
