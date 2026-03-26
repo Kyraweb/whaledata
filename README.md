@@ -90,6 +90,7 @@ whaledata/
 │   ├── app/
 │   │   ├── main.py             # App entry, all routers registered
 │   │   ├── database.py         # PostGIS connection (RealDictCursor)
+│   │   ├── middleware.py       # API usage logging
 │   │   ├── routers/
 │   │   │   ├── species.py
 │   │   │   ├── sightings.py
@@ -98,19 +99,14 @@ whaledata/
 │   │   │   ├── acoustics.py
 │   │   │   ├── inaturalist.py
 │   │   │   ├── historical.py
-│   │   │   └── layers.py       # Unified layer summary endpoint
+│   │   │   ├── layers.py       # Unified layer summary endpoint
+│   │   │   └── alerts.py       # Email alerts + contact form
 │   │   └── admin/              # Admin panel (HTTP Basic Auth)
 │   │       ├── admin.py
-│   │       ├── sync_db.py
-│   │       ├── sync_gbif.py
-│   │       ├── sync_obis.py
-│   │       ├── sync_strandings.py
-│   │       ├── sync_acoustics.py
-│   │       ├── sync_inaturalist.py
-│   │       ├── sync_historical.py
 │   │       └── templates/
 │   ├── schema.sql              # Base schema (6 tables)
 │   ├── schema_phase2.sql       # Phase 2 additions (4 tables)
+│   ├── schema_full.sql         # Consolidated single-file schema
 │   └── Dockerfile
 │
 ├── map/                        # Vue 3 frontend → whaledata.org
@@ -126,17 +122,32 @@ whaledata/
 │
 ├── jobs/                       # Sync workers → Coolify scheduled tasks
 │   ├── app/
-│   │   ├── sync_gbif.py        # Weekly
-│   │   ├── sync_obis.py        # Weekly
-│   │   ├── sync_strandings.py  # Monthly
-│   │   ├── sync_acoustics.py   # Monthly
-│   │   ├── sync_inaturalist.py # Weekly
-│   │   └── sync_historical.py  # Yearly
+│   │   ├── sync_gbif.py        # Weekly Sun 3am
+│   │   ├── sync_obis.py        # Weekly Sun 4am
+│   │   ├── sync_strandings.py  # Monthly 1st 3am
+│   │   ├── sync_acoustics.py   # Monthly 1st 4am
+│   │   ├── sync_inaturalist.py # Weekly Wed 3am
+│   │   └── sync_historical.py  # Yearly Jan 1st
 │   └── Dockerfile
 │
-└── docs/
-    ├── DEPLOYMENT.md
-    └── API.md
+├── docs/                       # Docs site → docs.whaledata.org
+│   ├── index.html              # Home
+│   ├── why.html                # Why this project
+│   ├── data.html               # Data sources
+│   ├── conservation.html       # Conservation layers
+│   ├── technology.html         # Technology stack
+│   ├── build.html              # The build journey
+│   ├── benchmarks.html         # Performance benchmarks
+│   ├── roadmap.html            # Roadmap
+│   ├── nginx.conf              # Extensionless URL routing
+│   ├── DEPLOYMENT.md
+│   ├── API.md
+│   └── DATABASE.md
+│
+├── ATTRIBUTION.md
+├── CHANGELOG.md
+├── README.md
+└── .gitignore
 ```
 
 ---
