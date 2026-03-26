@@ -262,4 +262,12 @@ For full Coolify self-hosting: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
 
 ---
 
+## Attribution
+
+whaledata.org is free and open source. If you build on it, a shoutout and a link back to [whaledata.org](https://whaledata.org) is appreciated — not required, but it means a lot.
+
+See [ATTRIBUTION.md](./ATTRIBUTION.md) for details.
+
+---
+
 *Personal hobby project by [Monarch / KyraWeb](https://kyraweb.ca). Built to explore geospatial development with real open ocean data.*
