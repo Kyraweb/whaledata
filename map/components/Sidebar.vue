@@ -127,6 +127,7 @@
         <div class="footer-note">Data: GBIF · OBIS · iNaturalist · NOAA · Updated regularly</div>
         <div class="footer-note">
           Hobby project ·
+          <a href="https://docs.whaledata.org" target="_blank" rel="noopener">Docs</a> ·
           <a href="https://kyraweb.ca" target="_blank" rel="noopener">kyraweb.ca</a>
         </div>
       </div>

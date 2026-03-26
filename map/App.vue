@@ -94,6 +94,8 @@
         <div class="sheet-attribution">
           Data: GBIF · OBIS · iNaturalist · NOAA · Updated regularly
           <span class="sheet-attr-divider">·</span>
+          <a href="https://docs.whaledata.org" target="_blank">Docs</a>
+          <span class="sheet-attr-divider">·</span>
           <a href="https://kyraweb.ca" target="_blank">kyraweb.ca</a>
         </div>
 
@@ -362,6 +364,7 @@
 
             <div class="help-footer">
               Data updated regularly from open scientific sources.
+              <a href="https://docs.whaledata.org" target="_blank">Docs</a> ·
               <a href="https://api.whaledata.org/docs" target="_blank">API docs</a> ·
               <a href="https://github.com/Kyraweb/whaledata" target="_blank">GitHub</a>
             </div>
