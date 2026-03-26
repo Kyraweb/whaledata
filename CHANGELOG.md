@@ -3,7 +3,35 @@
 All notable changes to this project documented across every iteration.
 Built over approximately 12 months from initial concept to production platform.
 
-Built with assistance from Claude by Anthropic — used for architecture decisions, code generation, debugging, and documentation across the entire build.
+---
+
+## [2.6.0] — 2026-03 — Documentation Site & Open Source Launch
+
+### Added
+* `feat: docs.whaledata.org — 8-page static documentation site`
+* `feat: docs/index.html — homepage with canvas whale pod animation, GSAP scroll reveals, stats counters`
+* `feat: docs/why.html — conservation context, the data gap problem, origin of the project`
+* `feat: docs/data.html — full data source breakdown (GBIF, OBIS, NOAA, iNaturalist, Historical)`
+* `feat: docs/conservation.html — feeding grounds, sonar zones, shipping lanes documentation`
+* `feat: docs/technology.html — full stack documentation with schema samples and code examples`
+* `feat: docs/build.html — complete iterative build journey across 6 phases`
+* `feat: docs/benchmarks.html — Locust load test results (50 users, 60s, 0% errors, 5.23 req/s)`
+* `feat: docs/roadmap.html — near/medium term roadmap, public API reference, contribute section`
+* `feat: docs/nginx.conf — extensionless URL routing (/why → why.html)`
+* `feat: feedback modal on all docs pages — posts to api.whaledata.org/alerts/contact`
+* `feat: GA4 G-YF6235KKFV on all docs pages`
+* `feat: og:image and favicon on all docs pages (reusing whaledata.org assets)`
+* `feat: ATTRIBUTION.md — open source attribution guidelines`
+* `feat: MIT licence`
+* `feat: GitHub repo description, topics, and website`
+
+### Fixed
+* `fix: data.html source card overflow on mobile — unified card border with overflow:hidden`
+* `fix: add docs.whaledata.org to API CORS allowed origins`
+
+### Changed
+* `docs: update README repo tree to reflect full current structure`
+* `docs: add attribution section and link to ATTRIBUTION.md in README`
 
 ---
 
