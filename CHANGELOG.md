@@ -19,7 +19,6 @@ Built over approximately 12 months from initial concept to production platform.
 * `feat: docs/roadmap.html — near/medium term roadmap, public API reference, contribute section`
 * `feat: docs/nginx.conf — extensionless URL routing (/why → why.html)`
 * `feat: feedback modal on all docs pages — posts to api.whaledata.org/alerts/contact`
-* `feat: GA4 G-YF6235KKFV on all docs pages`
 * `feat: og:image and favicon on all docs pages (reusing whaledata.org assets)`
 * `feat: ATTRIBUTION.md — open source attribution guidelines`
 * `feat: MIT licence`
