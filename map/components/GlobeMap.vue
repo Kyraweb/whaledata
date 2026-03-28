@@ -38,7 +38,24 @@
 import { ref, watch, onMounted, onUnmounted, computed, nextTick } from 'vue'
 import * as maptilersdk from '@maptiler/sdk'
 import '@maptiler/sdk/dist/maptiler-sdk.css'
-import shipLanes from './ShipLanes.js'
+// Ship lanes inlined — avoids Rollup export resolution issues with ShipLanes.js
+const shipLanes = [
+  { name: 'North Atlantic', traffic: 'high', coordinates: [[-5,48],[-20,45],[-35,42],[-50,42],[-65,42],[-70,42]] },
+  { name: 'Suez Canal Corridor', traffic: 'high', coordinates: [[32,30],[33,28],[38,20],[45,15],[50,12],[55,10],[63,8],[70,5],[80,5],[88,8],[95,10],[100,5],[103,2],[105,2]] },
+  { name: 'Strait of Malacca', traffic: 'high', coordinates: [[100,5],[103,2],[105,1],[108,2],[114,5]] },
+  { name: 'North Pacific West', traffic: 'high', coordinates: [[122,30],[140,35],[155,42],[170,48],[178,52]] },
+  { name: 'North Pacific East', traffic: 'high', coordinates: [[-178,52],[-165,55],[-150,52],[-135,48],[-125,42],[-122,37]] },
+  { name: 'Panama Canal Pacific', traffic: 'high', coordinates: [[-122,37],[-110,28],[-92,16],[-80,9],[-77,8]] },
+  { name: 'Panama Canal Atlantic', traffic: 'high', coordinates: [[-77,8],[-70,15],[-60,25],[-55,30]] },
+  { name: 'Cape of Good Hope', traffic: 'medium', coordinates: [[20,-34],[15,-34],[5,-20],[0,-10],[-5,0],[-10,5]] },
+  { name: 'Cape Horn', traffic: 'medium', coordinates: [[-70,-55],[-65,-53],[-60,-50],[-55,-45],[-50,-40]] },
+  { name: 'South Atlantic', traffic: 'medium', coordinates: [[15,-25],[0,-10],[-20,0],[-35,-5],[-50,-25]] },
+  { name: 'Indian Ocean Arabia to Asia', traffic: 'high', coordinates: [[55,20],[65,10],[75,10],[85,10],[95,6],[100,4]] },
+  { name: 'Australia East Coast', traffic: 'medium', coordinates: [[147,-43],[152,-32],[153,-27],[150,-17],[145,-15]] },
+  { name: 'Australia West Coast', traffic: 'medium', coordinates: [[114,-30],[113,-20],[115,-15],[120,-10]] },
+  { name: 'Mediterranean', traffic: 'high', coordinates: [[-5,36],[5,38],[15,38],[25,35],[32,31]] },
+  { name: 'North Sea English Channel', traffic: 'high', coordinates: [[-5,48],[0,49],[5,53],[10,56]] },
+]
 
 const props = defineProps({
   sightings: { type: Array, default: () => [] },
