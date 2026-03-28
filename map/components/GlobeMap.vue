@@ -38,7 +38,7 @@
 import { ref, watch, onMounted, onUnmounted, computed, nextTick } from 'vue'
 import * as maptilersdk from '@maptiler/sdk'
 import '@maptiler/sdk/dist/maptiler-sdk.css'
-import { shipLanes } from './ShipLanes.js'
+import shipLanes from './ShipLanes.js'
 
 const props = defineProps({
   sightings: { type: Array, default: () => [] },
