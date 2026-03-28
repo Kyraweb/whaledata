@@ -1628,7 +1628,7 @@ onUnmounted(() => { window.removeEventListener('resize', checkMobile); window.re
   color: var(--text-primary);
 }
 
-
+.btn-year {
   border: 1px solid rgba(0, 229, 255, 0.25);
   color: rgba(0, 229, 255, 0.7);
   font-family: var(--font-mono);
