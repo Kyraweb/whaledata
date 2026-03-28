@@ -828,4 +828,9 @@ document.querySelectorAll('.nav-link').forEach(l => l.addEventListener('click', 
         setTimeout(close, 3000);
       } catch(err) {
         submit.disabled = false;
-     
+     submit.textContent = 'Send feedback';
+        alert('Something went wrong. Please try again.');
+      }
+    });
+  })();
+  </script>
