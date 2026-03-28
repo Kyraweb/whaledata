@@ -1,1183 +1,1767 @@
 <template>
-  <div id="app" :class="{ mobile: isMobile }">
+  <div class="app">
 
-    <!-- ── Desktop sidebar ── -->
+    <!-- Desktop sidebar -->
     <Sidebar
       v-if="!isMobile"
-      :species="species"
-      :selected-species="selectedSpecies"
-      :sighting-count="filteredCount"
+      :speciesList="speciesSummary"
+      :totalCount="totalCount"
+      :filteredCount="shownCount"
+      :selectedSpecies="selectedSpecies"
       :loading="loading"
-      @select-species="selectSpecies"
+      @species-change="onSpeciesChange"
     />
 
-    <!-- ── Map ── -->
-    <div class="map-area" :class="{ 'map-area-desktop': !isMobile }">
-      <GlobeMap
-        ref="globeMap"
-        :sightings="filteredSightings"
-        :routes="routes"
-        :selected-species="selectedSpecies"
-        :is-mobile="isMobile"
-        :year-range="yearRange"
-        :active-layers="activeLayers"
-        @map-ready="onMapReady"
-      />
-    </div>
+    <!-- Mobile: hamburger (only when sheet closed) -->
+    <button v-if="isMobile && !sheetOpen && !infoOpen" class="hamburger" @click="sheetOpen = true">☰</button>
 
-    <!-- ── Layers panel ── -->
-    <LayersPanel
-      v-if="showLayersPanel"
-      :active-layers="activeLayers"
-      :active-sources="activeSources"
-      :initial-tab="layersPanelTab"
-      @update-layers="activeLayers = $event"
-      @update-sources="activeSources = $event"
-      @close="showLayersPanel = false"
-    />
+    <!-- Mobile: info button (only when species selected and sheets closed) -->
+    <button
+      v-if="isMobile && selectedSpecies && !sheetOpen && !infoOpen"
+      class="info-btn"
+      :style="{ borderColor: speciesColor(selectedSpecies), color: speciesColor(selectedSpecies) }"
+      @click="infoOpen = true"
+    >ⓘ</button>
 
-    <!-- ── Date filter panel ── -->
-    <div v-if="showDateFilter" class="date-filter-panel">
-      <div class="date-filter-header">
-        <span class="date-filter-title">Year Range</span>
-        <button class="date-filter-close" @click="showDateFilter = false">✕</button>
-      </div>
-      <div class="year-display">{{ yearRange[0] }} – {{ yearRange[1] }}</div>
-      <div class="slider-row">
-        <input type="range" :min="1800" :max="2025" v-model.number="yearRange[0]"
-          @input="clampYears" class="year-slider" />
-        <input type="range" :min="1800" :max="2025" v-model.number="yearRange[1]"
-          @input="clampYears" class="year-slider" />
-      </div>
-      <div class="year-labels"><span>1800</span><span>2025</span></div>
-    </div>
-
-    <!-- ── 4-slot bottom bar ── -->
-    <div v-if="!isMobile" class="bottom-bar">
-      <button
-        class="bar-btn"
-        :class="{ active: showLayersPanel && layersPanelTab === 'data' }"
-        @click="openLayersTab('data')"
-      >
-        <span class="bar-btn-icon">⊞</span>
-        <span class="bar-btn-label">Data Layers</span>
-      </button>
-      <button
-        class="bar-btn"
-        :class="{ active: showLayersPanel && layersPanelTab === 'conservation' }"
-        @click="openLayersTab('conservation')"
-      >
-        <span class="bar-btn-icon">🐋</span>
-        <span class="bar-btn-label">Conservation</span>
-      </button>
-      <button
-        class="bar-btn"
-        :class="{ active: shipLanesActive }"
-        @click="toggleShipLanes"
-      >
-        <span class="bar-btn-icon">🚢</span>
-        <span class="bar-btn-label">Ship Lanes</span>
-      </button>
-      <button
-        class="bar-btn"
-        :class="{ active: showDateFilter }"
-        @click="showDateFilter = !showDateFilter"
-      >
-        <span class="bar-btn-icon">📅</span>
-        <span class="bar-btn-label">Date Filter</span>
-        <span v-if="yearFiltered" class="bar-btn-badge">●</span>
-      </button>
-    </div>
-
-    <!-- ── Top-right controls ── -->
-    <div class="top-right-controls">
-      <button class="ctrl-btn" @click="nearMe" title="Near me (N)">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/>
-          <line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/>
-          <line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/>
-        </svg>
-        <span>Near me</span>
-      </button>
-      <button class="ctrl-btn" @click="showAlertsModal = true" title="Email alerts">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-        </svg>
-        <span>Alerts</span>
-      </button>
-      <button class="ctrl-btn" @click="showContactModal = true" title="Contact">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-          <polyline points="22,6 12,13 2,6"/>
-        </svg>
-        <span>Contact</span>
-      </button>
-      <button class="ctrl-btn" @click="showOnboarding = true" title="Help">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-          <line x1="12" y1="17" x2="12.01" y2="17"/>
-        </svg>
-        <span>Help</span>
-      </button>
-      <button class="ctrl-btn share-btn" @click="shareUrl" title="Share (S)">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/>
-          <circle cx="18" cy="19" r="3"/>
-          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
-          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-        </svg>
-        <span v-if="shareCopied">Copied!</span>
-        <span v-else>Share</span>
-      </button>
-    </div>
-
-    <!-- ── Onboarding overlay ── -->
-    <Transition name="onboard">
-      <div v-if="showOnboarding" class="onboarding-overlay" @click.self="dismissOnboarding">
-        <div class="onboarding-card">
-          <div class="onboarding-logo">🐋 whaledata.org</div>
-          <h2 class="onboarding-title">Explore 25,000+ whale sightings</h2>
-          <p class="onboarding-sub">Here's what's on the map and how to navigate it.</p>
-
-          <div class="onboarding-grid">
-            <div class="onboarding-item">
-              <div class="onboarding-icon" style="background:rgba(0,229,255,0.1);color:#00e5ff">⊞</div>
-              <div class="onboarding-text">
-                <strong>Data Layers</strong>
-                <span>Toggle sighting sources — GBIF, OBIS, iNaturalist, strandings, acoustics, historical</span>
-              </div>
-            </div>
-            <div class="onboarding-item">
-              <div class="onboarding-icon" style="background:rgba(0,201,122,0.1);color:#00c97a">🐋</div>
-              <div class="onboarding-text">
-                <strong>Conservation</strong>
-                <span>Show whale feeding grounds and naval sonar exercise zones</span>
-              </div>
-            </div>
-            <div class="onboarding-item">
-              <div class="onboarding-icon" style="background:rgba(255,159,67,0.1);color:#ff9f43">🚢</div>
-              <div class="onboarding-text">
-                <strong>Ship Lanes</strong>
-                <span>Overlay global shipping corridors to see vessel-whale conflict zones</span>
-              </div>
-            </div>
-            <div class="onboarding-item">
-              <div class="onboarding-icon" style="background:rgba(150,100,255,0.1);color:#9664ff">📅</div>
-              <div class="onboarding-text">
-                <strong>Date Filter</strong>
-                <span>Filter sightings by year range — from historical records to today</span>
-              </div>
-            </div>
-            <div class="onboarding-item">
-              <div class="onboarding-icon" style="background:rgba(0,229,255,0.08);color:#00b8cc">◎</div>
-              <div class="onboarding-text">
-                <strong>Near me</strong>
-                <span>Find whale sightings near your current location</span>
-              </div>
-            </div>
-            <div class="onboarding-item">
-              <div class="onboarding-icon" style="background:rgba(0,229,255,0.08);color:#7a9bb5">⌨</div>
-              <div class="onboarding-text">
-                <strong>Keyboard shortcuts</strong>
-                <span>Keys 1–6 filter by species · 0 shows all · Space pauses rotation · Esc closes panels</span>
-              </div>
-            </div>
-          </div>
-
-          <button class="onboarding-cta" @click="dismissOnboarding">
-            Got it, explore →
-          </button>
-
-          <div class="onboarding-hint">You can reopen this guide anytime with the Help button</div>
-        </div>
-      </div>
-    </Transition>
-
-    <!-- ── Contact modal ── -->
-    <Transition name="modal-fade">
-      <div v-if="showContactModal" class="modal-backdrop" @click.self="showContactModal = false">
-        <div class="modal-card">
-          <div class="modal-header">
-            <h3>Get in touch</h3>
-            <button class="modal-close" @click="showContactModal = false">✕</button>
-          </div>
-          <form @submit.prevent="submitContact">
-            <div class="form-group">
-              <label>Name</label>
-              <input v-model="contactForm.name" type="text" placeholder="Your name" required />
-            </div>
-            <div class="form-group">
-              <label>Email</label>
-              <input v-model="contactForm.email" type="email" placeholder="you@example.com" required />
-            </div>
-            <div class="form-group">
-              <label>Message</label>
-              <textarea v-model="contactForm.message" rows="4" placeholder="Report an issue, ask a question, or just say hello..." required></textarea>
-            </div>
-            <button type="submit" class="form-submit" :disabled="contactSubmitting">
-              {{ contactSubmitting ? 'Sending…' : 'Send message' }}
-            </button>
-            <div v-if="contactSent" class="form-success">✓ Message sent — thank you!</div>
-          </form>
-        </div>
-      </div>
-    </Transition>
-
-    <!-- ── Alerts modal ── -->
-    <Transition name="modal-fade">
-      <div v-if="showAlertsModal" class="modal-backdrop" @click.self="showAlertsModal = false">
-        <div class="modal-card">
-          <div class="modal-header">
-            <h3>Weekly sighting alerts</h3>
-            <button class="modal-close" @click="showAlertsModal = false">✕</button>
-          </div>
-          <p class="modal-intro">Get a weekly digest of new whale sightings delivered to your inbox.</p>
-          <form @submit.prevent="submitAlerts">
-            <div class="form-group">
-              <label>Email address</label>
-              <input v-model="alertsEmail" type="email" placeholder="you@example.com" required />
-            </div>
-            <button type="submit" class="form-submit" :disabled="alertsSubmitting">
-              {{ alertsSubmitting ? 'Subscribing…' : 'Subscribe' }}
-            </button>
-            <div v-if="alertsSent" class="form-success">✓ Check your inbox to confirm!</div>
-          </form>
-        </div>
-      </div>
-    </Transition>
-
-    <!-- ── Mobile: hamburger ── -->
-    <button v-if="isMobile && !sheetOpen" class="mobile-hamburger" @click="sheetOpen = true">
-      <span></span><span></span><span></span>
-    </button>
-
-    <!-- ── Mobile: species info btn ── -->
-    <button v-if="isMobile && selectedSpecies && !sheetOpen" class="mobile-info-btn" @click="sheetDetailOpen = true">
-      ⓘ
-    </button>
-
-    <!-- ── Mobile: stats bar ── -->
-    <div v-if="isMobile" class="mobile-stats-bar">
-      <div class="mobile-stat">
-        <span class="mobile-stat-num">{{ filteredCount.toLocaleString() }}</span>
-        <span class="mobile-stat-lbl">sightings</span>
-      </div>
-      <div class="mobile-stat">
-        <span class="mobile-stat-num">{{ species.length }}</span>
-        <span class="mobile-stat-lbl">species</span>
-      </div>
-      <div class="mobile-stat">
-        <span class="mobile-stat-species">{{ selectedSpecies || 'All species' }}</span>
-      </div>
-    </div>
-
-    <!-- ── Mobile: backdrop ── -->
-    <div v-if="isMobile && (sheetOpen || sheetDetailOpen)" class="mobile-backdrop"
-      @click="sheetOpen = false; sheetDetailOpen = false"></div>
-
-    <!-- ── Mobile: filter sheet ── -->
+    <!-- Mobile: bottom sheet -->
     <Transition name="sheet">
       <div v-if="isMobile && sheetOpen" class="mobile-sheet">
-        <div class="sheet-handle"></div>
         <div class="sheet-header">
-          <span>Filter species</span>
-          <button class="sheet-close" @click="sheetOpen = false">✕</button>
-        </div>
-        <div class="sheet-species-list">
-          <button class="sheet-species-item" :class="{ active: !selectedSpecies }" @click="selectSpecies(null); sheetOpen = false">
-            All species
-            <span class="sheet-species-count">{{ sightings.length.toLocaleString() }}</span>
-          </button>
-          <button v-for="s in species" :key="s.id" class="sheet-species-item"
-            :class="{ active: selectedSpecies === s.name }"
-            @click="selectSpecies(s.name); sheetOpen = false">
-            <span class="sheet-species-dot" :style="{ background: getSpeciesColor(s.name) }"></span>
-            {{ s.name }}
-            <span class="sheet-species-count">{{ s.sighting_count?.toLocaleString() }}</span>
-          </button>
-        </div>
-      </div>
-    </Transition>
-
-    <!-- ── Mobile: species detail sheet ── -->
-    <Transition name="sheet">
-      <div v-if="isMobile && sheetDetailOpen && selectedSpeciesData" class="mobile-sheet mobile-sheet-detail">
-        <div class="sheet-handle"></div>
-        <div class="sheet-header">
-          <span>{{ selectedSpeciesData.name }}</span>
-          <button class="sheet-close" @click="sheetDetailOpen = false">✕</button>
-        </div>
-        <div class="sheet-detail-body">
-          <img v-if="selectedSpeciesData.photo_url" :src="selectedSpeciesData.photo_url"
-            :alt="selectedSpeciesData.name" class="sheet-detail-img" />
-          <div class="sheet-iucn" :class="`iucn-${selectedSpeciesData.iucn_status}`">
-            {{ selectedSpeciesData.iucn_status }}
+          <div class="sheet-brand">
+            <span>🐋</span>
+            <span class="sheet-brand-title">whaledata<span class="sheet-brand-tld">.org</span></span>
           </div>
-          <p class="sheet-detail-desc">{{ selectedSpeciesData.description }}</p>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="sheet-help-btn" @click="helpOpen = true; sheetOpen = false">?</button>
+            <button class="sheet-close" @click="sheetOpen = false">✕</button>
+          </div>
+        </div>
+
+        <div class="sheet-stats">
+          <div class="sheet-stat">
+            <span class="sheet-stat-value">{{ totalCount.toLocaleString() }}</span>
+            <span class="sheet-stat-label">sightings</span>
+          </div>
+          <div class="sheet-stat-divider" />
+          <div class="sheet-stat">
+            <span class="sheet-stat-value">{{ speciesSummary.length }}</span>
+            <span class="sheet-stat-label">species</span>
+          </div>
+          <div class="sheet-stat-divider" />
+          <div class="sheet-stat">
+            <span class="sheet-stat-value">{{ shownCount.toLocaleString() }}</span>
+            <span class="sheet-stat-label">shown</span>
+          </div>
+        </div>
+
+        <div class="sheet-label">Data Layers</div>
+        <div style="display:flex;gap:8px;padding:0 12px 12px;flex-wrap:wrap">
+          <button class="sheet-layer-btn" :class="{ active: activeLayers.strandings }"  @click="activeLayers.strandings  = !activeLayers.strandings">🔴 Strandings</button>
+          <button class="sheet-layer-btn" :class="{ active: activeLayers.acoustics }"   @click="activeLayers.acoustics   = !activeLayers.acoustics">🔵 Acoustics</button>
+          <button class="sheet-layer-btn" :class="{ active: activeLayers.inaturalist }" @click="activeLayers.inaturalist = !activeLayers.inaturalist">🟢 iNaturalist</button>
+          <button class="sheet-layer-btn" :class="{ active: activeLayers.historical }"  @click="activeLayers.historical  = !activeLayers.historical">🟡 Historical</button>
+        </div>
+        <div class="sheet-label">Conservation</div>
+        <div style="display:flex;gap:8px;padding:0 12px 12px;flex-wrap:wrap">
+          <button class="sheet-layer-btn" :class="{ active: activeConservation.feeding }" @click="activeConservation.feeding = !activeConservation.feeding">🌿 Feeding Grounds</button>
+          <button class="sheet-layer-btn" :class="{ active: activeConservation.sonar }"   @click="activeConservation.sonar   = !activeConservation.sonar">⚠️ Sonar Zones</button>
+        </div>
+
+        <div class="sheet-label">Species</div>
+        <div class="sheet-species-list">
+          <button
+            class="sheet-species-btn"
+            :class="{ active: selectedSpecies === '' }"
+            @click="onSpeciesChange('')"
+          >
+            <span class="sheet-dot all-dot" />
+            All species
+          </button>
+          <button
+            v-for="s in speciesSummary"
+            :key="s.common_name"
+            class="sheet-species-btn"
+            :class="{ active: selectedSpecies === s.common_name }"
+            @click="onSpeciesChange(s.common_name)"
+          >
+            <span class="sheet-dot" :style="{ background: speciesColor(s.common_name) }" />
+            <span class="sheet-species-name">{{ s.common_name }}</span>
+            <span class="sheet-species-count">{{ s.sighting_count.toLocaleString() }}</span>
+          </button>
+        </div>
+
+        <!-- Attribution -->
+        <div class="sheet-attribution">
+          Data: GBIF · OBIS · iNaturalist · NOAA · Updated regularly
+          <span class="sheet-attr-divider">·</span>
+          <a href="https://docs.whaledata.org" target="_blank">Docs</a>
+          <span class="sheet-attr-divider">·</span>
+          <a href="https://kyraweb.ca" target="_blank">kyraweb.ca</a>
+        </div>
+
+      </div>
+    </Transition>
+
+    <!-- Species detail sheet -->
+    <Transition name="sheet">
+      <div v-if="isMobile && infoOpen && activeSpeciesData" class="mobile-sheet info-sheet">
+        <div class="sheet-header">
+          <div class="sheet-brand" :style="{ color: speciesColor(selectedSpecies) }">
+            {{ selectedSpecies }}
+          </div>
+          <button class="sheet-close" @click="infoOpen = false">✕</button>
+        </div>
+        <div class="info-scroll">
+          <img :src="activeSpeciesData.photo" :alt="selectedSpecies" class="info-img" @error="e => e.target.style.display='none'" />
+          <div class="info-body">
+            <div class="info-sci">{{ activeSpeciesData.scientific }}</div>
+            <div class="info-badges">
+              <span class="iucn-badge" :class="activeSpeciesData.iucn.toLowerCase()">{{ activeSpeciesData.iucn }}</span>
+              <span class="iucn-label">{{ activeSpeciesData.iucnLabel }}</span>
+            </div>
+            <div class="info-facts">
+              <div v-for="f in activeSpeciesData.facts" :key="f.label" class="info-fact">
+                <span class="info-fact-value">{{ f.value }}</span>
+                <span class="info-fact-label">{{ f.label }}</span>
+              </div>
+            </div>
+            <p class="info-desc">{{ activeSpeciesData.description }}</p>
+            <div class="info-audio-label">🔊 Whale call</div>
+            <audio :key="activeSpeciesData.audio" controls preload="none" class="info-audio">
+              <source :src="activeSpeciesData.audio" type="audio/ogg" />
+            </audio>
+          </div>
         </div>
       </div>
     </Transition>
 
-    <!-- ── Share toast ── -->
-    <Transition name="toast">
-      <div v-if="shareCopied" class="share-toast">Link copied to clipboard</div>
+    <!-- Backdrop -->
+    <div v-if="isMobile && (sheetOpen || infoOpen)" class="backdrop" @click="sheetOpen = false; infoOpen = false" />
+
+    <!-- Mobile stats bar (always visible) -->
+    <div v-if="isMobile" class="mobile-bar">
+      <span class="bar-stat"><b>{{ totalCount.toLocaleString() }}</b> sightings</span>
+      <span class="bar-divider" />
+      <span class="bar-stat"><b>{{ speciesSummary.length }}</b> species</span>
+      <span class="bar-divider" />
+      <span class="bar-stat" :style="{ color: selectedSpecies ? speciesColor(selectedSpecies) : 'var(--text-secondary)' }">
+        {{ selectedSpecies || 'All species' }}
+      </span>
+    </div>
+
+
+
+    <!-- Top-right action bar — desktop -->
+    <div v-if="!isMobile" class="top-actions">
+      <button class="top-btn btn-share" @click="shareMap">
+        {{ shareCopied ? '✓ Copied!' : '🔗 Share' }}
+      </button>
+      <button class="top-btn btn-nearme" @click="nearMe" :class="{ loading: nearMeLoading }">
+        {{ nearMeLoading ? '...' : '📍 Near me' }}
+      </button>
+      <button class="top-btn btn-alerts" @click="alertsOpen = true">
+        🔔 Alerts
+      </button>
+      <button class="top-btn btn-contact" @click="contactOpen = true">
+        ✉ Contact
+      </button>
+      <button class="top-btn btn-help" @click="helpOpen = true">
+        ? Help
+      </button>
+    </div>
+
+    <!-- Alerts subscribe modal -->
+    <Transition name="help-modal">
+      <div v-if="alertsOpen" class="help-backdrop" @click.self="alertsOpen = false">
+        <div class="help-modal" style="max-width:460px">
+          <div class="help-header">
+            <div class="help-title">🔔 Weekly sighting alerts</div>
+            <button class="help-close" @click="alertsOpen = false">✕</button>
+          </div>
+          <div class="help-body" style="padding-bottom:24px">
+            <p class="help-p" style="margin-bottom:20px">
+              Get a weekly email digest of new whale sightings, strandings, and acoustic detections.
+              Filter by species, region, or data layer — or receive all new records.
+            </p>
+
+            <div v-if="alertStatus === 'sent'" class="alert-success">
+              ✓ Check your email to confirm your subscription.
+            </div>
+            <div v-else-if="alertStatus === 'error'" class="alert-error">
+              Something went wrong. Please try again.
+            </div>
+            <div v-else>
+              <div class="form-group-alert">
+                <label class="alert-label">Email address *</label>
+                <input v-model="alertForm.email" type="email" placeholder="you@example.com" class="alert-input" />
+              </div>
+              <div class="form-group-alert">
+                <label class="alert-label">Species (optional — leave blank for all)</label>
+                <select v-model="alertForm.species" class="alert-input">
+                  <option value="">All species</option>
+                  <option v-for="s in speciesSummary" :key="s.common_name" :value="s.common_name">{{ s.common_name }}</option>
+                </select>
+              </div>
+              <div class="form-group-alert">
+                <label class="alert-label">Data layer (optional)</label>
+                <select v-model="alertForm.layer" class="alert-input">
+                  <option value="">All layers</option>
+                  <option value="sightings">Sightings</option>
+                  <option value="strandings">Strandings</option>
+                  <option value="acoustics">Acoustics</option>
+                  <option value="inaturalist">iNaturalist</option>
+                  <option value="historical">Historical</option>
+                </select>
+              </div>
+              <div class="form-group-alert">
+                <label class="alert-label">Region (optional — e.g. "North Atlantic", "Hawaii")</label>
+                <input v-model="alertForm.region" type="text" placeholder="Leave blank for worldwide" class="alert-input" />
+              </div>
+              <button class="alert-submit" :disabled="alertSubmitting" @click="submitAlert">
+                {{ alertSubmitting ? 'Sending...' : '🔔 Subscribe to weekly alerts' }}
+              </button>
+              <p style="font-size:11px;color:var(--text-muted);margin-top:12px;line-height:1.6">
+                Weekly digest every Sunday. Unsubscribe anytime from any email.
+                No spam — only new whale data.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </Transition>
 
+    <!-- Contact modal -->
+    <Transition name="help-modal">
+      <div v-if="contactOpen" class="help-backdrop" @click.self="contactOpen = false">
+        <div class="help-modal" style="max-width:460px">
+          <div class="help-header">
+            <div class="help-title">✉ Get in touch</div>
+            <button class="help-close" @click="contactOpen = false">✕</button>
+          </div>
+          <div class="help-body" style="padding-bottom:24px">
+            <p class="help-p" style="margin-bottom:20px">
+              Found a bug, have a suggestion, or want to collaborate on whale conservation data?
+              We'd love to hear from you.
+            </p>
+            <div v-if="contactStatus === 'sent'" class="alert-success">
+              ✓ Message sent — we'll get back to you soon.
+            </div>
+            <div v-else-if="contactStatus === 'error'" class="alert-error">
+              Something went wrong. Try emailing <a href="mailto:alerts@whaledata.org" style="color:#ff9f43">alerts@whaledata.org</a> directly.
+            </div>
+            <div v-else>
+              <div class="form-group-alert">
+                <label class="alert-label">Your name</label>
+                <input v-model="contactForm.name" type="text" placeholder="Your name" class="alert-input" />
+              </div>
+              <div class="form-group-alert">
+                <label class="alert-label">Email address *</label>
+                <input v-model="contactForm.email" type="email" placeholder="you@example.com" class="alert-input" />
+              </div>
+              <div class="form-group-alert">
+                <label class="alert-label">Subject</label>
+                <select v-model="contactForm.subject" class="alert-input">
+                  <option value="bug">Bug report</option>
+                  <option value="suggestion">Suggestion or feature request</option>
+                  <option value="data">Data question or issue</option>
+                  <option value="collaboration">Collaboration inquiry</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="form-group-alert">
+                <label class="alert-label">Message *</label>
+                <textarea v-model="contactForm.message" placeholder="Tell us more..." class="alert-input" rows="4" style="resize:vertical;min-height:100px"></textarea>
+              </div>
+              <button class="alert-submit" style="background:rgba(0,229,255,0.1);border-color:rgba(0,229,255,0.3);color:#00e5ff"
+                :disabled="contactSubmitting" @click="submitContact">
+                {{ contactSubmitting ? 'Sending...' : '✉ Send message' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- Help modal -->
+    <Transition name="help-modal">
+      <div v-if="helpOpen" class="help-backdrop" @click.self="helpOpen = false">
+        <div class="help-modal">
+          <div class="help-header">
+            <div class="help-title">How to use whaledata.org</div>
+            <button class="help-close" @click="helpOpen = false">✕</button>
+          </div>
+          <div class="help-body">
+
+            <div class="help-section">
+              <div class="help-section-title">🌍 Navigating the globe</div>
+              <div class="help-grid">
+                <div class="help-item"><span class="help-key">Drag</span><span class="help-desc">Rotate the globe</span></div>
+                <div class="help-item"><span class="help-key">Scroll</span><span class="help-desc">Zoom in and out</span></div>
+                <div class="help-item"><span class="help-key">Click cluster</span><span class="help-desc">Expand grouped sightings</span></div>
+                <div class="help-item"><span class="help-key">Hover dot</span><span class="help-desc">See sighting details</span></div>
+              </div>
+            </div>
+
+            <div class="help-section">
+              <div class="help-section-title">⌨️ Keyboard shortcuts</div>
+              <div class="help-grid">
+                <div class="help-item"><span class="help-key">1 – 6</span><span class="help-desc">Select species</span></div>
+                <div class="help-item"><span class="help-key">0</span><span class="help-desc">Show all species</span></div>
+                <div class="help-item"><span class="help-key">Space</span><span class="help-desc">Toggle globe rotation</span></div>
+                <div class="help-item"><span class="help-key">Esc</span><span class="help-desc">Close panels</span></div>
+              </div>
+            </div>
+
+            <div class="help-section">
+              <div class="help-section-title">⚡ Data layers explained</div>
+              <div class="help-layers">
+                <div class="help-layer">
+                  <span class="help-dot" style="background:#00e5ff"></span>
+                  <div><strong>Sightings</strong> — Verified visual observations from GBIF and OBIS scientific databases. These are confirmed whale encounters submitted by researchers and field observers.</div>
+                </div>
+                <div class="help-layer">
+                  <span class="help-dot" style="background:#ff5a5a"></span>
+                  <div><strong>Strandings</strong> — Whales found dead or alive on beaches and shores. Compiled from NOAA stranding network reports. Strandings can indicate disease, injury, pollution, or disorientation from sonar.</div>
+                </div>
+                <div class="help-layer">
+                  <span class="help-dot" style="background:#9664ff"></span>
+                  <div><strong>Acoustics</strong> — Detections from underwater hydrophone networks. Whales are heard but not seen — useful for tracking species in deep water or at night.</div>
+                </div>
+                <div class="help-layer">
+                  <span class="help-dot" style="background:#64c864"></span>
+                  <div><strong>iNaturalist</strong> — Research-grade citizen science observations verified by the community. Anyone can submit a sighting; only those confirmed by experts appear here.</div>
+                </div>
+                <div class="help-layer">
+                  <span class="help-dot" style="background:#ffb432"></span>
+                  <div><strong>Historical</strong> — Pre-1950 records from digitised 19th and early 20th century whaling logs. Shows where whales roamed before industrial hunting began.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="help-section">
+              <div class="help-section-title">🌿 Conservation layers</div>
+              <div class="help-layers">
+                <div class="help-layer">
+                  <span class="help-dot" style="background:#00c97a;border-radius:3px"></span>
+                  <div><strong>Feeding Grounds</strong> — Known areas where whales concentrate to feed. Protecting these zones is critical — disruption during feeding season can affect an animal's survival through winter.</div>
+                </div>
+                <div class="help-layer">
+                  <span class="help-dot" style="background:#ff4444;border-radius:3px"></span>
+                  <div><strong>Sonar Exercise Zones</strong> — Naval areas where active sonar is used. High-intensity sonar can cause acoustic trauma, disorientation, and mass strandings in cetaceans. Compare these zones against feeding grounds and strandings data.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="help-section">
+              <div class="help-section-title">🚢 Ship lanes</div>
+              <p class="help-p">Toggle the shipping lane overlay to see where major commercial shipping corridors cross whale habitats. Ship strikes are a leading cause of death for large whales — Blue, Fin, and Humpback whales are most affected.</p>
+            </div>
+
+            <div class="help-section">
+              <div class="help-section-title">📅 Year range filter</div>
+              <p class="help-p">Slide the year filter to explore how sighting data changes over time. Historical records go back to the 1780s. Modern verified sightings begin in earnest from the 1990s as scientific monitoring programmes expanded.</p>
+            </div>
+
+            <div class="help-footer">
+              Data updated regularly from open scientific sources.
+              <a href="https://docs.whaledata.org" target="_blank">Docs</a> ·
+              <a href="https://api.whaledata.org/docs" target="_blank">API docs</a> ·
+              <a href="https://github.com/Kyraweb/whaledata" target="_blank">GitHub</a>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- LayersPanel: mobile only. Desktop controls live in the bottom bar below. -->
+    <LayersPanel
+      v-if="isMobile"
+      v-model="activeLayers"
+      v-model:conservationValue="activeConservation"
+      :layersSummary="layersSummary"
+      :selectedSpecies="selectedSpecies"
+    />
+
+    <!-- API error banner -->
+    <Transition name="panel">
+      <div v-if="apiError" class="api-error-banner">
+        <span>⚠️ Unable to load whale data — the API may be temporarily unavailable.</span>
+        <button @click="loadData(); apiError = false" class="api-error-retry">Retry</button>
+      </div>
+    </Transition>
+
+    <!-- ── First-visit onboarding overlay ──────────────────── -->
+    <Transition name="onboard">
+      <div v-if="onboardingVisible" class="onboard-backdrop" @click.self="dismissOnboarding">
+        <div class="onboard-card">
+          <div class="onboard-header">
+            <span class="onboard-whale">🐋</span>
+            <div class="onboard-title">Welcome to <span class="onboard-brand">whaledata<span>.org</span></span></div>
+          </div>
+          <p class="onboard-intro">A real-time globe of whale sightings, strandings, acoustics, and migration routes. Here's what you can do:</p>
+          <div class="onboard-grid">
+            <div class="onboard-item">
+              <span class="onboard-icon">🗂️</span>
+              <div><strong>Data Layers</strong> — toggle sightings, strandings, acoustics, iNaturalist, and historical records</div>
+            </div>
+            <div class="onboard-item">
+              <span class="onboard-icon">🌿</span>
+              <div><strong>Conservation</strong> — overlay feeding grounds and sonar exercise zones</div>
+            </div>
+            <div class="onboard-item">
+              <span class="onboard-icon">🚢</span>
+              <div><strong>Ship Lanes</strong> — see where commercial shipping routes cross whale habitat</div>
+            </div>
+            <div class="onboard-item">
+              <span class="onboard-icon">📅</span>
+              <div><strong>Date Filter</strong> — slide through records from the 1780s to today</div>
+            </div>
+            <div class="onboard-item">
+              <span class="onboard-icon">📍</span>
+              <div><strong>Near me</strong> — fly the globe to your location instantly</div>
+            </div>
+            <div class="onboard-item">
+              <span class="onboard-icon">⌨️</span>
+              <div><strong>Shortcuts</strong> — keys 1–6 select species · Space toggles rotation · Esc closes panels</div>
+            </div>
+          </div>
+          <button class="onboard-dismiss" @click="dismissOnboarding">Got it, explore →</button>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- ── Desktop bottom bar: Data Layers / Conservation / Ship Lanes / Date Filter ── -->
+    <div v-if="!isMobile" class="bottom-bar">
+
+      <!-- Data Layers -->
+      <div class="bb-slot">
+        <button
+          class="bb-btn"
+          :class="{ 'bb-active': layersPanelOpen }"
+          @click="layersPanelOpen = !layersPanelOpen; conservPanelOpen = false; yearOpen = false"
+        >
+          <span>🗂️</span>
+          <span>Data Layers</span>
+          <span class="bb-count">{{ Object.values(activeLayers).filter(Boolean).length }}/{{ Object.keys(activeLayers).length }}</span>
+        </button>
+        <Transition name="layers-panel">
+          <div v-if="layersPanelOpen" class="bb-popup">
+            <div class="bb-popup-title">Data Layers</div>
+            <button class="bb-layer-btn" :class="{ active: activeLayers.sightings }" @click="activeLayers.sightings = !activeLayers.sightings">
+              <span class="bb-dot" style="background:#00e5ff"></span> Sightings
+              <span class="bb-layer-n">{{ (layersSummary.sightings||0).toLocaleString() }}</span>
+            </button>
+            <button class="bb-layer-btn" :class="{ active: activeLayers.strandings }" @click="activeLayers.strandings = !activeLayers.strandings">
+              <span class="bb-dot" style="background:#ff5a5a"></span> Strandings
+              <span class="bb-layer-n">{{ (layersSummary.strandings||0).toLocaleString() }}</span>
+            </button>
+            <button class="bb-layer-btn" :class="{ active: activeLayers.acoustics }" @click="activeLayers.acoustics = !activeLayers.acoustics">
+              <span class="bb-dot" style="background:#9664ff"></span> Acoustics
+              <span class="bb-layer-n">{{ (layersSummary.acoustics||0).toLocaleString() }}</span>
+            </button>
+            <button class="bb-layer-btn" :class="{ active: activeLayers.inaturalist }" @click="activeLayers.inaturalist = !activeLayers.inaturalist">
+              <span class="bb-dot" style="background:#64c864"></span> iNaturalist
+              <span class="bb-layer-n">{{ (layersSummary.inaturalist||0).toLocaleString() }}</span>
+            </button>
+            <button class="bb-layer-btn" :class="{ active: activeLayers.historical }" @click="activeLayers.historical = !activeLayers.historical">
+              <span class="bb-dot" style="background:#ffb432"></span> Historical
+              <span class="bb-layer-n">{{ (layersSummary.historical||0).toLocaleString() }}</span>
+            </button>
+          </div>
+        </Transition>
+      </div>
+
+      <div class="bb-divider"></div>
+
+      <!-- Conservation -->
+      <div class="bb-slot">
+        <button
+          class="bb-btn"
+          :class="{ 'bb-active': conservPanelOpen, 'bb-on': activeConservation.feeding || activeConservation.sonar }"
+          @click="conservPanelOpen = !conservPanelOpen; layersPanelOpen = false; yearOpen = false"
+        >
+          <span>🌿</span>
+          <span>Conservation</span>
+          <span v-if="activeConservation.feeding || activeConservation.sonar" class="bb-on-dot"></span>
+        </button>
+        <Transition name="layers-panel">
+          <div v-if="conservPanelOpen" class="bb-popup">
+            <div class="bb-popup-title">Conservation Layers</div>
+            <button class="bb-layer-btn" :class="{ active: activeConservation.feeding }" @click="activeConservation.feeding = !activeConservation.feeding">
+              <span class="bb-dot" style="background:#00c97a;border-radius:3px"></span> Feeding Grounds
+            </button>
+            <button class="bb-layer-btn" :class="{ active: activeConservation.sonar }" @click="activeConservation.sonar = !activeConservation.sonar">
+              <span class="bb-dot" style="background:#ff4444;border-radius:3px"></span> Sonar Zones
+            </button>
+          </div>
+        </Transition>
+      </div>
+
+      <div class="bb-divider"></div>
+
+      <!-- Ship Lanes -->
+      <div class="bb-slot">
+        <button
+          class="bb-btn"
+          :class="{ 'bb-on': shipLanesOn }"
+          @click="shipLanesOn = !shipLanesOn; layersPanelOpen = false; conservPanelOpen = false; yearOpen = false"
+        >
+          <span>🚢</span>
+          <span>Ship Lanes</span>
+          <span v-if="shipLanesOn" class="bb-on-dot bb-on-dot--orange"></span>
+        </button>
+      </div>
+
+      <div class="bb-divider"></div>
+
+      <!-- Date Filter -->
+      <div class="bb-slot">
+        <button
+          class="bb-btn"
+          :class="{ 'bb-active': yearOpen, 'bb-year-on': yearRange[0] !== 1900 || yearRange[1] !== 2026 }"
+          @click="yearOpen = !yearOpen; layersPanelOpen = false; conservPanelOpen = false"
+        >
+          <span>📅</span>
+          <span>{{ yearRange[0] }}–{{ yearRange[1] }}</span>
+          <span v-if="yearRange[0] !== 1900 || yearRange[1] !== 2026" class="year-filtered-dot"></span>
+        </button>
+        <Transition name="layers-panel">
+          <div v-if="yearOpen" class="year-popup bb-popup bb-popup--year">
+            <div class="year-popup-header">
+              <span class="year-popup-title">Year Range</span>
+              <div style="display:flex;gap:8px;align-items:center">
+                <span class="year-reset-link" @click="yearRange = [1900, 2026]">Reset</span>
+                <button class="lp-close-btn" @click="yearOpen = false">✕</button>
+              </div>
+            </div>
+            <div class="year-popup-values">
+              <span class="year-val">{{ yearRange[0] }}</span>
+              <span class="year-sep">–</span>
+              <span class="year-val">{{ yearRange[1] }}</span>
+            </div>
+            <div class="year-slider-track">
+              <div class="year-slider-fill" :style="fillStyle"></div>
+              <input type="range" min="1900" max="2026" :value="yearRange[0]"
+                @input="e => yearRange = [Math.min(parseInt(e.target.value), yearRange[1] - 1), yearRange[1]]"
+                class="year-slider year-slider-min" />
+              <input type="range" min="1900" max="2026" :value="yearRange[1]"
+                @input="e => yearRange = [yearRange[0], Math.max(parseInt(e.target.value), yearRange[0] + 1)]"
+                class="year-slider year-slider-max" />
+            </div>
+          </div>
+        </Transition>
+      </div>
+
+    </div>
+
+    <!-- Persistent help icon — re-opens onboarding (desktop) -->
+    <button v-if="!isMobile" class="onboard-help-icon" @click="onboardingVisible = true" title="Show intro">?</button>
+
+    <div class="map-area">
+      <GlobeMap
+        :sightings="filteredSightings"
+        :migrationRoutes="filteredRoutes"
+        :selectedSpecies="selectedSpecies"
+        :yearRange="yearRange"
+        :activeLayers="activeLayers"
+        :layerData="filteredLayerData"
+        :activeConservation="activeConservation"
+        :userLocation="userLocation"
+        :globeRotating="globeRotating"
+        :shipLanesOn="shipLanesOn"
+      />
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import GlobeMap from './components/GlobeMap.vue'
 import Sidebar from './components/Sidebar.vue'
 import LayersPanel from './components/LayersPanel.vue'
 
-const API = import.meta.env.VITE_API_URL || 'https://api.whaledata.org'
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.whaledata.org'
 
-// ─── State ────────────────────────────────────────────────────────────────────
-
-const globeMap = ref(null)
-const sightings = ref([])
-const species = ref([])
-const routes = ref([])
-const loading = ref(true)
-
-const selectedSpecies = ref(null)
-const yearRange = ref([1900, 2025])
-
-// All sources ON by default (sprint item 1)
-const activeSources = ref({
-  gbif: true,
-  obis: true,
+const allSightings    = ref([])
+const allRoutes       = ref([])
+const speciesSummary  = ref([])
+const selectedSpecies = ref('')
+const loading         = ref(true)
+const apiError        = ref(false)
+const isMobile        = ref(false)
+const yearRange       = ref([1990, 2026])
+const layersSummary   = ref({})
+const activeLayers    = ref({
+  sightings:   true,
+  strandings:  true,
+  acoustics:   true,
   inaturalist: true,
-  strandings: true,
-  acoustics: true,
-  historical: true,
+  historical:  true,
 })
-
-const activeLayers = ref({
-  feedingGrounds: false,
-  sonarZones: false,
-})
-
-// Panel visibility
-const showLayersPanel = ref(false)
-const layersPanelTab = ref('data')
-const showDateFilter = ref(false)
-const shipLanesActive = computed(() => globeMap.value?.shipLanesActive ?? false)
-
-// Mobile
-const isMobile = ref(window.innerWidth < 768)
-const sheetOpen = ref(false)
-const sheetDetailOpen = ref(false)
-
-// Modals
-const showContactModal = ref(false)
-const showAlertsModal = ref(false)
-const contactForm = ref({ name: '', email: '', message: '' })
+const activeConservation = ref({ feeding: false, sonar: false })
+const shareCopied    = ref(false)
+const helpOpen        = ref(false)
+const alertsOpen      = ref(false)
+const alertStatus     = ref('')  // '' | 'sent' | 'error'
+const alertSubmitting = ref(false)
+const alertForm       = ref({ email: '', species: '', layer: '', region: '' })
+const contactOpen     = ref(false)
+const contactStatus   = ref('')
 const contactSubmitting = ref(false)
-const contactSent = ref(false)
-const alertsEmail = ref('')
-const alertsSubmitting = ref(false)
-const alertsSent = ref(false)
-
-// Share
-const shareCopied = ref(false)
-
-// Onboarding (sprint item 2)
-const ONBOARDING_KEY = 'wd_onboarding_done'
-const showOnboarding = ref(!localStorage.getItem(ONBOARDING_KEY))
-
-// ─── Computed ─────────────────────────────────────────────────────────────────
-
-const filteredSightings = computed(() => {
-  let s = sightings.value
-
-  // Filter by active sources
-  s = s.filter(x => activeSources.value[x.source] !== false)
-
-  // Land filter
-  s = s.filter(x => !isLandlocked(x.longitude, x.latitude))
-
-  return s
+const contactForm     = ref({ name: '', email: '', subject: 'bug', message: '' })
+const yearOpen       = ref(false)
+const nearMeLoading   = ref(false)
+const shipLanesOn     = ref(false)
+const layersPanelOpen  = ref(false)
+const conservPanelOpen = ref(false)
+const onboardingVisible = ref(false)
+const layerData = ref({
+  strandings:  [],
+  acoustics:   [],
+  inaturalist: [],
+  historical:  [],
 })
 
-const filteredCount = computed(() => filteredSightings.value.length)
+const fillStyle = computed(() => {
+  const min = 1900, max = 2026, range = max - min
+  const left  = ((yearRange.value[0] - min) / range) * 100
+  const right = ((yearRange.value[1] - min) / range) * 100
+  return { left: left + '%', width: (right - left) + '%' }
+})
+const sheetOpen       = ref(false)
+const infoOpen        = ref(false)
 
-const yearFiltered = computed(() => yearRange.value[0] !== 1900 || yearRange.value[1] !== 2025)
-
-const selectedSpeciesData = computed(() =>
-  species.value.find(s => s.name === selectedSpecies.value) ?? null
-)
-
-// ─── Land filter ──────────────────────────────────────────────────────────────
-
-function isLandlocked(lng, lat) {
-  if (lng === null || lat === null) return true
-  // Paraguay / Bolivia interior
-  if (lng > -64 && lng < -55 && lat > -28 && lat < -15) return true
-  // Himalayas / Central Asia
-  if (lng > 65 && lng < 100 && lat > 28 && lat < 50) return true
-  // Sahara interior
-  if (lng > -5 && lng < 40 && lat > 15 && lat < 30) return true
-  // Amazon interior
-  if (lng > -72 && lng < -48 && lat > -15 && lat < 0) return true
-  return false
+const SPECIES_DATA = {
+  'Humpback whale': {
+    scientific: 'Megaptera novaeangliae', iucn: 'LC', iucnLabel: 'Least Concern',
+    photo: '/assets/images/humpback.jpg',
+    description: 'Famous for their haunting, complex songs sung only by males. Humpbacks make one of the longest migrations of any mammal, travelling up to 8,000 km between feeding and breeding grounds.',
+    facts: [{ label: 'Length', value: '14–17m' }, { label: 'Weight', value: '25–30t' }, { label: 'Lifespan', value: '45–100yr' }],
+    audio: '/assets/sounds/humpback.ogg'
+  },
+  'Blue whale': {
+    scientific: 'Balaenoptera musculus', iucn: 'EN', iucnLabel: 'Endangered',
+    photo: '/assets/images/blue-whale.jpg',
+    description: "The largest animal ever known to have existed on Earth. A blue whale's heart alone weighs as much as a car, and its call can be heard up to 1,600 km away.",
+    facts: [{ label: 'Length', value: '24–33m' }, { label: 'Weight', value: 'up to 200t' }, { label: 'Lifespan', value: '80–90yr' }],
+    audio: '/assets/sounds/blue-whale.ogg'
+  },
+  'Grey whale': {
+    scientific: 'Eschrichtius robustus', iucn: 'LC', iucnLabel: 'Least Concern',
+    photo: '/assets/images/grey-whale.jpg',
+    description: 'Undertakes the longest migration of any mammal — up to 20,000 km round trip between Arctic feeding grounds and warm Mexican lagoons.',
+    facts: [{ label: 'Length', value: '13–15m' }, { label: 'Weight', value: '15–35t' }, { label: 'Migration', value: '20,000km' }],
+    audio: '/assets/sounds/grey-whale.ogg'
+  },
+  'Sperm whale': {
+    scientific: 'Physeter macrocephalus', iucn: 'VU', iucnLabel: 'Vulnerable',
+    photo: '/assets/images/sperm-whale.jpg',
+    description: 'The largest toothed predator on Earth, capable of diving to 3,000m for over 90 minutes. Their clicks are the loudest sounds made by any animal.',
+    facts: [{ label: 'Length', value: '15–20m' }, { label: 'Dive', value: '3,000m' }, { label: 'Lifespan', value: '60–70yr' }],
+    audio: '/assets/sounds/sperm-whale.ogg'
+  },
+  'Fin whale': {
+    scientific: 'Balaenoptera physalus', iucn: 'VU', iucnLabel: 'Vulnerable',
+    photo: '/assets/images/fin-whale.jpg',
+    description: 'The second largest animal on Earth, known as the "greyhound of the sea" for its slender build and speed.',
+    facts: [{ label: 'Length', value: '18–26m' }, { label: 'Speed', value: '37 km/h' }, { label: 'Lifespan', value: '80–90yr' }],
+    audio: '/assets/sounds/fin-whale.ogg'
+  },
+  'Orca': {
+    scientific: 'Orcinus orca', iucn: 'DD', iucnLabel: 'Data Deficient',
+    photo: '/assets/images/orca.jpg',
+    description: 'The apex predator of the ocean, found in every sea from Arctic to Antarctic. Orcas live in tight family pods with distinct cultural traditions.',
+    facts: [{ label: 'Length', value: '6–8m' }, { label: 'Weight', value: '3–6t' }, { label: 'Lifespan', value: '50–90yr' }],
+    audio: '/assets/sounds/orca.ogg'
+  }
 }
 
-// ─── Data fetching ────────────────────────────────────────────────────────────
+const activeSpeciesData = computed(() => selectedSpecies.value ? SPECIES_DATA[selectedSpecies.value] : null)
 
-async function fetchAll() {
+const filteredLayerData = computed(() => {
+  const species = selectedSpecies.value
+  const result  = {}
+  for (const key of ['strandings','acoustics','inaturalist','historical']) {
+    let data = (layerData.value[key] || []).filter(r => {
+      if (r.longitude == null || r.latitude == null) return false
+      // Reuse ocean filter — layer data uses same lat/lng fields
+      return isOceanSighting({ longitude: r.longitude, latitude: r.latitude })
+    })
+    if (species) data = data.filter(r => r.common_name === species)
+    result[key] = data
+  }
+  return result
+})
+
+const SPECIES_COLORS = {
+  'Humpback whale': '#00e5ff',
+  'Blue whale':     '#4d9fff',
+  'Grey whale':     '#a8c5da',
+  'Sperm whale':    '#7eb8d4',
+  'Fin whale':      '#5dd4b8',
+  'Orca':           '#ff6b9d',
+}
+function speciesColor(name) { return SPECIES_COLORS[name] || '#ffffff' }
+
+function checkMobile() { isMobile.value = window.innerWidth < 768 }
+
+const totalCount = computed(() => {
+  let n = allSightings.value.filter(isOceanSighting).length
+  for (const key of ['strandings','acoustics','inaturalist','historical']) {
+    if (activeLayers.value[key]) n += (layerData.value[key] || []).length
+  }
+  return n
+})
+
+function isOceanSighting(s) {
+  const lng = parseFloat(s.longitude)
+  const lat = parseFloat(s.latitude)
+  if (lng > -72 && lng < -44 && lat > -18 && lat < 8)   return false
+  if (lng > -68 && lng < -52 && lat > -28 && lat < -15)  return false
+  if (lng > 70  && lng < 100 && lat > 22  && lat < 38)   return false
+  if (lng > 50  && lng < 120 && lat > 38  && lat < 58)   return false
+  if (lng > 10  && lng < 40  && lat > 5   && lat < 22)   return false
+  return true
+}
+
+const filteredSightings = computed(() => {
+  const base = allSightings.value.filter(isOceanSighting)
+  if (!selectedSpecies.value) return base
+  return base.filter(s => s.common_name === selectedSpecies.value)
+})
+
+const shownCount = computed(() => {
+  let n = filteredSightings.value.length
+  for (const key of ['strandings','acoustics','inaturalist','historical']) {
+    if (activeLayers.value[key]) {
+      const data = filteredLayerData.value[key] || []
+      n += data.length
+    }
+  }
+  return n
+})
+
+const filteredRoutes = computed(() => {
+  if (!selectedSpecies.value) return allRoutes.value
+  return allRoutes.value.filter(r => r.common_name === selectedSpecies.value)
+})
+
+function onSpeciesChange(species) {
+  selectedSpecies.value = species
+  sheetOpen.value = false
+  infoOpen.value = false
+  if (species) trackEvent('species_select', { species })
+}
+
+async function loadData() {
+  loading.value = true
   try {
-    const [sRes, spRes, rRes] = await Promise.all([
-      fetch(`${API}/sightings/?limit=25000`),
-      fetch(`${API}/species`),
-      fetch(`${API}/routes/`),
+    const [a, b, c, d] = await Promise.all([
+      fetch(`${API_URL}/sightings/?limit=5000`),
+      fetch(`${API_URL}/sightings/species-summary`),
+      fetch(`${API_URL}/routes/`),
+      fetch(`${API_URL}/layers/summary`),
     ])
-    sightings.value = await sRes.json()
-    species.value = await spRes.json()
-    routes.value = await rRes.json()
-  } catch (e) {
-    console.error('Fetch error:', e)
+    allSightings.value   = (await a.json()).data || []
+    speciesSummary.value = (await b.json()).data || []
+    allRoutes.value      = (await c.json()).data || []
+    layersSummary.value  = (await d.json()).layers || {}
+  } catch (err) {
+    console.error('Failed to load whale data:', err)
+    apiError.value = true
   } finally {
     loading.value = false
   }
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function getSpeciesColor(name) {
-  const map = {
-    'humpback': '#00e5ff',
-    'blue':     '#00b8cc',
-    'grey':     '#00c97a',
-    'orca':     '#9664ff',
-    'sperm':    '#ffb432',
-    'fin':      '#ff6b9d',
-  }
-  const lower = name?.toLowerCase() ?? ''
-  for (const [k, v] of Object.entries(map)) {
-    if (lower.includes(k)) return v
-  }
-  return '#00e5ff'
-}
-
-function clampYears() {
-  if (yearRange.value[0] > yearRange.value[1]) {
-    yearRange.value[0] = yearRange.value[1]
-  }
-}
-
-// ─── Bottom bar actions (sprint item 3) ───────────────────────────────────────
-
-function openLayersTab(tab) {
-  if (showLayersPanel.value && layersPanelTab.value === tab) {
-    showLayersPanel.value = false
-  } else {
-    layersPanelTab.value = tab
-    showLayersPanel.value = true
-    showDateFilter.value = false
-  }
-}
-
-function toggleShipLanes() {
-  globeMap.value?.toggleShipLanes()
-}
-
-// ─── Species selection ────────────────────────────────────────────────────────
-
-function selectSpecies(name) {
-  selectedSpecies.value = name
-  // Restore rotation if deselecting
-}
-
-// ─── Near me ─────────────────────────────────────────────────────────────────
-
-function nearMe() {
-  if (!navigator.geolocation) return
-  navigator.geolocation.getCurrentPosition(pos => {
-    globeMap.value?.flyTo(pos.coords.longitude, pos.coords.latitude, 6)
-  })
-}
-
-// ─── Share ────────────────────────────────────────────────────────────────────
-
-function shareUrl() {
-  const params = new URLSearchParams()
-  if (selectedSpecies.value) params.set('species', selectedSpecies.value)
-  if (yearRange.value[0] !== 1900) params.set('from', yearRange.value[0])
-  if (yearRange.value[1] !== 2025) params.set('to', yearRange.value[1])
-  const url = `${location.origin}${params.toString() ? '?' + params : ''}`
-  navigator.clipboard.writeText(url).then(() => {
-    shareCopied.value = true
-    setTimeout(() => { shareCopied.value = false }, 2500)
-  })
-}
-
-function loadStateFromUrl() {
-  const params = new URLSearchParams(location.search)
-  if (params.get('species')) selectedSpecies.value = params.get('species')
-  if (params.get('from')) yearRange.value[0] = parseInt(params.get('from'))
-  if (params.get('to')) yearRange.value[1] = parseInt(params.get('to'))
-}
-
-// ─── Contact / alerts ─────────────────────────────────────────────────────────
-
-async function submitContact() {
-  contactSubmitting.value = true
+async function loadLayerData(key, url) {
   try {
-    await fetch(`${API}/alerts/contact`, {
+    const res = await fetch(`${API_URL}${url}?limit=5000`)
+    const data = await res.json()
+    layerData.value[key] = data.data || []
+  } catch (err) {
+    console.error(`Failed to load ${key}:`, err)
+  }
+}
+
+// Watch activeLayers — fetch data when a layer is turned on
+
+// ── Alerts ───────────────────────────────────────────────────
+async function submitAlert() {
+  if (!alertForm.value.email) return
+  alertSubmitting.value = true
+  try {
+    const res = await fetch(`${API_URL}/alerts/subscribe`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(contactForm.value),
+      body: JSON.stringify({
+        email:           alertForm.value.email,
+        species_filter:  alertForm.value.species  || null,
+        layer_filter:    alertForm.value.layer    || null,
+        region_filter:   alertForm.value.region   || null,
+      })
     })
-    contactSent.value = true
-    contactForm.value = { name: '', email: '', message: '' }
-    setTimeout(() => { showContactModal.value = false; contactSent.value = false }, 2500)
-  } catch (e) {
-    console.error(e)
+    if (res.ok) { alertStatus.value = 'sent' }
+    else        { alertStatus.value = 'error' }
+  } catch {
+    alertStatus.value = 'error'
+  } finally {
+    alertSubmitting.value = false
+  }
+}
+
+// ── Contact ──────────────────────────────────────────────────
+async function submitContact() {
+  if (!contactForm.value.email || !contactForm.value.message) return
+  contactSubmitting.value = true
+  try {
+    const res = await fetch(`${API_URL}/alerts/contact`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(contactForm.value)
+    })
+    contactStatus.value = res.ok ? 'sent' : 'error'
+  } catch {
+    contactStatus.value = 'error'
   } finally {
     contactSubmitting.value = false
   }
 }
 
-async function submitAlerts() {
-  alertsSubmitting.value = true
-  try {
-    await fetch(`${API}/alerts/subscribe`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: alertsEmail.value }),
+// ── GA event tracking ─────────────────────────────────────────
+function trackEvent(name, params = {}) {
+  if (typeof window !== 'undefined' && window.gtag) {
+    window.gtag('event', name, params)
+  }
+}
+
+// ── Share ─────────────────────────────────────────────────────
+function shareMap() {
+  const params = new URLSearchParams()
+  if (selectedSpecies.value) params.set('species', selectedSpecies.value)
+  if (yearRange.value[0] !== 1990) params.set('from', yearRange.value[0])
+  if (yearRange.value[1] !== 2026) params.set('to', yearRange.value[1])
+  const activeLayers_ = Object.entries(activeLayers.value)
+    .filter(([k, v]) => v && k !== 'sightings')
+    .map(([k]) => k).join(',')
+  if (activeLayers_) params.set('layers', activeLayers_)
+  const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`
+  trackEvent('share_map', { species: selectedSpecies.value || 'all' })
+  navigator.clipboard.writeText(url).then(() => {
+    shareCopied.value = true
+    setTimeout(() => shareCopied.value = false, 2500)
+  })
+}
+
+// ── Near Me ───────────────────────────────────────────────────
+function nearMe() {
+  if (!navigator.geolocation) return
+  nearMeLoading.value = true
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      nearMeLoading.value = false
+      // Emit to GlobeMap to fly to user location
+      userLocation.value = { lng: pos.coords.longitude, lat: pos.coords.latitude }
+    },
+    () => { nearMeLoading.value = false }
+  )
+}
+const userLocation = ref(null)
+
+// ── URL state restore ─────────────────────────────────────────
+function restoreFromURL() {
+  const params = new URLSearchParams(window.location.search)
+  if (params.get('species')) selectedSpecies.value = params.get('species')
+  if (params.get('from'))    yearRange.value[0] = parseInt(params.get('from'))
+  if (params.get('to'))      yearRange.value[1] = parseInt(params.get('to'))
+  if (params.get('layers')) {
+    params.get('layers').split(',').forEach(k => {
+      if (activeLayers.value.hasOwnProperty(k)) activeLayers.value[k] = true
     })
-    alertsSent.value = true
-    setTimeout(() => { showAlertsModal.value = false; alertsSent.value = false }, 2500)
-  } catch (e) {
-    console.error(e)
-  } finally {
-    alertsSubmitting.value = false
   }
 }
 
-// ─── Onboarding ───────────────────────────────────────────────────────────────
+// ── Keyboard shortcuts ────────────────────────────────────────
+const SPECIES_KEYS = {
+  '1': 'Humpback whale', '2': 'Blue whale', '3': 'Grey whale',
+  '4': 'Sperm whale',    '5': 'Fin whale',  '6': 'Orca',
+}
+function onKeydown(e) {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return
+  if (SPECIES_KEYS[e.key]) { onSpeciesChange(SPECIES_KEYS[e.key]); return }
+  if (e.key === '0') { onSpeciesChange(''); return }
+  if (e.key === 'Escape') { sheetOpen.value = false; infoOpen.value = false; layersPanelOpen.value = false; conservPanelOpen.value = false; yearOpen.value = false; return }
+  if (e.key === ' ') { e.preventDefault(); globeRotating.value = !globeRotating.value; return }
+}
+const globeRotating = ref(true)
 
-function dismissOnboarding() {
-  showOnboarding.value = false
-  localStorage.setItem(ONBOARDING_KEY, '1')
+const LAYER_URLS = {
+  strandings:  '/strandings/',
+  acoustics:   '/acoustics/',
+  inaturalist: '/inaturalist/',
+  historical:  '/historical/',
 }
 
-// ─── Keyboard shortcuts ───────────────────────────────────────────────────────
-
-function onKeyDown(e) {
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
-  const speciesNames = species.value.map(s => s.name)
-  switch (e.key) {
-    case '1': case '2': case '3': case '4': case '5': case '6': {
-      const idx = parseInt(e.key) - 1
-      if (speciesNames[idx]) selectedSpecies.value = speciesNames[idx]
-      break
+watch(activeLayers, (layers) => {
+  for (const [key, active] of Object.entries(layers)) {
+    if (active && key !== 'sightings' && layerData.value[key]?.length === 0) {
+      loadLayerData(key, LAYER_URLS[key])
     }
-    case '0': selectedSpecies.value = null; break
-    case 'Escape':
-      showLayersPanel.value = false
-      showDateFilter.value = false
-      showContactModal.value = false
-      showAlertsModal.value = false
-      showOnboarding.value = false
-      sheetOpen.value = false
-      break
-    case 'n': case 'N': nearMe(); break
-    case 's': case 'S': shareUrl(); break
   }
+}, { deep: true })
+
+// ── Onboarding ────────────────────────────────────────────────
+function dismissOnboarding() {
+  localStorage.setItem('wd_onboarding_done', '1')
+  onboardingVisible.value = false
 }
-
-// ─── Resize ───────────────────────────────────────────────────────────────────
-
-function onResize() {
-  isMobile.value = window.innerWidth < 768
-}
-
-// ─── Map ready ────────────────────────────────────────────────────────────────
-
-function onMapReady() {
-  // nothing needed — data already bound via props
-}
-
-// ─── Lifecycle ────────────────────────────────────────────────────────────────
 
 onMounted(() => {
-  fetchAll()
-  loadStateFromUrl()
-  window.addEventListener('keydown', onKeyDown)
-  window.addEventListener('resize', onResize)
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+  window.addEventListener('keydown', onKeydown)
+  restoreFromURL()
+  loadData()
+  // All layers default to on — trigger initial data load for each
+  for (const [key, active] of Object.entries(activeLayers.value)) {
+    if (active && key !== 'sightings') loadLayerData(key, LAYER_URLS[key])
+  }
+  // First-visit onboarding
+  if (!localStorage.getItem('wd_onboarding_done')) {
+    onboardingVisible.value = true
+  }
 })
-
-onUnmounted(() => {
-  window.removeEventListener('keydown', onKeyDown)
-  window.removeEventListener('resize', onResize)
-})
+onUnmounted(() => { window.removeEventListener('resize', checkMobile); window.removeEventListener('keydown', onKeydown) })
 </script>
 
-<style>
-*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+<style scoped>
+.app { width: 100vw; height: 100vh; overflow: hidden; position: relative; }
 
-:root {
-  --cyan: #00e5ff;
-  --cyan-dim: #00b8cc;
-  --dark: #050810;
-  --surface: #0a1525;
-  --surface2: #0d1e32;
-  --border: rgba(0,229,255,0.1);
-  --border2: rgba(0,229,255,0.2);
-  --text: #e8f4f8;
-  --text2: #7a9bb5;
-  --text3: #3a5a72;
-  --green: #00c97a;
-  --amber: #ffb432;
-  --purple: #9664ff;
-  --orange: #ff9f43;
-}
-
-html, body { width: 100%; height: 100%; overflow: hidden; background: var(--dark); }
-
-#app {
-  width: 100vw;
-  height: 100vh;
-  position: relative;
-  overflow: hidden;
-  font-family: 'DM Sans', sans-serif;
-  color: var(--text);
-}
-
-/* ── Map area ── */
-.map-area { position: absolute; inset: 0; }
-.map-area-desktop { left: 300px; }
-.mobile .map-area { left: 0; }
-
-/* ── 4-slot bottom bar (sprint item 3) ── */
-.bottom-bar {
-  position: absolute;
-  bottom: 20px;
-  left: calc(300px + 20px);
-  right: 20px;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  background: rgba(5, 8, 16, 0.88);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  backdrop-filter: blur(16px);
-  overflow: hidden;
-  z-index: 20;
-}
-
-.bar-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 16px;
-  background: transparent;
-  border: none;
-  border-right: 1px solid var(--border);
-  color: var(--text2);
-  font-size: 13px;
-  font-family: 'DM Sans', sans-serif;
-  cursor: pointer;
-  transition: all 0.18s;
-  position: relative;
-}
-.bar-btn:last-child { border-right: none; }
-.bar-btn:hover { background: rgba(0,229,255,0.05); color: var(--text); }
-.bar-btn.active {
-  background: rgba(0,229,255,0.08);
-  color: var(--cyan);
-}
-.bar-btn-icon { font-size: 15px; line-height: 1; }
-.bar-btn-label { font-size: 12px; font-weight: 500; }
-.bar-btn-badge {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  font-size: 8px;
-  color: var(--cyan);
-  line-height: 1;
-}
-
-/* ── Top-right controls ── */
-.top-right-controls {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  display: flex;
-  gap: 8px;
-  z-index: 20;
-}
-
-.ctrl-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  background: rgba(5,8,16,0.88);
-  border: 1px solid var(--border);
-  border-radius: 40px;
-  color: var(--text2);
-  font-size: 12px;
-  font-family: 'DM Sans', sans-serif;
-  cursor: pointer;
-  transition: all 0.15s;
-  backdrop-filter: blur(12px);
-  white-space: nowrap;
-}
-.ctrl-btn:hover { border-color: var(--border2); color: var(--text); }
-.ctrl-btn svg { flex-shrink: 0; }
-
-/* ── Date filter panel ── */
-.date-filter-panel {
-  position: absolute;
-  bottom: 80px;
-  right: 20px;
-  width: 280px;
-  background: rgba(10, 21, 37, 0.96);
-  border: 1px solid var(--border2);
-  border-radius: 14px;
-  padding: 18px 20px;
-  z-index: 25;
-  backdrop-filter: blur(16px);
-}
-.date-filter-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 14px;
-}
-.date-filter-title {
-  font-family: 'Syne', sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text);
-}
-.date-filter-close {
-  background: none;
-  border: none;
-  color: var(--text3);
-  cursor: pointer;
-  font-size: 14px;
-  padding: 0;
-  line-height: 1;
-}
-.year-display {
-  font-family: 'DM Mono', monospace;
-  font-size: 20px;
-  font-weight: 500;
-  color: var(--cyan);
-  text-align: center;
-  margin-bottom: 14px;
-}
-.slider-row { display: flex; flex-direction: column; gap: 8px; }
-.year-slider {
-  width: 100%;
-  accent-color: var(--cyan);
-  cursor: pointer;
-}
-.year-labels {
-  display: flex;
-  justify-content: space-between;
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  color: var(--text3);
-  margin-top: 4px;
-}
-
-/* ── Onboarding overlay (sprint item 2) ── */
-.onboarding-overlay {
+/* ── API error banner ───────────────────────────────────────── */
+.api-error-banner {
   position: fixed;
-  inset: 0;
-  background: rgba(5, 8, 16, 0.82);
-  backdrop-filter: blur(6px);
-  z-index: 200;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-.onboarding-card {
-  background: rgba(10, 21, 37, 0.98);
-  border: 1px solid var(--border2);
-  border-radius: 20px;
-  padding: 40px 44px;
-  max-width: 640px;
-  width: 100%;
-  backdrop-filter: blur(24px);
-  box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 60px rgba(0,229,255,0.04);
-}
-.onboarding-logo {
-  font-family: 'Syne', sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--cyan);
-  margin-bottom: 16px;
-  letter-spacing: 0.02em;
-}
-.onboarding-title {
-  font-family: 'Syne', sans-serif;
-  font-size: 28px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  margin-bottom: 8px;
-  color: var(--text);
-}
-.onboarding-sub {
-  font-size: 15px;
-  color: var(--text2);
-  margin-bottom: 28px;
-  font-weight: 300;
-}
-.onboarding-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  margin-bottom: 28px;
-}
-.onboarding-item {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  padding: 14px;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-}
-.onboarding-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  flex-shrink: 0;
-}
-.onboarding-text {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.onboarding-text strong {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-}
-.onboarding-text span {
-  font-size: 12px;
-  color: var(--text2);
-  line-height: 1.5;
-  font-weight: 300;
-}
-.onboarding-cta {
-  width: 100%;
-  padding: 14px;
-  background: var(--cyan);
-  color: var(--dark);
-  border: none;
-  border-radius: 40px;
-  font-family: 'Syne', sans-serif;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.18s;
-  margin-bottom: 14px;
-}
-.onboarding-cta:hover {
-  background: #fff;
-  box-shadow: 0 8px 32px rgba(0,229,255,0.3);
-  transform: translateY(-1px);
-}
-.onboarding-hint {
-  text-align: center;
-  font-size: 12px;
-  color: var(--text3);
-}
-
-/* Onboarding animation */
-.onboard-enter-active, .onboard-leave-active { transition: opacity 0.3s, transform 0.3s; }
-.onboard-enter-from, .onboard-leave-to { opacity: 0; transform: scale(0.97); }
-
-/* ── Modals ── */
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(5,8,16,0.7);
-  backdrop-filter: blur(4px);
-  z-index: 150;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-.modal-card {
-  background: rgba(10, 21, 37, 0.98);
-  border: 1px solid var(--border2);
-  border-radius: 16px;
-  padding: 28px 32px;
-  width: 100%;
-  max-width: 420px;
-  backdrop-filter: blur(20px);
-}
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-.modal-header h3 {
-  font-family: 'Syne', sans-serif;
-  font-size: 18px;
-  font-weight: 700;
-}
-.modal-close {
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  color: var(--text2);
-  width: 32px;
-  height: 32px;
-  cursor: pointer;
-  font-size: 13px;
-  transition: all 0.15s;
-}
-.modal-close:hover { border-color: var(--border2); color: var(--text); }
-.modal-intro { font-size: 14px; color: var(--text2); margin-bottom: 20px; line-height: 1.6; font-weight: 300; }
-
-.form-group { margin-bottom: 16px; }
-.form-group label {
-  display: block;
-  font-size: 11px;
-  font-family: 'DM Mono', monospace;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text3);
-  margin-bottom: 6px;
-}
-.form-group input, .form-group textarea {
-  width: 100%;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 12px;
-  color: var(--text);
-  font-size: 14px;
-  font-family: inherit;
-  outline: none;
-  transition: border-color 0.15s;
-  resize: vertical;
-}
-.form-group input:focus, .form-group textarea:focus { border-color: var(--border2); }
-.form-submit {
-  width: 100%;
-  padding: 12px;
-  background: var(--cyan);
-  color: var(--dark);
-  border: none;
-  border-radius: 40px;
-  font-family: 'Syne', sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.form-submit:hover:not(:disabled) { background: #fff; }
-.form-submit:disabled { opacity: 0.5; cursor: not-allowed; }
-.form-success { text-align: center; color: var(--green); font-size: 13px; margin-top: 12px; }
-
-.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.2s; }
-.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
-
-/* ── Share toast ── */
-.share-toast {
-  position: fixed;
-  bottom: 80px;
+  top: 60px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(10,21,37,0.96);
-  border: 1px solid var(--border2);
-  border-radius: 40px;
-  padding: 10px 22px;
-  font-size: 13px;
-  color: var(--cyan);
-  z-index: 100;
-  pointer-events: none;
-  backdrop-filter: blur(12px);
-}
-.toast-enter-active, .toast-leave-active { transition: opacity 0.2s, transform 0.2s; }
-.toast-enter-from, .toast-leave-to { opacity: 0; transform: translateX(-50%) translateY(8px); }
-
-/* ── Mobile controls ── */
-.mobile-hamburger {
-  position: fixed;
-  top: 18px;
-  left: 18px;
-  z-index: 60;
-  width: 44px;
-  height: 44px;
-  background: rgba(5,8,16,0.88);
-  border: 1px solid var(--border);
-  border-radius: 12px;
   display: flex;
-  flex-direction: column;
-  gap: 5px;
   align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  backdrop-filter: blur(12px);
-}
-.mobile-hamburger span {
-  display: block;
-  width: 20px;
-  height: 2px;
-  background: var(--cyan);
-  border-radius: 2px;
-}
-
-.mobile-info-btn {
-  position: fixed;
-  top: 18px;
-  left: 72px;
-  z-index: 60;
-  width: 44px;
-  height: 44px;
-  background: rgba(5,8,16,0.88);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  color: var(--cyan);
-  font-size: 18px;
-  cursor: pointer;
-  backdrop-filter: blur(12px);
-}
-
-.mobile-stats-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 50;
-  background: rgba(5,8,16,0.92);
-  border-top: 1px solid var(--border);
+  gap: 12px;
   padding: 10px 20px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
+  background: rgba(255, 90, 90, 0.12);
+  border: 1px solid rgba(255, 90, 90, 0.3);
+  border-radius: 30px;
+  color: #ff5a5a;
+  font-size: 13px;
+  z-index: 500;
+  white-space: nowrap;
   backdrop-filter: blur(12px);
 }
-.mobile-stat { display: flex; flex-direction: column; gap: 1px; }
-.mobile-stat-num {
-  font-family: 'Syne', sans-serif;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--cyan);
-  line-height: 1;
+.api-error-retry {
+  padding: 4px 12px;
+  background: rgba(255, 90, 90, 0.15);
+  border: 1px solid rgba(255, 90, 90, 0.3);
+  border-radius: 20px;
+  color: #ff5a5a;
+  font-size: 12px;
+  font-family: var(--font-display);
+  cursor: pointer;
+  transition: all 0.15s;
 }
-.mobile-stat-lbl { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; letter-spacing: 0.1em; }
-.mobile-stat-species { font-size: 13px; color: var(--text2); font-weight: 500; }
+.api-error-retry:hover { background: rgba(255, 90, 90, 0.25); }
+.map-area { position: absolute; inset: 0; }
 
-/* ── Mobile sheet ── */
-.mobile-backdrop {
+/* ── Hamburger ─────────────────────────────────────────────── */
+.hamburger {
   position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 299;
+  top: 16px; left: 16px;
+  z-index: 500;
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  background: rgba(8, 13, 26, 0.92);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-bright);
+  color: var(--cyan);
+  font-size: 20px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
 }
+
+/* ── Mobile sheet ──────────────────────────────────────────── */
 .mobile-sheet {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 300;
-  background: rgba(10,21,37,0.98);
-  border-top: 1px solid var(--border);
+  bottom: 64px;
+  left: 0; right: 0;
+  max-height: calc(100dvh - 120px); /* leave room for bar + safe area */
+  background: rgba(8, 13, 26, 0.98);
+  backdrop-filter: blur(24px);
+  border-top: 1px solid var(--border-bright);
   border-radius: 20px 20px 0 0;
-  padding: 0 0 40px;
-  max-height: 85vh;
-  overflow-y: auto;
-  backdrop-filter: blur(20px);
+  z-index: 400;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
-.sheet-handle {
-  width: 40px;
-  height: 4px;
-  background: var(--border2);
-  border-radius: 4px;
-  margin: 12px auto 0;
-}
+
 .sheet-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
-  font-family: 'Syne', sans-serif;
-  font-size: 15px;
-  font-weight: 700;
+  justify-content: space-between;
+  padding: 20px 20px 12px;
   border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  background: rgba(8, 13, 26, 0.98);
+  z-index: 1;
+  border-radius: 20px 20px 0 0;
+}
+
+.sheet-brand {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 16px; font-weight: 700; color: var(--text-primary);
+}
+.sheet-brand-tld { color: var(--cyan); }
+
+.sheet-help-btn {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: none; border: 1px solid var(--border);
+  color: var(--text-secondary); font-size: 15px; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
 }
 .sheet-close {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.sheet-stats {
+  display: flex; align-items: center; gap: 16px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.sheet-stat { display: flex; flex-direction: column; align-items: center; flex: 1; }
+.sheet-stat-value { font-size: 16px; font-weight: 700; color: var(--cyan); font-family: var(--font-mono); }
+.sheet-stat-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 2px; }
+.sheet-stat-divider { width: 1px; height: 28px; background: var(--border); }
+
+.sheet-label {
+  font-size: 9px; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.12em;
+  padding: 12px 20px 6px;
+  flex-shrink: 0;
+}
+
+.sheet-species-list {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 12px 20px;
+  flex: 1;
+  min-height: 0; /* critical for flex scroll */
+}
+
+.sheet-species-btn {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; background: none;
+  border: 1px solid transparent; border-radius: 10px;
+  padding: 12px 10px; margin-bottom: 4px;
+  cursor: pointer; color: var(--text-secondary);
+  font-family: var(--font-display); font-size: 15px;
+  text-align: left; transition: all 0.15s;
+}
+.sheet-species-btn.active {
+  background: var(--cyan-glow-soft);
+  border-color: var(--border-bright);
+  color: var(--text-primary);
+}
+.sheet-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.all-dot {
+  background: conic-gradient(
+    #00e5ff 0deg 60deg, #4d9fff 60deg 120deg, #a8c5da 120deg 180deg,
+    #7eb8d4 180deg 240deg, #5dd4b8 240deg 300deg, #ff6b9d 300deg 360deg
+  );
+}
+.sheet-layer-btn {
+  padding: 7px 12px; border-radius: 20px; font-size: 12px;
+  background: none; border: 1px solid var(--border);
+  color: var(--text-secondary); cursor: pointer; font-family: var(--font-display);
+  transition: all 0.15s;
+}
+.sheet-layer-btn.active {
+  background: var(--cyan-glow-soft); border-color: var(--border-bright);
+  color: var(--text-primary);
+}
+.sheet-species-name { flex: 1; }
+.sheet-attribution {
+  padding: 10px 20px 14px;
+  font-size: 10px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  line-height: 1.6;
+}
+.sheet-attribution a { color: var(--cyan-dim); text-decoration: none; }
+.sheet-attr-divider { margin: 0 4px; }
+.sheet-species-count { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); }
+
+/* ── Backdrop ──────────────────────────────────────────────── */
+.backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 399;
+}
+
+/* ── Mobile stats bar ──────────────────────────────────────── */
+.mobile-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 64px;
+  background: rgba(8, 13, 26, 0.95);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  gap: 12px;
+  z-index: 300;
+  pointer-events: none;
+}
+.bar-stat { font-size: 12px; color: var(--text-secondary); }
+.bar-stat b { color: var(--cyan); font-family: var(--font-mono); }
+.bar-divider { width: 1px; height: 16px; background: var(--border); }
+
+
+
+/* ── Info button ───────────────────────────────────────────── */
+.info-btn {
+  position: fixed;
+  top: 16px; left: 68px;
+  z-index: 500;
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  background: rgba(8, 13, 26, 0.92);
+  backdrop-filter: blur(12px);
+  border: 1px solid;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+
+/* ── Info sheet ─────────────────────────────────────────────── */
+.info-sheet { bottom: 0 !important; }
+
+.info-scroll {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+}
+
+.info-img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  display: block;
+}
+
+.info-body { padding: 16px 20px 32px; }
+
+.info-sci {
+  font-size: 12px; color: var(--text-muted);
+  font-style: italic; margin-bottom: 10px;
+}
+
+.info-badges { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.iucn-badge {
+  font-size: 10px; font-weight: 700; padding: 2px 8px;
+  border-radius: 4px; font-family: var(--font-mono);
+}
+.iucn-badge.lc  { background: rgba(0,180,100,0.2); color: #00b464; border: 1px solid rgba(0,180,100,0.3); }
+.iucn-badge.en  { background: rgba(255,140,0,0.2); color: #ff8c00; border: 1px solid rgba(255,140,0,0.3); }
+.iucn-badge.vu  { background: rgba(255,200,0,0.2); color: #ffc800; border: 1px solid rgba(255,200,0,0.3); }
+.iucn-badge.dd  { background: rgba(150,150,180,0.2); color: #9696b4; border: 1px solid rgba(150,150,180,0.3); }
+.iucn-label { font-size: 11px; color: var(--text-muted); }
+
+.info-facts {
+  display: flex; justify-content: space-around;
+  padding: 12px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  margin-bottom: 14px;
+}
+.info-fact { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.info-fact-value { font-size: 14px; font-weight: 600; color: var(--text-primary); font-family: var(--font-mono); }
+.info-fact-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+
+.info-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.7; margin-bottom: 16px; }
+.info-audio-label { font-size: 10px; color: var(--text-muted); margin-bottom: 6px; }
+.info-audio { width: 100%; height: 36px; filter: invert(1) hue-rotate(180deg) brightness(0.8); }
+
+/* ── Sheet transition ───────────────────────────────────────── */
+.sheet-enter-active, .sheet-leave-active {
+  transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.sheet-enter-from, .sheet-leave-to { transform: translateY(100%); }
+/* ── Bottom button base (year filter) ──────────────────────── */
+.bottom-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 18px;
+  background: rgba(8, 13, 26, 0.92);
+  backdrop-filter: blur(16px);
+  border-radius: 30px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.bottom-btn.loading { opacity: 0.6; cursor: wait; }
+
+/* ── Help modal ─────────────────────────────────────────────── */
+.help-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 600;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.help-modal {
+  background: rgba(8, 13, 26, 0.99);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(0,229,255,0.2);
+  border-radius: 18px;
+  width: 580px; max-width: 100%;
+  max-height: 85vh;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 0 60px rgba(0,229,255,0.08);
+}
+.help-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.help-title { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+.help-close {
+  width: 30px; height: 30px; border-radius: 8px;
+  background: none; border: 1px solid var(--border);
+  color: var(--text-secondary); font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.help-body {
+  overflow-y: auto; padding: 20px 24px 8px;
+  -webkit-overflow-scrolling: touch;
+}
+.help-section { margin-bottom: 24px; }
+.help-section-title {
+  font-size: 12px; font-weight: 700;
+  color: var(--cyan); margin-bottom: 10px;
+  text-transform: uppercase; letter-spacing: 0.08em;
+}
+.help-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+}
+@media (max-width: 767px) {
+  .help-grid { grid-template-columns: 1fr; }
+  .help-modal { border-radius: 14px; }
+}
+.help-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border); border-radius: 8px;
+}
+.help-key {
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--cyan); background: rgba(0,229,255,0.08);
+  border: 1px solid rgba(0,229,255,0.2);
+  padding: 2px 8px; border-radius: 6px;
+  white-space: nowrap; flex-shrink: 0;
+}
+.help-desc { font-size: 12px; color: var(--text-secondary); }
+.help-layers { display: flex; flex-direction: column; gap: 10px; }
+.help-layer {
+  display: flex; gap: 12px; align-items: flex-start;
+  font-size: 13px; color: var(--text-secondary); line-height: 1.6;
+}
+.help-dot {
+  width: 12px; height: 12px; border-radius: 50%;
+  flex-shrink: 0; margin-top: 4px;
+}
+.help-layer strong { color: var(--text-primary); }
+.help-p { font-size: 13px; color: var(--text-secondary); line-height: 1.7; }
+.help-footer {
+  margin-top: 16px; padding: 16px 0;
+  border-top: 1px solid var(--border);
+  font-size: 11px; color: var(--text-muted);
+  display: flex; gap: 12px; align-items: center;
+}
+.help-footer a { color: var(--cyan-dim); text-decoration: none; }
+.help-footer a:hover { color: var(--cyan); }
+.help-modal-enter-active, .help-modal-leave-active { transition: all 0.25s ease; }
+.help-modal-enter-from, .help-modal-leave-to { opacity: 0; transform: scale(0.97); }
+
+/* ── Top-right actions ──────────────────────────────────────── */
+.top-actions {
+  position: fixed;
+  top: 16px;
+  right: 56px; /* clear MapTiler controls */
+  display: flex;
+  gap: 8px;
+  z-index: 200;
+}
+
+.top-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 16px;
+  background: rgba(8, 13, 26, 0.92);
+  backdrop-filter: blur(16px);
+  border-radius: 30px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.top-btn.loading { opacity: 0.6; cursor: wait; }
+
+/* Share — purple */
+.btn-share {
+  border: 1px solid rgba(180, 100, 255, 0.3);
+  color: rgba(180, 100, 255, 0.8);
+}
+.btn-share:hover {
+  background: rgba(180, 100, 255, 0.1);
+  border-color: rgba(180, 100, 255, 0.6);
+  color: #b464ff;
+  box-shadow: 0 0 16px rgba(180, 100, 255, 0.15);
+}
+
+/* Near me — blue */
+.btn-nearme {
+  border: 1px solid rgba(77, 159, 255, 0.3);
+  color: rgba(77, 159, 255, 0.8);
+}
+.btn-nearme:hover {
+  background: rgba(77, 159, 255, 0.1);
+  border-color: rgba(77, 159, 255, 0.6);
+  color: #4d9fff;
+  box-shadow: 0 0 16px rgba(77, 159, 255, 0.15);
+}
+
+/* Alerts — orange */
+.btn-alerts {
+  border: 1px solid rgba(255, 159, 67, 0.3);
+  color: rgba(255, 159, 67, 0.8);
+}
+.btn-alerts:hover {
+  background: rgba(255, 159, 67, 0.1);
+  border-color: rgba(255, 159, 67, 0.5);
+  color: #ff9f43;
+  box-shadow: 0 0 16px rgba(255, 159, 67, 0.15);
+}
+
+/* Alert form */
+.form-group-alert { margin-bottom: 14px; }
+.alert-label { display: block; font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 5px; }
+.alert-input { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; color: var(--text-primary); font-family: var(--font-display); font-size: 13px; outline: none; transition: border 0.15s; }
+.alert-input:focus { border-color: var(--border-bright); }
+.alert-input option { background: #0d1528; }
+.alert-submit { width: 100%; padding: 12px; background: rgba(255,159,67,0.1); border: 1px solid rgba(255,159,67,0.3); border-radius: 10px; color: #ff9f43; font-family: var(--font-display); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; margin-top: 4px; }
+.alert-submit:hover:not(:disabled) { background: rgba(255,159,67,0.18); }
+.alert-submit:disabled { opacity: 0.5; cursor: wait; }
+.alert-success { background: rgba(0,201,122,0.1); border: 1px solid rgba(0,201,122,0.3); border-radius: 10px; padding: 16px; color: #00c97a; font-size: 14px; text-align: center; }
+.alert-error { background: rgba(255,90,90,0.1); border: 1px solid rgba(255,90,90,0.3); border-radius: 10px; padding: 16px; color: #ff5a5a; font-size: 14px; text-align: center; }
+
+/* Contact — cyan muted */
+.btn-contact {
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  color: rgba(0, 229, 255, 0.6);
+}
+.btn-contact:hover {
+  background: rgba(0, 229, 255, 0.08);
+  border-color: rgba(0, 229, 255, 0.4);
+  color: #00e5ff;
+}
+
+/* Help — white/muted */
+.btn-help {
+  border: 1px solid var(--border-bright);
+  color: var(--text-secondary);
+}
+.btn-help:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.3);
+  color: var(--text-primary);
+}
+
+/* ── Desktop bottom bar ──────────────────────────────────── */
+.bottom-bar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  background: rgba(8, 13, 26, 0.92);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-bright);
+  border-radius: 30px;
+  z-index: 200;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.45);
+}
+
+.bb-slot { position: relative; }
+
+.bb-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.15s;
+  white-space: nowrap;
+}
+.bb-btn:hover { color: var(--text-primary); }
+.bb-btn.bb-active { color: var(--cyan); }
+.bb-btn.bb-on { color: #ff9f43; }
+.bb-btn.bb-year-on { color: var(--cyan); }
+
+.bb-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.bb-count {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+
+.bb-on-dot {
+  width: 6px; height: 6px;
+  background: var(--cyan);
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.bb-on-dot--orange { background: #ff9f43; }
+
+/* popup card — opens upward from each slot */
+.bb-popup {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 210px;
+  background: rgba(8, 13, 26, 0.97);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  border-radius: 14px;
+  padding: 14px 16px 16px;
+  box-shadow: 0 0 30px rgba(0, 229, 255, 0.08);
+  z-index: 210;
+}
+/* year popup anchors right instead of center */
+.bb-popup--year {
+  left: auto;
+  right: 0;
+  transform: none;
+  width: 260px;
+}
+
+.bb-popup-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 10px;
+}
+
+.bb-layer-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
   background: none;
   border: 1px solid var(--border);
   border-radius: 8px;
-  color: var(--text2);
-  width: 30px;
-  height: 30px;
+  color: var(--text-secondary);
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
-  font-size: 13px;
-}
-.sheet-species-list { padding: 8px 0; }
-.sheet-species-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 14px 20px;
-  background: transparent;
-  border: none;
-  color: var(--text2);
-  font-size: 14px;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background 0.15s;
+  transition: all 0.15s;
+  margin-bottom: 6px;
   text-align: left;
 }
-.sheet-species-item:hover, .sheet-species-item.active {
-  background: rgba(0,229,255,0.06);
-  color: var(--text);
+.bb-layer-btn:last-child { margin-bottom: 0; }
+.bb-layer-btn:hover { border-color: var(--border-bright); color: var(--text-primary); }
+.bb-layer-btn.active {
+  background: rgba(255,255,255,0.05);
+  border-color: var(--border-bright);
+  color: var(--text-primary);
 }
-.sheet-species-item.active { color: var(--cyan); }
-.sheet-species-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-.sheet-species-count { margin-left: auto; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text3); }
 
-.sheet-detail-body { padding: 16px 20px; }
-.sheet-detail-img { width: 100%; height: 200px; object-fit: cover; border-radius: 12px; margin-bottom: 14px; }
-.sheet-iucn {
+.bb-dot {
+  width: 9px; height: 9px;
+  border-radius: 50%;
   display: inline-block;
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  padding: 3px 10px;
+  flex-shrink: 0;
+}
+.bb-layer-n {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+/* ── First-visit onboarding overlay ──────────────────────── */
+.onboard-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+  z-index: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.onboard-card {
+  background: rgba(8, 13, 26, 0.99);
+  backdrop-filter: blur(32px);
+  border: 1px solid rgba(0, 229, 255, 0.25);
   border-radius: 20px;
+  padding: 32px;
+  max-width: 560px;
+  width: 100%;
+  box-shadow: 0 0 80px rgba(0, 229, 255, 0.1);
+}
+.onboard-header {
+  display: flex; align-items: center; gap: 12px;
   margin-bottom: 12px;
-  font-weight: 500;
 }
-.iucn-EN, .iucn-VU { background: rgba(255,164,0,0.12); color: #ffb432; }
-.iucn-LC           { background: rgba(0,201,122,0.12); color: #00c97a; }
-.sheet-detail-desc { font-size: 14px; color: var(--text2); line-height: 1.7; font-weight: 300; }
-
-.sheet-enter-active, .sheet-leave-active { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-.sheet-enter-from, .sheet-leave-to { transform: translateY(100%); }
-
-/* ── Responsive ── */
-@media (max-width: 767px) {
-  .bottom-bar, .top-right-controls { display: none; }
+.onboard-whale { font-size: 28px; }
+.onboard-title { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+.onboard-brand span { color: var(--cyan); }
+.onboard-intro {
+  font-size: 13px; color: var(--text-secondary); line-height: 1.7;
+  margin-bottom: 20px;
 }
-@media (max-width: 900px) {
-  .bar-btn-label { font-size: 11px; }
-  .ctrl-btn span { display: none; }
-  .ctrl-btn { padding: 8px 10px; }
+.onboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+@media (max-width: 767px) { .onboard-grid { grid-template-columns: 1fr; } }
+.onboard-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 12px; color: var(--text-secondary); line-height: 1.5;
+}
+.onboard-item strong { color: var(--text-primary); }
+.onboard-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.onboard-dismiss {
+  width: 100%;
+  padding: 13px;
+  background: rgba(0, 229, 255, 0.1);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  border-radius: 12px;
+  color: var(--cyan);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.01em;
+}
+.onboard-dismiss:hover {
+  background: rgba(0, 229, 255, 0.18);
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.15);
+}
+.onboard-enter-active, .onboard-leave-active { transition: all 0.3s ease; }
+.onboard-enter-from, .onboard-leave-to { opacity: 0; transform: scale(0.97); }
+
+/* ── Persistent onboarding trigger ───────────────────────── */
+.onboard-help-icon {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: rgba(8, 13, 26, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 14px; font-weight: 700;
+  font-family: var(--font-display);
+  cursor: pointer;
+  z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.onboard-help-icon:hover {
+  border-color: var(--border-bright);
+  color: var(--text-primary);
+}
+
+
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  color: rgba(0, 229, 255, 0.7);
+  font-family: var(--font-mono);
+  position: relative;
+}
+.btn-year:hover, .btn-year.active {
+  background: rgba(0, 229, 255, 0.1);
+  border-color: rgba(0, 229, 255, 0.5);
+  color: #00e5ff;
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.15);
+}
+.btn-year.filtered {
+  border-color: rgba(0, 229, 255, 0.5);
+  color: #00e5ff;
+}
+.year-filtered-dot {
+  width: 6px; height: 6px;
+  background: var(--cyan);
+  border-radius: 50%;
+  margin-left: 2px;
+}
+
+.year-popup {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  right: 0;
+  width: 260px;
+  background: rgba(8, 13, 26, 0.97);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  border-radius: 14px;
+  padding: 14px 16px 16px;
+  box-shadow: 0 0 30px rgba(0, 229, 255, 0.08);
+}
+
+.year-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.year-popup-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.year-reset-link {
+  font-size: 11px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.year-reset-link:hover { color: var(--cyan); }
+.lp-close-btn {
+  width: 22px; height: 22px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 11px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.year-popup-values {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.year-val {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--cyan);
+  font-family: var(--font-mono);
+  line-height: 1;
+}
+.year-sep { font-size: 14px; color: var(--text-muted); }
+
+.year-slider-track {
+  position: relative;
+  height: 20px;
+  display: flex;
+  align-items: center;
+}
+.year-slider-track::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  top: 50%; transform: translateY(-50%);
+}
+.year-slider-fill {
+  position: absolute;
+  height: 3px;
+  background: var(--cyan);
+  border-radius: 2px;
+  top: 50%; transform: translateY(-50%);
+  opacity: 0.6;
+  pointer-events: none;
+}
+.year-slider {
+  position: absolute;
+  left: 0; right: 0;
+  -webkit-appearance: none;
+  width: 100%; height: 3px;
+  background: transparent;
+  outline: none;
+  cursor: pointer;
+  pointer-events: none;
+}
+.year-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--cyan);
+  cursor: pointer;
+  border: 2px solid #080d1a;
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.5);
+  pointer-events: auto;
+  position: relative; z-index: 1;
+}
+.year-slider::-moz-range-thumb {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--cyan);
+  cursor: pointer;
+  border: 2px solid #080d1a;
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.5);
+  pointer-events: auto;
 }
 </style>
