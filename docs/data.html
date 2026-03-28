@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Open Cetacean Data Sources — GBIF, OBIS, NOAA &amp; More | whaledata.org</title>
-  <meta name="description" content="Five open databases powering whaledata.org — GBIF whale records, OBIS cetacean occurrence data, NOAA sightings, iNaturalist, and historical whaling logs."/>
+  <title>Open Whale Data Sources — GBIF, OBIS, NOAA &amp; Historical Records | whaledata.org</title>
+  <meta name="description" content="Documentation for the open whale data sources behind whaledata.org — GBIF, OBIS, NOAA, iNaturalist, and historical whaling records used in the platform."/>
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-YF6235KKFV"></script>
   <script>
@@ -28,17 +28,17 @@
   <link rel="canonical" href="https://docs.whaledata.org/data"/>
   <meta name="twitter:card" content="summary_large_image"/>
   <meta name="twitter:image" content="https://whaledata.org/og-image.jpg"/>
-  <meta property="og:title" content="Open Cetacean Data Sources — GBIF, OBIS &amp; NOAA | whaledata.org"/>
+  <meta property="og:title" content="Open Whale Data Sources — GBIF, OBIS, NOAA &amp; Historical Records | whaledata.org"/>
   <meta property="og:url" content="https://docs.whaledata.org/data"/>
-  <meta name="twitter:title" content="Open Cetacean Data Sources — GBIF, OBIS &amp; NOAA | whaledata.org"/>
-  <meta name="keywords" content="GBIF whale records, open whale data, cetacean occurrence data, OBIS cetacean, NOAA whale sightings, open cetacean data, iNaturalist whale"/>
+  <meta name="twitter:title" content="Open Whale Data Sources — GBIF, OBIS, NOAA &amp; Historical Records | whaledata.org"/>
+  <meta name="keywords" content="open whale data sources, GBIF whale records, OBIS whale data, NOAA whale sightings, cetacean dataset, historical whaling records, marine biodiversity data"/>
   <meta name="author" content="Monarch / KyraWeb"/>
   <!-- JSON-LD -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "Article",
-    "headline": "Open Cetacean Data Sources — GBIF, OBIS, NOAA & More",
+    "headline": "Open Whale Data Sources — GBIF, OBIS, NOAA & Historical Records",
     "url": "https://docs.whaledata.org/data",
     "author": {
       "@type": "Person",
@@ -55,6 +55,24 @@
       "name": "whaledata.org Documentation",
       "url": "https://docs.whaledata.org"
     }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Open Whale Data Sources",
+    "description": "Documentation covering the open whale and cetacean datasets used by whaledata.org.",
+    "url": "https://docs.whaledata.org/data"
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Dataset",
+    "name": "whaledata.org source datasets",
+    "description": "Aggregated whale and cetacean records sourced from GBIF, OBIS, NOAA, iNaturalist, and historical whaling logs.",
+    "url": "https://docs.whaledata.org/data"
   }
   </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
@@ -223,6 +241,7 @@
       .hamburger { display: flex; }
       .overview-grid { grid-template-columns: repeat(3,1fr); padding: 32px 24px 0; }
       .content-layout { grid-template-columns: 1fr; padding: 40px 24px; }
+      .page-bridge { padding:32px 24px 0 !important; }
       .on-this-page { display: none; }
       .page-hero { padding: 80px 24px 48px; }
       .page-nav { padding: 48px 24px; }
@@ -426,6 +445,8 @@
 </aside>
 
 <main class="main">
+  <h1 style="position:absolute;left:-9999px;">Open whale data sources documentation for whaledata.org</h1>
+
 
   <div class="page-hero">
     <div class="breadcrumb">
@@ -434,7 +455,7 @@
     </div>
     <div class="page-label">The Data</div>
     <h1 class="page-title">Five sources.<br><em>One</em> unified picture.</h1>
-    <p class="page-intro">Every record in whaledata.org comes from open scientific databases under CC BY 4.0 or equivalent open licenses — updated automatically on rolling schedules with zero manual intervention.</p>
+    <p class="page-intro">This page documents the open whale and cetacean datasets behind whaledata.org — where the records come from, how they differ, and what each source contributes to the final platform.</p>
   </div>
 
   <!-- OVERVIEW CARDS -->
@@ -469,6 +490,19 @@
       <div class="src-count">1,500</div>
       <div class="src-type">Pre-1950 whaling records · Yearly</div>
     </div>
+  </div>
+
+  <div class="page-bridge" style="padding:40px 80px 0;">
+    <section id="page-purpose" style="max-width:760px;border-top:1px solid var(--border);padding-top:40px;">
+      <div class="page-label" style="margin-bottom:12px;">What this page covers</div>
+      <h2 style="font-family:'Syne',sans-serif;font-size:30px;font-weight:800;line-height:1.1;letter-spacing:-0.02em;margin-bottom:16px;">The datasets behind the map.</h2>
+      <p style="font-size:16px;color:var(--text2);line-height:1.8;font-weight:300;margin-bottom:16px;">
+        whaledata.org combines modern sightings, marine biodiversity records, strandings, acoustic detections, citizen science observations, and historical whaling-era data into one searchable platform.
+      </p>
+      <p style="font-size:15px;color:var(--text2);line-height:1.8;font-weight:300;margin:0;">
+        For the wider conservation context, read <a href="/why" style="color:var(--cyan);text-decoration:none;">why this project exists</a>. For the system that processes these records, see the <a href="/technology" style="color:var(--cyan);text-decoration:none;">technology stack</a>. For how the layers are interpreted on the globe, continue to <a href="/conservation" style="color:var(--cyan);text-decoration:none;">conservation layers</a>.
+      </p>
+    </section>
   </div>
 
   <div class="content-layout">
@@ -655,6 +689,7 @@
     <aside>
       <div class="on-this-page">
         <h4>On this page</h4>
+        <a href="#page-purpose">What this page covers</a>
         <a href="#gbif">GBIF</a>
         <a href="#obis">OBIS</a>
         <a href="#noaa">NOAA</a>

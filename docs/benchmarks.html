@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FastAPI PostGIS Benchmarks — Geospatial API Performance Tests | whaledata.org</title>
-  <meta name="description" content="FastAPI PostGIS performance benchmarks for whaledata.org — Locust load tests, geospatial API latency, and infrastructure analysis at scale."/>
+  <title>FastAPI vs PostGIS Performance — Real Geospatial API Benchmarks | whaledata.org</title>
+  <meta name="description" content="FastAPI and PostGIS benchmark results for a real geospatial API. Latency tests, load performance, and scaling insights from whaledata.org."/>
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-YF6235KKFV"></script>
   <script>
@@ -28,10 +28,10 @@
   <link rel="canonical" href="https://docs.whaledata.org/benchmarks"/>
   <meta name="twitter:card" content="summary_large_image"/>
   <meta name="twitter:image" content="https://whaledata.org/og-image.jpg"/>
-  <meta property="og:title" content="FastAPI PostGIS Benchmarks — Geospatial API Performance | whaledata.org"/>
+  <meta property="og:title" content="FastAPI vs PostGIS Performance — Real Geospatial API Benchmarks | whaledata.org"/>
   <meta property="og:url" content="https://docs.whaledata.org/benchmarks"/>
-  <meta name="twitter:title" content="FastAPI PostGIS Benchmarks — Geospatial API Performance | whaledata.org"/>
-  <meta name="keywords" content="FastAPI PostGIS performance, geospatial API benchmarks, whale data API latency, Locust load testing, PostGIS query performance, marine data benchmarks"/>
+  <meta name="twitter:title" content="FastAPI vs PostGIS Performance — Real Geospatial API Benchmarks | whaledata.org"/>
+  <meta name="keywords" content="FastAPI vs PostGIS performance, geospatial API benchmarks, FastAPI benchmarks, PostGIS query performance, Locust load testing, real API latency tests"/>
   <meta name="author" content="Monarch / KyraWeb"/>
   <!-- JSON-LD -->
   <script type="application/ld+json">
@@ -55,6 +55,20 @@
       "name": "whaledata.org Documentation",
       "url": "https://docs.whaledata.org"
     }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "FastAPI PostGIS Benchmarks",
+    "about": [
+      "Geospatial API performance",
+      "FastAPI benchmarks",
+      "PostGIS query performance",
+      "API latency under load"
+    ],
+    "url": "https://docs.whaledata.org/benchmarks"
   }
   </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
@@ -407,6 +421,7 @@
 </aside>
 
 <main class="main">
+  <h1 style="position:absolute;left:-9999px;">FastAPI PostGIS Benchmarks — Geospatial API Performance and Latency Tests</h1>
 
   <div class="page-hero">
     <div class="breadcrumb">
@@ -414,7 +429,7 @@
     </div>
     <div class="page-label">Performance</div>
     <h1 class="page-title">Zero failures.<br><em>Real numbers.</em></h1>
-    <p class="page-intro">Load tested against production with 50 concurrent users over 60 seconds using Locust 2.43. The API runs on a $12/month VPS. These are the honest results.</p>
+    <p class="page-intro">These benchmarks measure how a real geospatial API performs under load — including FastAPI response times, PostGIS query latency, and endpoint stability on a low-cost production VPS.</p>
   </div>
 
   <!-- HERO STATS -->
@@ -440,6 +455,21 @@
       <div class="sub">2GB RAM, Debian VPS</div>
     </div>
   </div>
+
+
+  <section id="overview" style="padding:60px 80px 0;max-width:900px;">
+    <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text3);margin-bottom:10px;">Overview</div>
+    <h2 style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;margin-bottom:14px;">What these benchmarks measure</h2>
+    <p style="font-size:15px;color:var(--text2);line-height:1.8;">
+      These benchmarks test the performance of a real geospatial API built with FastAPI and PostGIS. The results include latency under load, spatial query performance, and response consistency across production endpoints.
+    </p>
+    <p style="margin-top:16px;font-size:15px;color:var(--text2);line-height:1.8;">
+      The goal is not synthetic testing in isolation, but understanding how a live whale data platform behaves under real-world conditions on modest infrastructure.
+    </p>
+    <p style="margin-top:16px;font-size:15px;color:var(--text2);line-height:1.8;">
+      See how this connects to the <a href="/technology" style="color:var(--cyan);text-decoration:none;">technology stack</a> and <a href="/build" style="color:var(--cyan);text-decoration:none;">build journey</a>.
+    </p>
+  </section>
 
   <div class="content-layout">
     <div class="content-body">
@@ -654,6 +684,7 @@
     <aside>
       <div class="on-this-page">
         <h4>On this page</h4>
+        <a href="#overview">Overview</a>
         <a href="#setup">Test setup</a>
         <a href="#results">Raw results</a>
         <a href="#percentiles">Percentiles</a>

@@ -709,7 +709,8 @@ function checkMobile() { isMobile.value = window.innerWidth < 768 }
 const totalCount = computed(() => {
   let n = allSightings.value.filter(isOceanSighting).length
   for (const key of ['strandings','acoustics','inaturalist','historical']) {
-    if (activeLayers.value[key]) n += (layerData.value[key] || []).length
+    if (activeLayers.value[key])
+      n += (layerData.value[key] || []).filter(r => isOceanSighting({ longitude: r.longitude, latitude: r.latitude })).length
   }
   return n
 })

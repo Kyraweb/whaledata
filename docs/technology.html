@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Technology Stack — FastAPI PostGIS Geospatial &amp; Vue 3 Whale API | whaledata.org</title>
-  <meta name="description" content="The open source stack behind whaledata.org — FastAPI PostGIS geospatial API, Vue 3 globe, MapTiler SDK, Docker on Coolify for scalable marine data delivery."/>
+  <title>Whale Data Technology Stack — FastAPI, PostGIS, Vue &amp; Docker | whaledata.org</title>
+  <meta name="description" content="Explore the whale data technology stack behind whaledata.org — FastAPI, PostGIS, Vue 3, MapTiler, Docker, and Coolify for a geospatial whale tracking platform."/>
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-YF6235KKFV"></script>
   <script>
@@ -28,10 +28,10 @@
   <link rel="canonical" href="https://docs.whaledata.org/technology"/>
   <meta name="twitter:card" content="summary_large_image"/>
   <meta name="twitter:image" content="https://whaledata.org/og-image.jpg"/>
-  <meta property="og:title" content="Technology Stack — FastAPI PostGIS &amp; Vue 3 Whale Data API | whaledata.org"/>
+  <meta property="og:title" content="Whale Data Technology Stack — FastAPI, PostGIS, Vue &amp; Docker | whaledata.org"/>
   <meta property="og:url" content="https://docs.whaledata.org/technology"/>
-  <meta name="twitter:title" content="Technology Stack — FastAPI PostGIS &amp; Vue 3 Whale Data API | whaledata.org"/>
-  <meta name="keywords" content="FastAPI PostGIS geospatial, whale data API, open source marine data, Vue 3 MapTiler, PostgreSQL PostGIS whale, cetacean API stack"/>
+  <meta name="twitter:title" content="Whale Data Technology Stack — FastAPI, PostGIS, Vue &amp; Docker | whaledata.org"/>
+  <meta name="keywords" content="whale data technology stack, FastAPI PostGIS geospatial API, Vue 3 map application, Docker Coolify deployment, geospatial API architecture, cetacean API stack"/>
   <meta name="author" content="Monarch / KyraWeb"/>
   <!-- JSON-LD -->
   <script type="application/ld+json">
@@ -55,6 +55,20 @@
       "name": "whaledata.org Documentation",
       "url": "https://docs.whaledata.org"
     }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Whale Data Technology Stack",
+    "about": [
+      "FastAPI geospatial API",
+      "PostGIS whale data",
+      "Vue 3 map interface",
+      "Docker and Coolify deployment"
+    ],
+    "url": "https://docs.whaledata.org/technology"
   }
   </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
@@ -433,6 +447,8 @@
 </aside>
 
 <main class="main">
+  <h1 style="position:absolute;left:-9999px;">Whale Data Technology Stack — FastAPI, PostGIS, Vue 3 and Docker Deployment</h1>
+
 
   <div class="page-hero">
     <div class="breadcrumb">
@@ -441,7 +457,7 @@
     </div>
     <div class="page-label">How it was built</div>
     <h1 class="page-title">Built lean.<br>Built to <em>last</em>.</h1>
-    <p class="page-intro">Every technology choice was made against a single constraint: a solo project on a $12/month VPS with 2 vCPU and 2GB RAM. A system that works beautifully at $200/month is not a good system for this context.</p>
+    <p class="page-intro">This page documents the technology stack behind whaledata.org — a geospatial whale data platform built with FastAPI, PostGIS, Vue 3, Docker, and Coolify under tight infrastructure constraints.</p>
   </div>
 
   <!-- STACK OVERVIEW -->
@@ -471,6 +487,21 @@
       <div class="stack-item"><div class="stack-item-name">AWS SES</div><div class="stack-item-desc">Email alerts</div></div>
     </div>
   </div>
+
+  <section id="stack-overview" style="padding:60px 80px 0;max-width:980px;">
+    <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text3);margin-bottom:10px;">
+      Overview
+    </div>
+    <h2 style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;letter-spacing:-0.02em;margin-bottom:14px;">
+      How this whale data platform is built
+    </h2>
+    <p style="font-size:15px;color:var(--text2);line-height:1.8;">
+      whaledata.org runs on a lean geospatial stack designed for reliability rather than excess: PostgreSQL with PostGIS for spatial data, FastAPI for the backend and admin layer, Vue 3 for the interface, and Docker with Coolify for deployment.
+    </p>
+    <p style="margin-top:16px;font-size:15px;color:var(--text2);line-height:1.8;">
+      The goal was not to assemble the trendiest stack. It was to build a whale tracking platform that could ingest open datasets, serve a public API, render an interactive globe, and stay affordable to operate. See how this connects to the <a href="/data" style="color:var(--cyan);text-decoration:none;">data sources</a> and <a href="/benchmarks" style="color:var(--cyan);text-decoration:none;">performance benchmarks</a>.
+    </p>
+  </section>
 
   <div class="content-layout">
     <div class="content-body">
@@ -632,6 +663,7 @@
     <aside>
       <div class="on-this-page">
         <h4>On this page</h4>
+        <a href="#stack-overview">Overview</a>
         <a href="#architecture">Architecture</a>
         <a href="#database">Database</a>
         <a href="#api">API</a>

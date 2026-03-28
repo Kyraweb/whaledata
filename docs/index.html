@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Whale Sighting Map &amp; Open Cetacean Data — Documentation | whaledata.org</title>
-  <meta name="description" content="Docs for whaledata.org — interactive whale sighting map with 25,000+ open cetacean records from GBIF, OBIS &amp; NOAA. Conservation layers, API, and tech stack."/>
+  <title>Whale Data Platform Documentation — API, Map &amp; Open Cetacean Data | whaledata.org</title>
+  <meta name="description" content="Technical documentation for whaledata.org — an open whale data platform with 25,000+ records, geospatial APIs, conservation layers, and an interactive 3D map."/>
 
   <!-- Fonts -->
   <!-- Google Analytics -->
@@ -32,10 +32,12 @@
   <link rel="canonical" href="https://docs.whaledata.org/"/>
   <meta name="twitter:card" content="summary_large_image"/>
   <meta name="twitter:image" content="https://whaledata.org/og-image.jpg"/>
-  <meta property="og:title" content="Whale Sighting Map &amp; Open Cetacean Data Docs — whaledata.org"/>
+  <meta property="og:title" content="Whale Data Platform Documentation — whaledata.org"/>
   <meta property="og:url" content="https://docs.whaledata.org/"/>
-  <meta name="twitter:title" content="Whale Sighting Map &amp; Open Cetacean Data Docs — whaledata.org"/>
-  <meta name="keywords" content="whale sighting map, open cetacean data, whale tracking, whale conservation, cetacean database, interactive whale map, GBIF OBIS whale records"/>
+  <meta name="twitter:title" content="Whale Data Platform Documentation — whaledata.org"/>
+  <meta property="og:description" content="Technical documentation for whaledata.org — open cetacean data, whale tracking maps, conservation layers, and geospatial APIs."/>
+  <meta name="twitter:description" content="Technical documentation for whaledata.org — open cetacean data, whale tracking maps, conservation layers, and geospatial APIs."/>
+  <meta name="keywords" content="whale data platform, whale tracking map, whale sighting map, open cetacean data, cetacean data API, marine geospatial data, whale sightings dataset, PostGIS whale data"/>
   <meta name="author" content="Monarch / KyraWeb"/>
   <!-- JSON-LD -->
   <script type="application/ld+json">
@@ -44,11 +46,30 @@
     "@type": "WebSite",
     "name": "whaledata.org",
     "url": "https://whaledata.org",
-    "description": "Interactive whale sighting map with 25,000+ open cetacean records from GBIF, OBIS, and NOAA.",
+    "description": "Open whale data platform with an interactive map, API, and conservation context.",
     "author": {
       "@type": "Person",
       "name": "Monarch",
       "url": "https://kyraweb.ca"
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Whale Data Platform Documentation",
+    "url": "https://docs.whaledata.org/",
+    "description": "Technical documentation for the whale data platform, including open cetacean data sources, conservation layers, and geospatial API architecture.",
+    "author": {
+      "@type": "Person",
+      "name": "Monarch",
+      "url": "https://kyraweb.ca"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "whaledata.org",
+      "url": "https://whaledata.org"
     }
   }
   </script>
@@ -436,6 +457,90 @@
       font-weight: 300;
     }
 
+    .visually-hidden {
+      position: absolute !important;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .intro-section {
+      padding-top: 96px;
+      padding-bottom: 96px;
+      background: linear-gradient(180deg, rgba(10,21,37,0.9), rgba(5,8,16,1));
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .intro-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr;
+      gap: 24px;
+      margin-top: 48px;
+    }
+    .intro-card {
+      background: rgba(0,229,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 28px;
+      transition: all 0.25s ease;
+    }
+    .intro-card:hover {
+      border-color: var(--border2);
+      background: rgba(0,229,255,0.05);
+      transform: translateY(-4px);
+    }
+    .intro-card h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+    .intro-card p {
+      font-size: 14px;
+      line-height: 1.75;
+      color: var(--text2);
+      font-weight: 300;
+    }
+    .intro-card .mini-label,
+    .inline-links-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: 14px;
+    }
+    .inline-links {
+      margin-top: 28px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 20px;
+    }
+    .inline-links a {
+      color: var(--cyan);
+      text-decoration: none;
+      font-size: 14px;
+    }
+    .inline-links a:hover { text-decoration: underline; }
+
+    .context-links {
+      margin-top: 32px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 16px;
+      align-items: center;
+    }
+    .context-links a {
+      color: var(--cyan);
+      text-decoration: none;
+      font-size: 14px;
+    }
+    .context-links a:hover { text-decoration: underline; }
+
     /* ── PROBLEM SECTION ─────────────────────────────── */
     .problem-section {
       background: var(--surface);
@@ -659,6 +764,7 @@
       .hamburger { display: flex; }
       .sources-grid { grid-template-columns: repeat(3, 1fr); }
       .problem-grid { grid-template-columns: 1fr; }
+      .intro-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 640px) {
       section, .hero-content { padding: 80px 24px; }
@@ -671,6 +777,7 @@
       .features-list { grid-template-columns: 1fr; }
       .footer { flex-direction: column; gap: 20px; text-align: center; }
       .cta-buttons { flex-direction: column; align-items: center; }
+      .intro-section { padding-top: 72px; padding-bottom: 72px; }
     }
 
     /* ── OVERLAY ─────────────────────────────────────── */
@@ -894,21 +1001,22 @@
     <canvas id="whale-canvas"></canvas>
 
     <div class="hero-content">
-      <div class="hero-eyebrow" id="heroEyebrow">From Data to Discovery</div>
+      <h1 class="visually-hidden">Whale Data Platform Documentation — Open Cetacean Data, Whale Tracking Map, and Geospatial API</h1>
+      <div class="hero-eyebrow" id="heroEyebrow">Open documentation for the whale data platform</div>
 
-      <h1 class="hero-title" id="heroTitle">
+      <div class="hero-title" id="heroTitle">
         <span class="line"><span class="line-inner">25,000 whale</span></span>
         <span class="line"><span class="line-inner">records. <em>One</em></span></span>
         <span class="line"><span class="line-inner">open globe.</span></span>
-      </h1>
+      </div>
 
       <p class="hero-sub" id="heroSub">
-        The complete account of building whaledata.org — from scattered open science data to an interactive 3D platform used by conservationists, researchers, and anyone who cares about the ocean.
+        Technical documentation for whaledata.org — an open whale data platform built from global cetacean datasets, conservation layers, and a geospatial API rendered through an interactive 3D globe.
       </p>
 
       <div class="hero-cta" id="heroCta">
         <a href="/why" class="btn-primary">
-          Read the story
+          Explore the docs
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
@@ -947,6 +1055,36 @@
     </div>
   </section>
 
+  <!-- ══ INTRO / SEO ANCHOR ═════════════════════════════ -->
+  <section class="intro-section">
+    <div class="section-label">Documentation Overview</div>
+    <h2 class="section-title">A whale tracking map, open data pipeline,<br>and geospatial build log in one place.</h2>
+    <p class="section-lead">whaledata.org is an open whale data platform that brings together cetacean sightings, conservation layers, and platform engineering decisions. This documentation is meant for researchers, builders, and anyone exploring how a project like this is designed.</p>
+
+    <div class="intro-grid">
+      <div class="intro-card">
+        <div class="mini-label">What this site is</div>
+        <h3>A complete record of the platform</h3>
+        <p>This documentation covers how whaledata.org comes together — from open cetacean datasets and conservation layers to the geospatial API and system design behind the map.</p>
+        <div class="inline-links">
+          <a href="/data">Open data sources</a>
+          <a href="/technology">Technology stack</a>
+          <a href="/benchmarks">Performance benchmarks</a>
+        </div>
+      </div>
+      <div class="intro-card">
+        <div class="mini-label">For researchers</div>
+        <h3>Trace the data</h3>
+        <p>Review where the records come from, how they are unified, and how conservation context is layered onto the final map experience.</p>
+      </div>
+      <div class="intro-card">
+        <div class="mini-label">For developers</div>
+        <h3>Study the architecture</h3>
+        <p>See how the project moves from raw marine datasets to a rendered globe, API endpoints, automated sync jobs, and frontend performance decisions.</p>
+      </div>
+    </div>
+  </section>
+
   <!-- ══ PROBLEM ════════════════════════════════════════ -->
   <section class="problem-section">
     <div class="section-label">The Problem</div>
@@ -982,6 +1120,12 @@
     <div class="section-label">The Data</div>
     <h2 class="section-title">Five open sources.<br>One unified picture.</h2>
     <p class="section-lead">Every record is sourced from open scientific databases under CC BY 4.0 or equivalent open licenses. Updated automatically on rolling schedules.</p>
+    <div class="context-links">
+      <span class="inline-links-label" style="margin-bottom:0;">Explore next</span>
+      <a href="/data">Source methodology</a>
+      <a href="/conservation">Conservation layers</a>
+      <a href="/roadmap">Future expansion</a>
+    </div>
 
     <div class="sources-grid">
       <div class="source-card">
@@ -1022,6 +1166,12 @@
     <div class="section-label">The Platform</div>
     <h2 class="section-title">Every feature<br>had a reason.</h2>
     <p class="section-lead">Nothing was added for visual effect. Every feature solves a real problem in how open ocean data gets communicated to non-technical audiences.</p>
+    <div class="context-links">
+      <span class="inline-links-label" style="margin-bottom:0;">Related docs</span>
+      <a href="/technology">How it was built</a>
+      <a href="/build">Build journey</a>
+      <a href="/benchmarks">API and rendering benchmarks</a>
+    </div>
 
     <div class="features-list">
       <div class="feature-item">
@@ -1073,11 +1223,17 @@
   <section class="cta-section">
     <div class="section-label" style="justify-content:center">Read the full story</div>
     <h2 class="section-title">Built over 12 months.<br>Documented completely.</h2>
-    <p class="section-lead">From the first database schema to the last mobile layout fix — every decision, every debugging session, every data quality problem is documented here.</p>
+    <p class="section-lead">From the first database schema to the last mobile layout fix — every decision, every debugging session, every data quality problem is documented here. Use the core narrative pages to understand the project, then branch into supporting pages and standalone articles for deeper technical or data-specific topics.</p>
     <div class="cta-buttons">
       <a href="/why" class="btn-primary">Start reading</a>
       <a href="/build" class="btn-primary" style="background:transparent;border:1px solid var(--border2);color:var(--cyan)">The build journey</a>
       <a href="/benchmarks" class="btn-primary" style="background:transparent;border:1px solid var(--border2);color:var(--cyan)">Performance benchmarks</a>
+    </div>
+    <div class="context-links" style="justify-content:center;margin-top:28px;">
+      <a href="/data">Open whale data sources</a>
+      <a href="/technology">Geospatial stack</a>
+      <a href="/conservation">Map layers</a>
+      <a href="/roadmap">Roadmap</a>
     </div>
   </section>
 

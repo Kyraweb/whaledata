@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Build Journey — Whale Data Visualization with FastAPI &amp; Vue 3 | whaledata.org</title>
-  <meta name="description" content="12 months of whale data visualization dev — FastAPI, Vue 3 globe, PostGIS. Every phase, failure, and fix in the whaledata.org build journey."/>
+  <title>Whale Data Platform Build Journey — FastAPI, Vue 3 &amp; PostGIS Case Study | whaledata.org</title>
+  <meta name="description" content="A complete case study of building a whale data platform using FastAPI, Vue 3, and PostGIS. Every iteration, bug, and system decision behind whaledata.org."/>
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-YF6235KKFV"></script>
   <script>
@@ -28,10 +28,10 @@
   <link rel="canonical" href="https://docs.whaledata.org/build"/>
   <meta name="twitter:card" content="summary_large_image"/>
   <meta name="twitter:image" content="https://whaledata.org/og-image.jpg"/>
-  <meta property="og:title" content="Whale Data Visualization Build Journey — FastAPI &amp; Vue 3 | whaledata.org"/>
+  <meta property="og:title" content="Whale Data Platform Build Journey — FastAPI, Vue 3 &amp; PostGIS Case Study | whaledata.org"/>
   <meta property="og:url" content="https://docs.whaledata.org/build"/>
-  <meta name="twitter:title" content="Whale Data Visualization Build Journey — FastAPI &amp; Vue 3 | whaledata.org"/>
-  <meta name="keywords" content="whale data visualization build, FastAPI Vue3 globe, open source whale map build, cetacean data platform, PostGIS geospatial development"/>
+  <meta name="twitter:title" content="Whale Data Platform Build Journey — FastAPI, Vue 3 &amp; PostGIS Case Study | whaledata.org"/>
+  <meta name="keywords" content="whale data platform build, FastAPI PostGIS case study, Vue 3 data visualization, geospatial API build example, whale tracking platform development"/>
   <meta name="author" content="Monarch / KyraWeb"/>
   <!-- JSON-LD -->
   <script type="application/ld+json">
@@ -55,6 +55,20 @@
       "name": "whaledata.org Documentation",
       "url": "https://docs.whaledata.org"
     }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Whale Data Platform Build Journey",
+    "about": [
+      "Geospatial data platform development",
+      "FastAPI backend architecture",
+      "Vue 3 data visualization",
+      "PostGIS whale data modeling"
+    ],
+    "url": "https://docs.whaledata.org/build"
   }
   </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
@@ -454,6 +468,8 @@
 
 <main class="main">
 
+  <h1 style="position:absolute;left:-9999px;">Whale Data Platform Build Journey — FastAPI, Vue 3 and PostGIS Case Study</h1>
+
   <div class="page-hero">
     <div class="breadcrumb">
       <a href="/">Home</a><span>/</span>
@@ -461,7 +477,7 @@
     </div>
     <div class="page-label">How it was built</div>
     <h1 class="page-title">12 months.<br>Every <em>iteration</em>.</h1>
-    <p class="page-intro">Nothing about this build went in a straight line. The globe took six months of debugging. The data had whales in the Himalayas. The admin panel broke in three different ways. This is the honest account of how it actually happened.</p>
+    <p class="page-intro">This is a full case study of building a whale data platform — from early API design and geospatial data issues to frontend performance, debugging, and production deployment decisions.</p>
   </div>
 
   <!-- TIMELINE -->
@@ -478,6 +494,20 @@
     <div class="timeline-point"><div class="timeline-date">Feb 2026</div><div class="timeline-event">Email alerts via SES</div></div>
     <div class="timeline-point"><div class="timeline-date">Mar 2026</div><div class="timeline-event">Docs site launched</div></div>
   </div>
+
+  <section id="overview" style="padding:60px 80px 0;max-width:980px;">
+    <div style="font-family:'DM Mono', monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text3);margin-bottom:10px;">Overview</div>
+    <h2 style="font-family:'Syne', sans-serif;font-size:28px;font-weight:800;letter-spacing:-0.02em;margin-bottom:14px;">What this build journey covers</h2>
+    <p style="font-size:15px;color:var(--text2);line-height:1.8;font-weight:300;margin-bottom:16px;">
+      This page documents how whaledata.org was built over 12 months — including data ingestion from open marine sources, geospatial modeling with PostGIS, API development in FastAPI, and rendering a real-time globe using Vue 3 and WebGL.
+    </p>
+    <p style="font-size:15px;color:var(--text2);line-height:1.8;font-weight:300;margin-bottom:16px;">
+      It is written as a practical reference for developers building similar data platforms, as well as anyone interested in how whale conservation data can be transformed into an accessible public tool.
+    </p>
+    <p style="font-size:15px;color:var(--text2);line-height:1.8;font-weight:300;">
+      See how this connects to the <a href="/technology" style="color:var(--cyan);text-decoration:none;">technology stack</a> and <a href="/data" style="color:var(--cyan);text-decoration:none;">data sources</a>.
+    </p>
+  </section>
 
   <div class="content-layout">
     <div class="content-body">
@@ -693,6 +723,7 @@
     <aside>
       <div class="on-this-page">
         <h4>On this page</h4>
+        <a href="#overview">Overview</a>
         <a href="#phase1">Foundation</a>
         <a href="#phase2">The Globe Problem</a>
         <a href="#phase3">Data Quality</a>
