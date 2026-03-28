@@ -401,6 +401,8 @@ function initLayers() {
 
   for (const key of ['strandings','acoustics','inaturalist','historical']) {
     const color = LAYER_COLORS_MAP[key]
+    // Respect the prop's initial value — if the layer starts active, show it immediately
+    const vis = props.activeLayers[key] ? 'visible' : 'none'
 
     map.addSource(`layer-${key}`, {
       type: 'geojson',
@@ -418,7 +420,7 @@ function initLayers() {
         'circle-radius': ['step', ['get', 'point_count'], 16, 50, 22, 200, 28],
         'circle-opacity': 0.75,
       },
-      layout: { visibility: 'none' }
+      layout: { visibility: vis }
     })
     // Cluster count label
     map.addLayer({ id: `layer-${key}-cluster-count`, type: 'symbol', source: `layer-${key}`,
@@ -427,7 +429,7 @@ function initLayers() {
         'text-field': '{point_count_abbreviated}',
         'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
         'text-size': 11,
-        'visibility': 'none',
+        'visibility': vis,
       },
       paint: { 'text-color': '#050810' }
     })
@@ -435,7 +437,7 @@ function initLayers() {
     map.addLayer({ id: `layer-${key}-glow`, type: 'circle', source: `layer-${key}`,
       filter: ['!', ['has', 'point_count']],
       paint: { 'circle-radius': 12, 'circle-color': color, 'circle-opacity': 0.12, 'circle-blur': 1 },
-      layout: { visibility: 'none' }
+      layout: { visibility: vis }
     })
     // Individual dot
     map.addLayer({ id: `layer-${key}-dot`, type: 'circle', source: `layer-${key}`,
@@ -448,13 +450,13 @@ function initLayers() {
         'circle-stroke-color': '#050810',
         'circle-stroke-opacity': 0.5,
       },
-      layout: { visibility: 'none' }
+      layout: { visibility: vis }
     })
     // Hit area for hover
     map.addLayer({ id: `layer-${key}-hit`, type: 'circle', source: `layer-${key}`,
       filter: ['!', ['has', 'point_count']],
       paint: { 'circle-radius': 12, 'circle-color': 'transparent', 'circle-opacity': 0 },
-      layout: { visibility: 'none' }
+      layout: { visibility: vis }
     })
 
     // Cluster click → zoom in

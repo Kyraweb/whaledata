@@ -450,23 +450,23 @@
             <div class="bb-popup-title">Data Layers</div>
             <button class="bb-layer-btn" :class="{ active: activeLayers.sightings }" @click="activeLayers.sightings = !activeLayers.sightings">
               <span class="bb-dot" style="background:#00e5ff"></span> Sightings
-              <span class="bb-layer-n">{{ (layersSummary.sightings||0).toLocaleString() }}</span>
+              <span class="bb-layer-n">{{ layerCount('sightings') }}</span>
             </button>
             <button class="bb-layer-btn" :class="{ active: activeLayers.strandings }" @click="activeLayers.strandings = !activeLayers.strandings">
               <span class="bb-dot" style="background:#ff5a5a"></span> Strandings
-              <span class="bb-layer-n">{{ (layersSummary.strandings||0).toLocaleString() }}</span>
+              <span class="bb-layer-n">{{ layerCount('strandings') }}</span>
             </button>
             <button class="bb-layer-btn" :class="{ active: activeLayers.acoustics }" @click="activeLayers.acoustics = !activeLayers.acoustics">
               <span class="bb-dot" style="background:#9664ff"></span> Acoustics
-              <span class="bb-layer-n">{{ (layersSummary.acoustics||0).toLocaleString() }}</span>
+              <span class="bb-layer-n">{{ layerCount('acoustics') }}</span>
             </button>
             <button class="bb-layer-btn" :class="{ active: activeLayers.inaturalist }" @click="activeLayers.inaturalist = !activeLayers.inaturalist">
               <span class="bb-dot" style="background:#64c864"></span> iNaturalist
-              <span class="bb-layer-n">{{ (layersSummary.inaturalist||0).toLocaleString() }}</span>
+              <span class="bb-layer-n">{{ layerCount('inaturalist') }}</span>
             </button>
             <button class="bb-layer-btn" :class="{ active: activeLayers.historical }" @click="activeLayers.historical = !activeLayers.historical">
               <span class="bb-dot" style="background:#ffb432"></span> Historical
-              <span class="bb-layer-n">{{ (layersSummary.historical||0).toLocaleString() }}</span>
+              <span class="bb-layer-n">{{ layerCount('historical') }}</span>
             </button>
           </div>
         </Transition>
@@ -911,9 +911,18 @@ watch(activeLayers, (layers) => {
   }
 }, { deep: true })
 
+// ── Layer count helper ────────────────────────────────────────
+// layersSummary values may be a plain number OR an object like { count: N, ... }
+function layerCount(key) {
+  const v = layersSummary.value[key]
+  if (v == null) return ''
+  const n = typeof v === 'number' ? v : (v.count ?? v.total ?? null)
+  return n != null ? Number(n).toLocaleString() : ''
+}
+
 // ── Onboarding ────────────────────────────────────────────────
 function dismissOnboarding() {
-  localStorage.setItem('wd_onboarding_done', '1')
+  sessionStorage.setItem('wd_onboarding_done', '1')
   onboardingVisible.value = false
 }
 
@@ -928,7 +937,7 @@ onMounted(() => {
     if (active && key !== 'sightings') loadLayerData(key, LAYER_URLS[key])
   }
   // First-visit onboarding
-  if (!localStorage.getItem('wd_onboarding_done')) {
+  if (!sessionStorage.getItem('wd_onboarding_done')) {
     onboardingVisible.value = true
   }
 })
@@ -1609,13 +1618,13 @@ onUnmounted(() => { window.removeEventListener('resize', checkMobile); window.re
 .onboard-help-icon {
   position: fixed;
   bottom: 24px;
-  left: 24px;
+  right: 16px;
   width: 36px; height: 36px;
   border-radius: 50%;
-  background: rgba(8, 13, 26, 0.85);
+  background: rgba(8, 13, 26, 0.88);
   backdrop-filter: blur(12px);
-  border: 1px solid var(--border);
-  color: var(--text-muted);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  color: rgba(0, 229, 255, 0.6);
   font-size: 14px; font-weight: 700;
   font-family: var(--font-display);
   cursor: pointer;
@@ -1624,8 +1633,9 @@ onUnmounted(() => { window.removeEventListener('resize', checkMobile); window.re
   transition: all 0.15s;
 }
 .onboard-help-icon:hover {
-  border-color: var(--border-bright);
-  color: var(--text-primary);
+  border-color: rgba(0, 229, 255, 0.7);
+  color: var(--cyan);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.15);
 }
 
 .btn-year {
