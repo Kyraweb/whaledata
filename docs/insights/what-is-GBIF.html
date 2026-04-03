@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>What Is GBIF Whale Data? Accuracy, Limits &amp; Why It Matters | whaledata.org</title>
+  <meta name="description" content="A plain-English guide to GBIF whale data: what it is, where the records come from, how accurate they are, and why filtering matters for maps, research, and public understanding."/>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-YF6235KKFV"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-YF6235KKFV');
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+  <link rel="icon" type="image/png" href="/favicon/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="/favicon/favicon.svg" />
+  <link rel="shortcut icon" href="/favicon/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png" />
+  <link rel="manifest" href="/favicon/site.webmanifest" />
+  <meta property="og:image" content="https://whaledata.org/og-image.jpg"/>
+  <meta property="og:image:width" content="1200"/>
+  <meta property="og:image:height" content="630"/>
+  <meta property="og:type" content="article"/>
+  <meta property="og:site_name" content="whaledata.org"/>
+  <link rel="canonical" href="https://docs.whaledata.org/insights/what-is-gbif-whale-data"/>
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:image" content="https://whaledata.org/og-image.jpg"/>
+  <meta property="og:title" content="What Is GBIF Whale Data? Accuracy, Limits &amp; Why It Matters | whaledata.org"/>
+  <meta property="og:url" content="https://docs.whaledata.org/insights/what-is-gbif-whale-data"/>
+  <meta name="twitter:title" content="What Is GBIF Whale Data? Accuracy, Limits &amp; Why It Matters | whaledata.org"/>
+  <meta property="og:description" content="A plain-English guide to GBIF whale data: what it is, where the records come from, how accurate they are, and why filtering matters for maps, research, and public understanding."/>
+  <meta name="twitter:description" content="A plain-English guide to GBIF whale data: what it is, where the records come from, how accurate they are, and why filtering matters for maps, research, and public understanding."/>
+  <meta name="keywords" content="GBIF whale data, what is GBIF, whale sightings data, GBIF whale records, whale data accuracy, biodiversity occurrence records, whale mapping data"/>
+  <meta name="author" content="Monarch / KyraWeb"/>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "What Is GBIF Whale Data? Accuracy, Limits and Why It Matters",
+    "url": "https://docs.whaledata.org/insights/what-is-gbif-whale-data",
+    "description": "A plain-English guide to GBIF whale data: what it is, where the records come from, how accurate they are, and why filtering matters for maps, research, and public understanding.",
+    "author": {
+      "@type": "Person",
+      "name": "Monarch",
+      "url": "https://kyraweb.ca"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "whaledata.org",
+      "url": "https://whaledata.org"
+    },
+    "isPartOf": {
+      "@type": "WebSite",
+      "name": "whaledata.org Documentation",
+      "url": "https://docs.whaledata.org"
+    }
+  }
+  </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is GBIF?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "GBIF stands for the Global Biodiversity Information Facility. It helps people discover biodiversity occurrence records from publishers such as museums, research institutions, surveys, and scientific collections."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What does GBIF whale data mean?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "GBIF whale data usually means occurrence records connected to whale species. These records can include a species name, a date, a location, and information about the dataset or institution that published the record."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is GBIF whale data accurate?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "GBIF whale data can be very useful, but it is not automatically perfect. Some records are strong and highly useful, while others may contain geospatial issues, taxonomic inconsistencies, missing metadata, or historical uncertainty."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Why do whales sometimes appear on land in biodiversity maps?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "This can happen when source records have coordinate problems, rough location estimates, older georeferencing standards, or other geospatial issues. Good map platforms try to filter or explain these cases."
+        }
+      }
+    ]
+  }
+  </script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --cyan: #00e5ff; --cyan-dim: #00b8cc; --cyan-deep: #006b7e;
+      --dark: #050810; --surface: #0a1525; --surface2: #0d1e32;
+      --border: rgba(0,229,255,0.1); --border2: rgba(0,229,255,0.2);
+      --text: #e8f4f8; --text2: #7a9bb5; --text3: #3a5a72;
+      --green: #00c97a; --pink: #ff6b9d; --amber: #ffb432;
+      --red: #ff5a5a; --purple: #9664ff;
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--dark); color: var(--text); font-family: 'DM Sans', sans-serif; overflow-x: hidden; cursor: none; }
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+
+    .cursor { position: fixed; width: 8px; height: 8px; background: var(--cyan); border-radius: 50%; pointer-events: none; z-index: 9999; transform: translate(-50%,-50%); mix-blend-mode: screen; }
+    .cursor-ring { position: fixed; width: 32px; height: 32px; border: 1px solid rgba(0,229,255,0.4); border-radius: 50%; pointer-events: none; z-index: 9998; transform: translate(-50%,-50%); transition: all 0.15s ease; }
+    @media (hover: none), (pointer: coarse) { body { cursor: auto; } .cursor, .cursor-ring { display: none !important; } }
+
+    .sidebar { position: fixed; top: 0; left: 0; width: 240px; height: 100vh; background: rgba(5,8,16,0.95); backdrop-filter: blur(20px); border-right: 1px solid var(--border); z-index: 100; display: flex; flex-direction: column; padding: 32px 0; }
+    .sidebar-logo { padding: 0 24px 32px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+    .sidebar-logo a { text-decoration: none; display: flex; align-items: center; gap: 10px; }
+    .sidebar-logo .name { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: var(--text); }
+    .sidebar-logo .name span { color: var(--cyan); }
+    .sidebar-logo .sub { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text3); letter-spacing: 0.15em; text-transform: uppercase; margin-top: 2px; }
+    .sidebar-nav { flex: 1; padding: 0 16px; overflow-y: auto; }
+    .nav-section { margin-bottom: 24px; }
+    .nav-section-label { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text3); letter-spacing: 0.15em; text-transform: uppercase; padding: 0 8px; margin-bottom: 8px; }
+    .nav-link { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; text-decoration: none; font-size: 13px; color: var(--text2); transition: all 0.15s; margin-bottom: 2px; }
+    .nav-link:hover, .nav-link.active { background: rgba(0,229,255,0.06); color: var(--cyan); }
+    .nav-link .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); flex-shrink: 0; transition: background 0.15s; }
+    .nav-link:hover .dot, .nav-link.active .dot { background: var(--cyan); }
+    .sidebar-footer { padding: 20px 24px 0; border-top: 1px solid var(--border); }
+    .sidebar-footer a { display: block; font-size: 11px; color: var(--text3); text-decoration: none; margin-bottom: 6px; transition: color 0.15s; }
+    .sidebar-footer a:hover { color: var(--cyan); }
+
+    .main { margin-left: 240px; min-height: 100vh; }
+
+    .page-hero {
+      padding: 100px 80px 80px;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-inner {
+      max-width: 1380px;
+      margin: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) 420px;
+      gap: 48px;
+      align-items: end;
+    }
+    .hero-side {
+      background: rgba(10,21,37,0.72);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 26px 24px;
+      box-shadow: 0 18px 48px rgba(0,0,0,0.22);
+      backdrop-filter: blur(14px);
+    }
+    .hero-side-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text3);
+      margin-bottom: 14px;
+    }
+    .hero-side h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px;
+      line-height: 1.15;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+    .hero-side p {
+      font-size: 14px;
+      line-height: 1.75;
+      color: var(--text2);
+      font-weight: 300;
+      margin-bottom: 18px;
+    }
+    .hero-side p:last-child { margin-bottom: 0; }
+    .hero-side-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .hero-side-item {
+      border-top: 1px solid rgba(0,229,255,0.06);
+      padding-top: 12px;
+    }
+    .hero-side-item strong {
+      display: block;
+      color: var(--text);
+      font-size: 14px;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+    .hero-side-item span {
+      display: block;
+      color: var(--text3);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .page-hero::before {
+      content: '';
+      position: absolute;
+      top: -100px; right: -100px;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(0,229,255,0.04) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .breadcrumb {
+      display: flex; align-items: center; gap: 8px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px; color: var(--text3);
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+    }
+    .breadcrumb a { color: var(--text3); text-decoration: none; transition: color 0.15s; }
+    .breadcrumb a:hover { color: var(--cyan); }
+    .page-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px; letter-spacing: 0.2em;
+      text-transform: uppercase; color: var(--cyan);
+      margin-bottom: 16px; display: flex; align-items: center; gap: 12px;
+    }
+    .page-label::before { content: ''; width: 24px; height: 1px; background: var(--cyan); }
+    .page-title { font-family: 'Syne', sans-serif; font-size: clamp(40px, 5vw, 68px); font-weight: 800; line-height: 1; letter-spacing: -0.03em; margin-bottom: 24px; max-width: 820px; }
+    .page-title em { font-style: normal; color: var(--cyan); }
+    .page-intro { font-size: 18px; color: var(--text2); line-height: 1.7; max-width: 720px; font-weight: 300; }
+
+    .overview-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      padding: 48px 80px 0;
+      max-width: 1380px;
+      margin: 0;
+    }
+    .overview-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      transition: all 0.2s;
+      cursor: default;
+    }
+    .overview-card:hover { border-color: var(--border2); transform: translateY(-3px); }
+    .overview-card .dot { width: 10px; height: 10px; border-radius: 50%; margin: 0 auto 12px; }
+    .overview-card .src-name { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .overview-card .src-count { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 500; color: var(--cyan); margin-bottom: 4px; }
+    .overview-card .src-type { font-size: 11px; color: var(--text3); line-height: 1.4; }
+
+    .content-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 230px;
+      gap: clamp(28px, 3vw, 56px);
+      padding: 80px;
+      max-width: 1380px;
+      margin: 0;
+      width: min(1380px, calc(100% - 160px));
+    }
+    .content-body {
+      min-width: 0;
+      max-width: 920px;
+    }
+
+    .on-this-page {
+      position: sticky; top: 24px; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px; font-size: 12px;
+    }
+    .on-this-page h4 { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text3); margin-bottom: 12px; }
+    .on-this-page a { display: block; color: var(--text2); text-decoration: none; padding: 5px 0 5px 12px; border-left: 2px solid transparent; transition: all 0.15s; font-size: 12px; }
+    .on-this-page a:hover, .on-this-page a.active { color: var(--cyan); border-left-color: var(--cyan); }
+
+    .prose-section { margin-bottom: 72px; scroll-margin-top: 80px; }
+    .prose-section h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 28px; font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 20px;
+    }
+    .prose-section h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      margin: 28px 0 12px;
+      color: var(--text);
+    }
+    .prose-section p {
+      font-size: 17px; line-height: 1.82;
+      color: var(--text2); font-weight: 300;
+      margin-bottom: 20px;
+    }
+    .prose-section p strong { color: var(--text); font-weight: 500; }
+    .prose-section ul { margin: 0 0 20px 20px; }
+    .prose-section li {
+      font-size: 16px; line-height: 1.8;
+      color: var(--text2); font-weight: 300;
+      margin-bottom: 8px;
+    }
+
+    .pullquote {
+      margin: 40px 0;
+      padding: 28px 32px;
+      border-left: 3px solid var(--cyan);
+      background: rgba(0,229,255,0.03);
+      border-radius: 0 12px 12px 0;
+    }
+    .pullquote p {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px; font-weight: 600;
+      color: var(--text) !important;
+      line-height: 1.5;
+      font-style: italic;
+      margin: 0 !important;
+    }
+
+    .stat-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin: 32px 0; }
+    .stat-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .stat-box:hover { border-color: var(--border2); transform: translateY(-2px); }
+    .stat-box .num { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; color: var(--cyan); line-height: 1; margin-bottom: 6px; }
+    .stat-box .lbl { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); }
+
+    .highlight-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      margin: 32px 0;
+    }
+    .highlight-box h3 { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+    .highlight-box p { font-size: 14px; color: var(--text2); line-height: 1.7; font-weight: 300; margin: 0; }
+
+    .warning-box { background: rgba(255,180,50,0.05); border: 1px solid rgba(255,180,50,0.2); border-radius: 12px; padding: 20px 24px; margin: 20px 0; display: flex; gap: 16px; }
+    .warning-box .icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+    .warning-box p { font-size: 14px; color: var(--text2); line-height: 1.7; margin: 0; font-weight: 300; }
+    .warning-box p strong { color: var(--amber); }
+
+    .info-box { background: rgba(0,229,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; margin: 20px 0; display: flex; gap: 16px; }
+    .info-box .icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+    .info-box p { font-size: 14px; color: var(--text2); line-height: 1.7; margin: 0; font-weight: 300; }
+    .info-box p strong { color: var(--cyan); }
+
+    .faq-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 10px 24px;
+      margin-top: 30px;
+    }
+    .faq-item { padding: 18px 0; border-bottom: 1px solid rgba(0,229,255,0.05); }
+    .faq-item:last-child { border-bottom: none; }
+    .faq-item h3 { margin: 0 0 8px; font-size: 17px; }
+    .faq-item p { font-size: 15px; margin: 0; }
+
+    .page-nav {
+      display: none;
+      justify-content: space-between;
+      padding: 48px 80px 80px;
+      border-top: 1px solid var(--border);
+    }
+    .page-nav-link {
+      display: flex; flex-direction: column; gap: 4px;
+      text-decoration: none; padding: 20px 24px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      transition: all 0.2s;
+      max-width: 240px;
+    }
+    .page-nav-link.next { align-items: flex-end; }
+    .page-nav-link:hover { border-color: var(--border2); background: rgba(0,229,255,0.03); }
+    .page-nav-link.prev:hover { transform: translateX(-4px); }
+    .page-nav-link.next:hover { transform: translateX(4px); }
+    .page-nav-link .label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); }
+    .page-nav-link .title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: var(--cyan); }
+
+    .footer {
+      background: var(--dark);
+      border-top: 1px solid var(--border);
+      padding: 48px 80px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .footer-inner {
+      width: min(1380px, 100%);
+      max-width: 1380px;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+    .footer-left { font-size: 13px; color: var(--text3); line-height: 1.7; }
+    .footer-left a { color: var(--cyan-dim); text-decoration: none; }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a { font-size: 13px; color: var(--text3); text-decoration: none; transition: color 0.15s; }
+    .footer-links a:hover { color: var(--cyan); }
+
+    .hamburger { display: none; position: fixed; top: 20px; right: 20px; z-index: 200; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px; cursor: pointer; flex-direction: column; gap: 4px; }
+    .hamburger span { display: block; width: 20px; height: 2px; background: var(--cyan); border-radius: 2px; }
+    .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99; }
+    .overlay.show { display: block; }
+
+    .feedback-btn {
+      position: fixed;
+      bottom: 32px; right: 32px;
+      z-index: 500;
+      display: flex; align-items: center; gap: 8px;
+      padding: 12px 20px;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 40px;
+      color: var(--cyan);
+      font-family: 'Syne', sans-serif;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+      transition: all 0.2s;
+      backdrop-filter: blur(12px);
+    }
+    .feedback-btn:hover {
+      background: rgba(0,229,255,0.08);
+      border-color: var(--cyan);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0,229,255,0.15);
+    }
+    .feedback-btn svg { flex-shrink: 0; }
+    .feedback-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 600;
+      backdrop-filter: blur(4px);
+    }
+    .feedback-overlay.open { display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .feedback-modal {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 20px;
+      padding: 36px;
+      width: 100%; max-width: 480px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,229,255,0.05);
+      animation: modalIn 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.94) translateY(12px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .feedback-modal-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; }
+    .feedback-modal-header h3 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; color: var(--text); }
+    .feedback-modal-header p { font-size: 13px; color: var(--text3); margin-top: 4px; font-weight: 300; }
+    .feedback-close {
+      width: 32px; height: 32px; border-radius: 8px; background: none;
+      border: 1px solid var(--border); color: var(--text2); font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s;
+    }
+    .feedback-close:hover { border-color: var(--border2); color: var(--text); }
+    .feedback-field { margin-bottom: 16px; }
+    .feedback-field label {
+      display: block; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--text3); margin-bottom: 8px;
+    }
+    .feedback-field input, .feedback-field textarea, .feedback-field select {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+      padding: 12px 16px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px;
+      outline: none; transition: border-color 0.15s; resize: none;
+    }
+    .feedback-field input:focus, .feedback-field textarea:focus, .feedback-field select:focus { border-color: var(--cyan); }
+    .feedback-field select option { background: var(--surface2); }
+    .feedback-field textarea { height: 110px; line-height: 1.6; }
+    .feedback-submit {
+      width: 100%; padding: 14px; background: var(--cyan); color: var(--dark);
+      font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700;
+      border: none; border-radius: 40px; cursor: pointer; transition: all 0.2s; margin-top: 8px;
+    }
+    .feedback-submit:hover { background: white; }
+    .feedback-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+    .feedback-success { text-align: center; padding: 24px 0 8px; }
+    .feedback-success .check { font-size: 40px; margin-bottom: 16px; }
+    .feedback-success h4 { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; margin-bottom: 8px; }
+    .feedback-success p { font-size: 14px; color: var(--text2); font-weight: 300; }
+
+    @media (min-width: 1181px) {
+      .page-hero,
+      .footer {
+        padding-left: 56px;
+        padding-right: 56px;
+      }
+      .overview-grid,
+      .content-layout {
+        padding-left: 56px;
+        padding-right: 56px;
+      }
+      .content-layout {
+        width: min(1380px, calc(100% - 112px));
+      }
+    }
+
+    @media (max-width: 1180px) {
+      .hero-inner {
+        grid-template-columns: 1fr;
+        gap: 28px;
+      }
+      .hero-side {
+        max-width: 760px;
+      }
+      .content-body {
+        max-width: 100%;
+      }
+    }
+
+    @media (max-width: 1024px) {
+      .sidebar {
+        top: auto; bottom: 0; left: 0; right: 0; width: 100%; height: auto; max-height: 80vh;
+        border-right: none; border-top: 1px solid var(--border); border-radius: 20px 20px 0 0;
+        transform: translateY(100%); padding: 0 0 32px;
+      }
+      .sidebar.open { transform: translateY(0); }
+      .sidebar-logo { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+      .close-btn { display: flex !important; width: 32px; height: 32px; align-items: center; justify-content: center; background: none; border: 1px solid var(--border); border-radius: 8px; color: var(--text2); font-size: 16px; cursor: pointer; }
+      .main { margin-left: 0; }
+      .hamburger { display: flex; }
+      .overview-grid { grid-template-columns: repeat(2,1fr); padding: 32px 24px 0; }
+      .content-layout { grid-template-columns: 1fr; padding: 40px 24px; }
+      .on-this-page { display: none; }
+      .page-hero { padding: 80px 24px 48px; }
+      .hero-inner { gap: 24px; }
+      .page-nav { padding: 48px 24px; }
+      .footer { padding: 40px 24px; }
+      .footer-inner { flex-direction: column; gap: 20px; text-align: center; }
+    }
+    @media (max-width: 640px) {
+      .page-title { font-size: clamp(36px, 10vw, 52px); }
+      .overview-grid { grid-template-columns: 1fr 1fr; }
+      .stat-row { grid-template-columns: 1fr; }
+      .prose-section p, .prose-section li { font-size: 16px; }
+      .feedback-btn { bottom: 20px; right: 20px; padding: 10px 16px; font-size: 12px; }
+      .feedback-modal { padding: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+<button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+<div class="overlay" id="overlay"></div>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <a href="/">
+      <span style="font-size:24px;line-height:1">🐋</span>
+      <div>
+        <div class="name">whaledata<span>.org</span></div>
+        <div class="sub">Documentation</div>
+      </div>
+    </a>
+    <button class="close-btn" id="closeBtn" style="display:none">✕</button>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-label">Overview</div>
+      <a href="/" class="nav-link"><span class="dot"></span>Home</a>
+      <a href="/why" class="nav-link"><span class="dot"></span>Why this project</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">The Data</div>
+      <a href="/data" class="nav-link"><span class="dot"></span>Data sources</a>
+      <a href="/conservation" class="nav-link"><span class="dot"></span>Conservation layers</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">How it was built</div>
+      <a href="/technology" class="nav-link"><span class="dot"></span>Technology stack</a>
+      <a href="/build" class="nav-link"><span class="dot"></span>The build journey</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Performance</div>
+      <a href="/benchmarks" class="nav-link"><span class="dot"></span>Benchmarks</a>
+      <a href="/roadmap" class="nav-link"><span class="dot"></span>Roadmap</a>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <a href="https://whaledata.org" target="_blank">↗ whaledata.org</a>
+    <a href="https://github.com/Kyraweb/whaledata" target="_blank">↗ GitHub</a>
+    <a href="https://api.whaledata.org/docs" target="_blank">↗ API docs</a>
+  </div>
+</aside>
+
+<main class="main">
+  <h1 class="sr-only">What is GBIF whale data? Accuracy, limits, and why it matters</h1>
+
+  <div class="page-hero">
+    <div class="hero-inner">
+      <div class="hero-copy">
+        <div class="breadcrumb">
+          <a href="/">Home</a><span>/</span><span>Article</span>
+        </div>
+        <div class="page-label">The Data</div>
+        <h1 class="page-title">What is <em>GBIF</em><br>whale data?</h1>
+        <p class="page-intro">GBIF whale data is one of the most useful starting points for understanding where whale species have been recorded around the world. It can power maps, public education, and research workflows — but it only becomes truly useful when people understand what the records mean, what their limits are, and why filtering matters.</p>
+      </div>
+      <aside class="hero-side">
+        <div class="hero-side-label">Quick context</div>
+        <h3>A discovery layer, not a perfect ocean truth machine.</h3>
+        <p>GBIF helps expose biodiversity occurrence records at global scale. That makes it excellent for exploration and education, but responsible platforms still need filtering, interpretation, and context before turning every record into a confident public-facing map point.</p>
+        <div class="hero-side-list">
+          <div class="hero-side-item">
+            <strong>Best use</strong>
+            <span>Discovery, mapping foundations, distribution questions, and public understanding.</span>
+          </div>
+          <div class="hero-side-item">
+            <strong>Main limitation</strong>
+            <span>Large aggregated biodiversity data can contain location issues, metadata gaps, and uneven source quality.</span>
+          </div>
+          <div class="hero-side-item">
+            <strong>Why it fits WhaleData</strong>
+            <span>It gives the platform a broad base of open whale records that can be cleaned, explained, and made more understandable.</span>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="overview-grid">
+    <div class="overview-card">
+      <div class="dot" style="background:#00e5ff"></div>
+      <div class="src-name">What it is</div>
+      <div class="src-count">GBIF</div>
+      <div class="src-type">A global biodiversity discovery platform</div>
+    </div>
+    <div class="overview-card">
+      <div class="dot" style="background:#64c864"></div>
+      <div class="src-name">What it holds</div>
+      <div class="src-count">Records</div>
+      <div class="src-type">Occurrence data published by many sources</div>
+    </div>
+    <div class="overview-card">
+      <div class="dot" style="background:#ffb432"></div>
+      <div class="src-name">What it supports</div>
+      <div class="src-count">Maps</div>
+      <div class="src-type">Distribution views, education, and analysis</div>
+    </div>
+    <div class="overview-card">
+      <div class="dot" style="background:#ff6b9d"></div>
+      <div class="src-name">Main caution</div>
+      <div class="src-count">Filter</div>
+      <div class="src-type">Large biodiversity data is useful, not flawless</div>
+    </div>
+  </div>
+
+  <div class="content-layout">
+    <div class="content-body">
+
+      <section class="prose-section" id="quick-answer">
+        <h2>The short answer</h2>
+        <p><strong>GBIF</strong> stands for the <strong>Global Biodiversity Information Facility</strong>. It helps people discover biodiversity occurrence records from publishers such as research institutions, museums, monitoring programs, and scientific collections.</p>
+        <p>When people talk about <strong>GBIF whale data</strong>, they are usually talking about records connected to whale species — often a species name, a date, a place, and details about the dataset or source that published the record.</p>
+        <p>That makes GBIF extremely useful for anyone trying to understand broad whale distribution patterns. It does <strong>not</strong> mean every point is perfect, real-time, or equally reliable.</p>
+
+        <div class="stat-row">
+          <div class="stat-box">
+            <div class="num">Global</div>
+            <div class="lbl">Coverage</div>
+          </div>
+          <div class="stat-box">
+            <div class="num">Shared</div>
+            <div class="lbl">By many publishers</div>
+          </div>
+          <div class="stat-box">
+            <div class="num">Needs</div>
+            <div class="lbl">Context and filtering</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="prose-section" id="what-is-gbif">
+        <h2>What is GBIF, in plain English?</h2>
+        <p>GBIF is not a whale-only database. It is a much broader biodiversity platform that helps make species records easier to find and reuse. That includes plants, birds, insects, mammals, marine animals, and whale species.</p>
+        <p>A simple way to think about it is this: instead of forcing someone to search many separate institutions one by one, GBIF helps expose records through one shared discovery layer. For whale data, that means observations and occurrence records that would otherwise stay buried in scattered datasets become much easier to explore.</p>
+
+        <div class="pullquote">
+          <p>GBIF is less like a single whale archive and more like a global doorway into biodiversity records that can include whales.</p>
+        </div>
+      </section>
+
+      <section class="prose-section" id="what-records-mean">
+        <h2>What does a whale record actually mean?</h2>
+        <p>One of the biggest misunderstandings around biodiversity data is assuming every dot means the same thing. In reality, a whale-related occurrence record can reflect different kinds of documentation depending on the source dataset.</p>
+        <p>A record may include:</p>
+        <ul>
+          <li>a species name used by the source,</li>
+          <li>a date or time range,</li>
+          <li>coordinates or place information,</li>
+          <li>the publishing institution or dataset,</li>
+          <li>record type or basis of record,</li>
+          <li>notes about uncertainty or geospatial quality.</li>
+        </ul>
+        <p>That is valuable, but it is not the same as saying “this is a perfect live whale tracker.” It is better to think of it as evidence that a species was documented in connection with a place and time.</p>
+      </section>
+
+      <section class="prose-section" id="why-useful">
+        <h2>Why GBIF whale data is so useful</h2>
+        <p>The power of GBIF is not perfection. The power is <strong>accessibility at scale</strong>. Whale records are often fragmented across institutions, studies, and publishing systems. GBIF helps make those records easier to discover in one place.</p>
+
+        <div class="highlight-box">
+          <h3>Why this matters for the public</h3>
+          <p>Most people will never open raw scientific files or query biodiversity infrastructure directly. A platform like WhaleData can take those records and turn them into something visual, searchable, and understandable without pretending the data has no limitations.</p>
+        </div>
+
+        <p>That matters for several reasons:</p>
+        <ul>
+          <li>it makes whale distribution easier to explain,</li>
+          <li>it gives writers and educators something concrete to work with,</li>
+          <li>it supports better mapping and comparison,</li>
+          <li>it helps people ask smarter follow-up questions.</li>
+        </ul>
+      </section>
+
+      <section class="prose-section" id="accuracy">
+        <h2>So, how accurate is GBIF whale data?</h2>
+        <p>The honest answer is: <strong>sometimes very strong, sometimes messy, and almost always in need of interpretation</strong>.</p>
+        <p>Some records come from trustworthy institutional sources and are very helpful. Others may contain issues that are common in large biodiversity systems: location uncertainty, duplicate observations, old taxonomy, incomplete metadata, or records that are technically real but difficult to interpret safely on a public map.</p>
+        <p>This does not make GBIF bad. It makes it real. Large-scale biodiversity systems reflect the complexity of how the world was observed, recorded, preserved, and digitized.</p>
+        <p>If you're comparing different marine datasets, it's also worth looking at how GBIF differs from more ocean-focused systems. <a href="/insights/obis-vs-gbif">See how OBIS compares to GBIF for whale data →</a></p>
+
+        <div class="info-box">
+          <div class="icon">🧭</div>
+          <p><strong>The safest way to use GBIF data:</strong> treat it as a powerful foundation, not as a final answer that should never be questioned.</p>
+        </div>
+      </section>
+
+      <section class="prose-section" id="why-problems-happen">
+        <h2>Why weird map points can happen</h2>
+        <p>If someone sees a whale point on land, the first reaction is often that the entire dataset must be broken. Usually, the truth is less dramatic. These odd cases can happen because geospatial data is hard, especially when records come from many sources and many years.</p>
+        <p>Common reasons include:</p>
+        <ul>
+          <li>coordinates entered with mistakes,</li>
+          <li>rough location estimates,</li>
+          <li>older georeferencing standards,</li>
+          <li>source records flagged with geospatial issues,</li>
+          <li>dataset differences in formatting and quality control.</li>
+        </ul>
+
+        <div class="warning-box">
+          <div class="icon">📍</div>
+          <p><strong>Important:</strong> a dot on a biodiversity map is not the same thing as certainty. It is a record that still needs context.</p>
+        </div>
+      </section>
+
+      <section class="prose-section" id="filtering-matters">
+        <h2>Why filtering matters more than most people think</h2>
+        <p>The difference between a weak whale map and a trustworthy one is often not the raw dataset itself. It is the <strong>methodology</strong> used to decide what to include, what to flag, and how to explain uncertainty.</p>
+        <p>A responsible platform will ask questions like:</p>
+        <ul>
+          <li>Should geospatially problematic records be excluded?</li>
+          <li>Should certain species be supplemented by more marine-focused sources?</li>
+          <li>Should older historical records be separated from modern sightings?</li>
+          <li>Should data quality caveats be visible to the user?</li>
+        </ul>
+        <p>This is where WhaleData becomes more than just a collection of dots. It becomes an interpretation layer between raw biodiversity records and public understanding.</p>
+      </section>
+
+      <section class="prose-section" id="what-it-is-not">
+        <h2>What GBIF whale data is not</h2>
+        <p>It helps to be clear about what GBIF does <strong>not</strong> promise.</p>
+        <ul>
+          <li>It is not a live whale-tracking feed.</li>
+          <li>It is not complete proof of where whales are at every moment.</li>
+          <li>It is not free from historical and geographic bias.</li>
+          <li>It is not enough on its own for every public-facing interpretation.</li>
+        </ul>
+        <p>That clarity is important because honest framing builds more trust than overselling ever will.</p>
+      </section>
+
+      <section class="prose-section" id="why-it-matters-here">
+        <h2>Why this matters for WhaleData</h2>
+        <p>WhaleData is strongest when it makes complex data easier to understand without flattening away its limits. GBIF helps power that mission because it provides a broad occurrence base that can be explored visually, compared over time, and connected to a bigger conservation story.</p>
+        <p>For users, that means a better path into the topic:</p>
+        <ul>
+          <li>they do not need to start with raw database interfaces,</li>
+          <li>they can move from a simple article into technical docs,</li>
+          <li>they can understand that maps are useful but never context-free,</li>
+          <li>they can see why source quality and filtering matter.</li>
+        </ul>
+        <p>For a deeper breakdown of how WhaleData combines multiple sources and applies filtering, <a href="/data">explore the full data sources documentation →</a></p>
+      </section>
+
+      <section class="prose-section" id="best-way">
+        <h2>The best way to think about GBIF whale data</h2>
+        <p>The smartest way to use GBIF whale data is to treat it as a <strong>strong starting point</strong>. It helps people ask better questions about whale distribution, data coverage, and public interpretation.</p>
+        <p>That is exactly the role it should play inside a modern platform: a useful foundation, combined with filtering, explanation, and links to deeper documentation.</p>
+      </section>
+
+      <section class="prose-section" id="faq">
+        <h2>Frequently asked questions</h2>
+        <div class="faq-box">
+          <div class="faq-item">
+            <h3>What is GBIF?</h3>
+            <p>GBIF is the Global Biodiversity Information Facility, a platform that helps people discover biodiversity occurrence records from many publishing sources.</p>
+          </div>
+          <div class="faq-item">
+            <h3>What does GBIF whale data mean?</h3>
+            <p>It usually means occurrence records connected to whale species, often including a species name, date, location, and dataset details.</p>
+          </div>
+          <div class="faq-item">
+            <h3>Is GBIF whale data accurate?</h3>
+            <p>It can be very useful, but it is not automatically perfect. Some records are stronger than others, which is why filtering and interpretation matter.</p>
+          </div>
+          <div class="faq-item">
+            <h3>Why do whales sometimes appear on land in maps?</h3>
+            <p>This can happen because of coordinate issues, rough historical georeferencing, or other geospatial data problems in source records.</p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <aside>
+      <div class="on-this-page">
+        <h4>On this page</h4>
+        <a href="#quick-answer">The short answer</a>
+        <a href="#what-is-gbif">What GBIF is</a>
+        <a href="#what-records-mean">What records mean</a>
+        <a href="#why-useful">Why it is useful</a>
+        <a href="#accuracy">How accurate it is</a>
+        <a href="#why-problems-happen">Why map issues happen</a>
+        <a href="#filtering-matters">Why filtering matters</a>
+        <a href="#what-it-is-not">What it is not</a>
+        <a href="#why-it-matters-here">Why it matters for WhaleData</a>
+        <a href="#best-way">Best way to think about it</a>
+        <a href="#faq">FAQ</a>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Future related-articles area intentionally hidden until multiple articles are published. -->
+  <div class="page-nav" aria-hidden="true"></div>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-left">
+        <strong style="color:var(--text);font-family:'Syne',sans-serif">whaledata.org</strong> — Documentation<br>
+        By <a href="https://kyraweb.ca">Monarch / KyraWeb</a> · Built with assistance from <a href="https://claude.ai">Claude by Anthropic</a>
+      </div>
+      <div class="footer-links">
+        <a href="https://whaledata.org">Platform</a>
+        <a href="https://github.com/Kyraweb/whaledata">GitHub</a>
+        <a href="https://api.whaledata.org/docs">API</a>
+      </div>
+    </div>
+  </footer>
+</main>
+
+<button class="feedback-btn" id="feedbackBtn" aria-label="Send feedback">
+  <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+    <path d="M1 1h13v9H8.5L5 13v-3H1V1Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+  </svg>
+  Feedback
+</button>
+
+<div class="feedback-overlay" id="feedbackOverlay">
+  <div class="feedback-modal" id="feedbackModal">
+    <div class="feedback-modal-header">
+      <div>
+        <h3>Share feedback</h3>
+        <p>Question, correction, or suggestion — we read everything.</p>
+      </div>
+      <button class="feedback-close" id="feedbackClose">✕</button>
+    </div>
+
+    <div id="feedbackForm">
+      <div class="feedback-field">
+        <label>Type</label>
+        <select id="feedbackType">
+          <option value="feedback">General feedback</option>
+          <option value="correction">Correction</option>
+          <option value="question">Question</option>
+          <option value="suggestion">Suggestion</option>
+        </select>
+      </div>
+      <div class="feedback-field">
+        <label>Your email (optional)</label>
+        <input type="email" id="feedbackEmail" placeholder="you@example.com"/>
+      </div>
+      <div class="feedback-field">
+        <label>Message</label>
+        <textarea id="feedbackMessage" placeholder="What should be improved?"></textarea>
+      </div>
+      <button class="feedback-submit" id="feedbackSubmit">Send feedback</button>
+    </div>
+
+    <div class="feedback-success" id="feedbackSuccess" style="display:none">
+      <div class="check">🐋</div>
+      <h4>Thanks for the feedback</h4>
+      <p>We'll read it and get back to you if you left an email.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+gsap.registerPlugin(ScrollTrigger);
+
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursorRing');
+document.addEventListener('mousemove', e => {
+  gsap.to(cursor, { x: e.clientX, y: e.clientY, duration: 0.05 });
+  gsap.to(ring, { x: e.clientX, y: e.clientY, duration: 0.18 });
+});
+document.querySelectorAll('a, button').forEach(el => {
+  el.addEventListener('mouseenter', () => gsap.to(ring, { scale: 2, duration: 0.2 }));
+  el.addEventListener('mouseleave', () => gsap.to(ring, { scale: 1, duration: 0.2 }));
+});
+
+gsap.from('.page-hero .page-label', { opacity: 0, y: 20, duration: 0.6, delay: 0.2 });
+gsap.from('.page-title', { opacity: 0, y: 30, duration: 0.8, delay: 0.3, ease: 'power3.out' });
+gsap.from('.page-intro', { opacity: 0, y: 20, duration: 0.7, delay: 0.5, ease: 'power3.out' });
+
+gsap.utils.toArray('.overview-card').forEach((el, i) => {
+  gsap.from(el, { opacity: 0, y: 20, duration: 0.5, delay: i * 0.08, ease: 'power3.out',
+    scrollTrigger: { trigger: el, start: 'top 90%', once: true }
+  });
+});
+
+gsap.utils.toArray('.prose-section').forEach(el => {
+  gsap.from(el, { opacity: 0, y: 24, duration: 0.7, ease: 'power3.out',
+    scrollTrigger: { trigger: el, start: 'top 88%', once: true }
+  });
+});
+
+const sections = document.querySelectorAll('[id]');
+const links = document.querySelectorAll('.on-this-page a');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => { if (window.scrollY >= s.offsetTop - 120) current = s.id; });
+  links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + current));
+});
+
+const sidebar = document.getElementById('sidebar');
+const hamburger = document.getElementById('hamburger');
+const overlay = document.getElementById('overlay');
+const closeBtn = document.getElementById('closeBtn');
+
+function openNav() { sidebar.classList.add('open'); overlay.classList.add('show'); if (closeBtn) closeBtn.style.display = 'flex'; }
+function closeNav() { sidebar.classList.remove('open'); overlay.classList.remove('show'); if (closeBtn) closeBtn.style.display = 'none'; }
+
+hamburger.addEventListener('click', openNav);
+overlay.addEventListener('click', closeNav);
+if (closeBtn) closeBtn.addEventListener('click', closeNav);
+document.querySelectorAll('.nav-link').forEach(link => {
+  link.addEventListener('click', () => { if (window.innerWidth <= 1024) closeNav(); });
+});
+
+(function() {
+  const btn = document.getElementById('feedbackBtn');
+  const feedbackOverlay = document.getElementById('feedbackOverlay');
+  const feedbackClose = document.getElementById('feedbackClose');
+  const submit = document.getElementById('feedbackSubmit');
+  const form = document.getElementById('feedbackForm');
+  const success = document.getElementById('feedbackSuccess');
+
+  function open() { feedbackOverlay.classList.add('open'); }
+  function close() { feedbackOverlay.classList.remove('open'); }
+
+  btn.addEventListener('click', open);
+  feedbackClose.addEventListener('click', close);
+  feedbackOverlay.addEventListener('click', e => { if (e.target === feedbackOverlay) close(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+
+  submit.addEventListener('click', async () => {
+    const message = document.getElementById('feedbackMessage').value.trim();
+    const email = document.getElementById('feedbackEmail').value.trim();
+    const type = document.getElementById('feedbackType').value;
+
+    if (!message) {
+      document.getElementById('feedbackMessage').focus();
+      return;
+    }
+
+    submit.disabled = true;
+    submit.textContent = 'Sending…';
+
+    try {
+      await fetch('https://api.whaledata.org/alerts/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email || 'anonymous@docs.whaledata.org',
+          message: '[' + type.toUpperCase() + ' — docs.whaledata.org/insights/what-is-gbif-whale-data]\\n\\n' + message,
+          page: window.location.href
+        })
+      });
+      form.style.display = 'none';
+      success.style.display = 'block';
+      setTimeout(close, 3000);
+    } catch(err) {
+      submit.disabled = false;
+      submit.textContent = 'Send feedback';
+      alert('Something went wrong. Please try again.');
+    }
+  });
+})();
+</script>
+</body>
+</html>
